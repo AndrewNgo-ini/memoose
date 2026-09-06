@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "mnemoth": {
-      "command": "uvx",
-      "args": ["--from", "${CLAUDE_PLUGIN_ROOT}", "mnemoth", "serve"],
-      "env": { "MNEMOTH_DATA_DIR": "${CLAUDE_PLUGIN_DATA}" }
-    }
-  }
-}

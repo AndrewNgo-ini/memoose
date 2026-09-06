@@ -7,3 +7,5 @@ dist/
 *.sqlite-wal
 *.sqlite-shm
 .omc/
+results/*/data/
+results/*/cwd/
