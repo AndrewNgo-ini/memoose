@@ -68,6 +68,13 @@ cross-project dataset. Embeddings use `fastembed` when the extra is installed an
 hashed fallback otherwise (`MNEMOTH_EMBEDDER=hash|fastembed|auto`). Install the `ontology`
 extra for full RDF parsing; a Turtle/RDF-XML fallback parser is built in.
 
+## Benchmarks
+
+LoCoMo, mem0's protocol with their answerer and judge prompts vendored verbatim, host model via
+Claude Code. Pilot on conversation 0: 94.7 with chunks-only ingest and Haiku as answerer and
+judge. Full results, retrieval-only numbers, and how to reproduce: `benchmarks/README.md` and
+`benchmarks/locomo/RESULTS.md`.
+
 ## Develop
 
 ```sh
