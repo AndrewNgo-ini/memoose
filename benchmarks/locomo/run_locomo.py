@@ -50,16 +50,50 @@ def log(*a):
 
 
 # ----- Claude Code as the model ----------------------------------------------------------
-def claude(prompt: str, model: str, cwd: Path, max_turns: int = 1, extra: list[str] | None = None, env: dict | None = None, timeout: int = 600) -> dict:
+LIMIT_MARKERS = ("session limit", "usage limit", "rate limit", "overloaded", "hit your limit")
+_limit_pause = threading.Event()
+
+
+def _is_transient(data: dict) -> bool:
+    text = ((data.get("result") or "") + " " + (data.get("stderr") or "")).lower()
+    return bool(data.get("is_error")) and any(m in text for m in LIMIT_MARKERS) or ("hit your" in text and "limit" in text)
+
+
+def claude(prompt: str, model: str, cwd: Path, max_turns: int = 1, extra: list[str] | None = None, env: dict | None = None, timeout: int = 600, max_wait_h: float = 8.0) -> dict:
+    """Run Claude Code once. On a usage/rate limit, wait (polling every 5 min) and retry instead of returning junk."""
     cmd = ["claude", "-p", "--model", model, "--output-format", "json", "--max-turns", str(max_turns)] + (extra or [])
-    t0 = time.time()
-    proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=str(cwd), env={**os.environ, **(env or {})}, timeout=timeout)
-    try:
-        data = json.loads(proc.stdout)
-    except json.JSONDecodeError:
-        data = {"result": proc.stdout, "is_error": True, "stderr": proc.stderr[-500:]}
-    data["wall_s"] = round(time.time() - t0, 1)
-    return data
+    deadline = time.time() + max_wait_h * 3600
+    while True:
+        while _limit_pause.is_set():
+            time.sleep(30)
+        t0 = time.time()
+        proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=str(cwd), env={**os.environ, **(env or {})}, timeout=timeout)
+        try:
+            data = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            data = {"result": proc.stdout, "is_error": True, "stderr": proc.stderr[-500:]}
+        data["wall_s"] = round(time.time() - t0, 1)
+        if _is_transient(data) and time.time() < deadline:
+            if not _limit_pause.is_set():
+                log(f"  usage limit hit ({(data.get('result') or '')[:80]!r}); pausing all calls, retrying every 5 min")
+                _limit_pause.set()
+                threading.Thread(target=_probe_until_clear, args=(model, cwd), daemon=True).start()
+            continue
+        return data
+
+
+def _probe_until_clear(model: str, cwd: Path) -> None:
+    while True:
+        time.sleep(300)
+        proc = subprocess.run(["claude", "-p", "--model", model, "--output-format", "json", "--max-turns", "1"], input="Reply OK", capture_output=True, text=True, cwd=str(cwd), timeout=120)
+        try:
+            d = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            d = {"result": proc.stdout, "is_error": True}
+        if not _is_transient(d):
+            log("  usage limit cleared; resuming")
+            _limit_pause.clear()
+            return
 
 
 def parse_locomo_date(s: str) -> datetime | None:
@@ -115,6 +149,9 @@ def ingest_agent(ds_name: str, conv: dict, data_dir: Path, model: str, cwd: Path
             r = f.result()
             results[s] = {"result": (r.get("result") or "")[-80:], "cost": r.get("total_cost_usd"), "wall_s": r.get("wall_s"), "turns": r.get("num_turns"), "error": r.get("is_error")}
             log(f"  ingest session {s}: {results[s]}")
+    failed = [s for s, r in results.items() if r["error"]]
+    if failed:
+        raise RuntimeError(f"agent ingest failed for sessions {failed}; data dir is partial, delete it and rerun")
     return results
 
 
@@ -152,12 +189,16 @@ def retrieve(ds, q: dict, k: int, reference_date: str) -> dict:
 def answer_and_judge(q: dict, ret: dict, answerer: str, judge: str, cwd: Path) -> dict:
     res, prompt, retrieval_ms = ret["res"], ret["prompt"], ret["retrieval_ms"]
     a = claude(prompt, answerer, cwd)
+    if a.get("is_error"):
+        raise RuntimeError(f"answer call failed: {(a.get('result') or '')[:200]}")
     generated = a.get("result") or ""
     if "ANSWER:" in generated:
         generated = generated.rsplit("ANSWER:", 1)[-1].strip()
     gold = P.preprocess_answer(q["category"], str(q["answer"]))
     jp = P.get_judge_prompt(q["category"], q["question"], gold, generated)
     j = claude(P.JUDGE_SYSTEM_PROMPT + "\n\n" + jp, judge, cwd)
+    if j.get("is_error"):
+        raise RuntimeError(f"judge call failed: {(j.get('result') or '')[:200]}")
     raw = j.get("result") or ""
     label = "WRONG"
     m = re.search(r'"label"\s*:\s*"(CORRECT|WRONG)"', raw, re.I)
@@ -250,7 +291,11 @@ def main() -> None:
         with ThreadPoolExecutor(max_workers=args.workers) as ex:
             futs = [ex.submit(answer_and_judge, q, retrieve(ds, q, args.k, reference_date), args.answerer, args.judge, cwd) for q in todo]
             for i, f in enumerate(as_completed(futs), 1):
-                r = f.result()
+                try:
+                    r = f.result()
+                except Exception as e:  # noqa: BLE001
+                    log(f"[conv {ci}] question skipped: {e}")
+                    continue
                 r["conversation"] = ci
                 with lock, rows_path.open("a") as fh:
                     fh.write(json.dumps(r) + "\n")

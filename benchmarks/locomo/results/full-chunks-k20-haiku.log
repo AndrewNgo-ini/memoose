@@ -1,3 +1,1 @@
-[conv 0] ingest (chunks) ...
-[conv 0] ingested: {'entities': 21, 'relations': 1, 'superseded_relations': 0, 'chunks': 111, 'entity_types': 17, 'open_contradictions': 0, 'sessions': 0, 'lessons': 0, 'schema_version': 3}
-[conv 0] 152 questions, 152 to run, reference date October 22, 2023
+[conv 0] 152 questions, 104 to run, reference date October 22, 2023

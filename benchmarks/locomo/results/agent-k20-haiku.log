@@ -1,1 +1,72 @@
 [conv 0] ingest (agent) ...
+  ingest session 2: {'result': "rent session (D3), not this session's content, so no action needed here.\n\nDONE 3", 'cost': 0.2200678, 'wall_s': 75.5, 'turns': 7, 'error': False}
+  ingest session 1: {'result': 'DONE 3', 'cost': 0.2330666, 'wall_s': 82.9, 'turns': 7, 'error': False}
+  ingest session 3: {'result': 'All 23 turns stored across 4 remember calls.\n\nDONE 4', 'cost': 0.2859062, 'wall_s': 117.1, 'turns': 6, 'error': False}
+  ingest session 5: {'result': 'All 16 turns stored across 3 remember calls.\n\nDONE 3', 'cost': 0.2215786, 'wall_s': 78.4, 'turns': 6, 'error': False}
+  ingest session 4: {'result': 'All 18 turns stored across 3 remember calls.\n\nDONE 3', 'cost': 0.32188559999999994, 'wall_s': 118.2, 'turns': 9, 'error': False}
+  ingest session 6: {'result': 'All turns stored across 3 remember calls.\n\nDONE 3', 'cost': 0.23649140000000002, 'wall_s': 84.6, 'turns': 6, 'error': False}
+  ingest session 8: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0.12773639999999997, 'wall_s': 43.8, 'turns': 7, 'error': True}
+  ingest session 7: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0.22789520000000002, 'wall_s': 77.8, 'turns': 11, 'error': True}
+  ingest session 10: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 3.3, 'turns': 1, 'error': True}
+  ingest session 11: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 3.3, 'turns': 1, 'error': True}
+  ingest session 9: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0.1037266, 'wall_s': 41.1, 'turns': 4, 'error': True}
+  ingest session 12: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 2.9, 'turns': 1, 'error': True}
+  ingest session 13: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 2.9, 'turns': 1, 'error': True}
+  ingest session 14: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 3.0, 'turns': 1, 'error': True}
+  ingest session 15: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 3.0, 'turns': 1, 'error': True}
+  ingest session 16: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 3.0, 'turns': 1, 'error': True}
+  ingest session 17: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 2.9, 'turns': 1, 'error': True}
+  ingest session 18: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 2.9, 'turns': 1, 'error': True}
+  ingest session 19: {'result': "You've hit your session limit · resets 7:50pm (Asia/Ho_Chi_Minh)", 'cost': 0, 'wall_s': 2.9, 'turns': 1, 'error': True}
+[conv 0] ingested: {'entities': 86, 'relations': 134, 'superseded_relations': 0, 'chunks': 28, 'entity_types': 18, 'open_contradictions': 0, 'sessions': 0, 'lessons': 0, 'schema_version': 3}
+[conv 0] 152 questions, 152 to run, reference date October 22, 2023
+[conv 0] 10/152 done
+[conv 0] 20/152 done
+[conv 0] 30/152 done
+[conv 0] 40/152 done
+[conv 0] 50/152 done
+[conv 0] 60/152 done
+[conv 0] 70/152 done
+[conv 0] 80/152 done
+[conv 0] 90/152 done
+[conv 0] 100/152 done
+[conv 0] 110/152 done
+[conv 0] 120/152 done
+[conv 0] 130/152 done
+[conv 0] 140/152 done
+[conv 0] 150/152 done
+[conv 0] {"n": 152, "score": 0.0, "by_category": {"multi-hop": {"n": 32, "score": 0.0}, "temporal": {"n": 37, "score": 0.0}, "open-domain": {"n": 13, "score": 0.0}, "single-hop": {"n": 70, "score": 0.0}}, "mean_prompt_tokens_est": 7214, "total_cost_usd": 0, "retrieval_ms_p50": 36.7}
+{
+  "n": 152,
+  "score": 0.0,
+  "by_category": {
+    "multi-hop": {
+      "n": 32,
+      "score": 0.0
+    },
+    "temporal": {
+      "n": 37,
+      "score": 0.0
+    },
+    "open-domain": {
+      "n": 13,
+      "score": 0.0
+    },
+    "single-hop": {
+      "n": 70,
+      "score": 0.0
+    }
+  },
+  "mean_prompt_tokens_est": 7214,
+  "total_cost_usd": 0,
+  "retrieval_ms_p50": 36.7,
+  "tag": "agent-k20-haiku",
+  "conversations": [
+    0
+  ],
+  "ingest": "agent",
+  "k": 20,
+  "answerer": "haiku",
+  "judge": "haiku",
+  "embedder": "fastembed"
+}
