@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 SERVER_NAME = "mnemoth"
-SKILL_SRC = Path(__file__).resolve().parents[2] / "skills" / "mnemoth"
+SKILLS_ROOT = Path(__file__).resolve().parents[2] / "skills"
 
 
 @dataclass(frozen=True)
@@ -57,20 +57,26 @@ def _paths(host: str, project: str | None) -> tuple[HostTarget, Path, Path, str]
 def install(host: str, project: str | None = None, command: list[str] | None = None) -> dict:
     t, skill_dir, mcp_path, kind = _paths(host, project)
     command = command or default_command()
-    skill_dir.mkdir(parents=True, exist_ok=True)
-    for src in SKILL_SRC.rglob("*"):
-        if src.is_file():
-            dst = skill_dir / src.relative_to(SKILL_SRC)
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dst)
+    installed = []
+    for skill_src in sorted(p for p in SKILLS_ROOT.iterdir() if (p / "SKILL.md").exists()):
+        dst_dir = skill_dir.parent / skill_src.name
+        dst_dir.mkdir(parents=True, exist_ok=True)
+        for src in skill_src.rglob("*"):
+            if src.is_file():
+                dst = dst_dir / src.relative_to(skill_src)
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+        installed.append(str(dst_dir))
     _write_mcp(kind, mcp_path, command)
-    return {"host": t.display, "scope": "project" if project else "user", "skill": str(skill_dir), "mcp_config": str(mcp_path), "command": command}
+    return {"host": t.display, "scope": "project" if project else "user", "skills": installed, "mcp_config": str(mcp_path), "command": command}
 
 
 def uninstall(host: str, project: str | None = None) -> dict:
     t, skill_dir, mcp_path, kind = _paths(host, project)
     removed_skill = skill_dir.exists()
-    shutil.rmtree(skill_dir, ignore_errors=True)
+    for skill_src in SKILLS_ROOT.iterdir():
+        if (skill_src / "SKILL.md").exists():
+            shutil.rmtree(skill_dir.parent / skill_src.name, ignore_errors=True)
     removed_mcp = _remove_mcp(kind, mcp_path)
     return {"host": t.display, "skill_removed": removed_skill, "mcp_removed": removed_mcp}
 

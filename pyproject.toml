@@ -1,6 +1,6 @@
 [project]
 name = "mnemoth"
-version = "0.1.0"
+version = "0.2.0"
 description = "Memory harness for coding agents: cognee-style graph memory exposed as MCP tools and skills, no API key."
 readme = "README.md"
 license = "Apache-2.0"
@@ -14,6 +14,7 @@ dependencies = [
 
 [project.optional-dependencies]
 fastembed = ["fastembed>=0.5"]
+ontology = ["rdflib>=7"]
 
 [project.scripts]
 mnemoth = "mnemoth.server:main"

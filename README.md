@@ -33,20 +33,40 @@ claude --plugin-dir /path/to/mnemoth
 
 ## Tools
 
-| tool | what it does |
+| area | tools |
 | --- | --- |
-| `describe_ontology` | entity types and the relation-name rule for a dataset |
-| `add_entity_type` | extend the ontology with a basic PascalCase type |
-| `remember` | store entities and `source --relation--> target` facts with evidence pointers; validates and merges |
-| `recall` | hybrid recall (FTS5 + local embeddings + one-hop graph); returns ranked raw facts |
-| `forget` | remove an entity, a relation, or a whole dataset |
-| `list_datasets` | memory scopes on this machine |
+| ontology | `describe_ontology`, `add_entity_type`, `import_ontology` (OWL/RDF/Turtle), `declare_functional_relations` |
+| write | `remember`, `mark_contradiction`, `supersede`, `merge_entities`, `cross_connect`, `set_bucket_summary`, `forget` |
+| read | `recall` (modes: hybrid, facts, neighbourhood, lexical, summaries, temporal, rules, session), `contradiction_candidates`, `history`, `memify_candidates`, `global_context`, `list_datasets` |
+| sessions | `session_start`, `session_add_turn`, `session_set_context`, `session_get`, `session_timeline`, `publish_lessons`, `session_end` |
+
+## Skills
+
+| skill | teaches the host model |
+| --- | --- |
+| `mnemoth` | when to recall, how to extract entities, relations, evidence, summaries (cognee's extraction rules) |
+| `mnemoth-contradictions` | judging hotspots, supersede vs mark_contradiction, functional relations |
+| `mnemoth-sessions` | context sections during work, curator and writer rules for distilling lessons |
+| `mnemoth-memify` | cross-connect, consolidate, global-context summaries, feedback weights |
+| `mnemoth-ontology` | extending and importing ontologies, declaring functional relations |
+
+## What is ported from cognee
+
+Typed graph with deterministic entity ids, ontology-constrained extraction with OWL import,
+chunk + summary retrieval material, hybrid retrieval (lexical + vector, reciprocal rank
+fusion) over chunk, entity, and fact channels, the regex query router, contradiction detection
+as candidate facts around touched nodes with `contradicts` edges, temporal supersession for
+functional relations, an append-only provenance ledger, sessions with a fast cache and typed
+context sections, session distillation into lessons, memify passes (cross-connect,
+consolidate, frequency and feedback weights, global context buckets), datasets with a
+project-then-user merge and reserve. Every step that called a model in cognee is a skill
+instruction here. See `docs/plan.md` and `docs/inspirations.md`.
 
 Data lives in `~/.mnemoth/<dataset>.sqlite` (override with `MNEMOTH_DATA_DIR`). The default
-dataset is derived from the directory the host launched the server in; pass `dataset`
-explicitly to use another scope. Embeddings use `fastembed` when the extra is installed
-(`uvx --from . --with fastembed mnemoth serve`) and a keyless hashed fallback otherwise
-(`MNEMOTH_EMBEDDER=hash|fastembed|auto`).
+dataset is derived from the directory the host launched the server in; `user` is the
+cross-project dataset. Embeddings use `fastembed` when the extra is installed and a keyless
+hashed fallback otherwise (`MNEMOTH_EMBEDDER=hash|fastembed|auto`). Install the `ontology`
+extra for full RDF parsing; a Turtle/RDF-XML fallback parser is built in.
 
 ## Develop
 

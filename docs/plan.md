@@ -1,5 +1,7 @@
 # mnemoth — end-to-end port plan
 
+> Status: implemented in v0.2.0. Every row of §1 has a tool or skill section and a test (`tests/test_port.py`).
+
 One pass, no milestone gates. The deliverable is the whole memory core of cognee, working,
 exposed only through skills and MCP tools, with no model call anywhere in the library
 (ADR 0001) and one SQLite file per Dataset (ADR 0002). Vocabulary: `CONTEXT.md`.

@@ -22,7 +22,13 @@ async def test_tools_over_stdio(tmp_path):
             init = await session.initialize()
             assert init.server_info.name == "mnemoth" and "never calls a model" in (init.instructions or "")
             tools = {t.name for t in (await session.list_tools()).tools}
-            assert tools == {"describe_ontology", "add_entity_type", "remember", "recall", "forget", "list_datasets"}
+            expected = {
+                "describe_ontology", "add_entity_type", "import_ontology", "declare_functional_relations",
+                "remember", "mark_contradiction", "supersede", "merge_entities", "cross_connect", "set_bucket_summary", "forget",
+                "recall", "contradiction_candidates", "history", "memify_candidates", "global_context", "list_datasets",
+                "session_start", "session_add_turn", "session_set_context", "session_get", "session_timeline", "publish_lessons", "session_end",
+            }
+            assert tools == expected
 
             onto = await session.call_tool("describe_ontology", {})
             assert any(t["name"] == "Person" for t in _out(onto)["entity_types"])

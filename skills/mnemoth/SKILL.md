@@ -1,13 +1,15 @@
 ---
 name: mnemoth
-description: Persistent project memory as a typed knowledge graph. Use when the user says remember, recall, "what did we decide", "last time", "as before", refers to people, systems, decisions, or dates from earlier work, or when you learn a durable fact about the project, the team, or the user's preferences.
+description: Persistent project memory as a typed knowledge graph. Use when the user says remember, recall, "what did we decide", "last time", "as before", refers to people, systems, decisions, or dates from earlier work, or when you learn a durable fact about the project, the team, or the user's preferences. Companion skills: mnemoth-sessions, mnemoth-contradictions, mnemoth-memify, mnemoth-ontology.
 ---
 
 # mnemoth memory
 
-mnemoth stores memory as a small typed knowledge graph plus source text and recalls it by
-hybrid search. It never calls a model. You do the extraction and the judgment; the tools
-validate and store. Memory is scoped to a **dataset**: by default the current project.
+mnemoth stores memory as a typed knowledge graph plus source text and recalls it by hybrid
+search. It never calls a model. You do the extraction and the judgment; the tools validate and
+store. Memory is scoped to a **dataset**: the current project by default, plus a `user` dataset
+for facts about the user that hold in every project (preferences, identity, standing rules).
+`recall` searches both; pass `dataset="user"` to `remember` for cross-project facts.
 
 ## When to recall
 
@@ -17,8 +19,14 @@ Call `recall` before you rely on the past, not after:
 - whenever the user says "remember", "last time", "as we agreed", "what did we decide", or names something without explaining it
 - before `remember`, to reuse the exact names of existing entities and to notice contradictions
 
+`recall` routes the query to a mode (hybrid, facts, neighbourhood, lexical, summaries,
+temporal, rules, session) and tells you which in `route`; pass `mode` to override. Quote a phrase
+for exact lexical search. Ask "when" for temporal ordering. Ask for rules or conventions to get
+session rules and lessons.
+
 Treat results as raw material. Synthesise the answer yourself. When a fact carries `evidence`
 (a file range, URL, or date) and the decision matters, re-check the evidence before acting on it.
+`contested: true` means an open contradiction touches the fact (see mnemoth-contradictions).
 Facts have a `score`; low scores are hints, not truths.
 
 ## When to remember
@@ -49,6 +57,7 @@ Ask before storing anything personal or sensitive that the user did not explicit
    Bad: "This edge describes employment."
 7. **Evidence**: put where the fact comes from in `evidence`: `repo://path/file.py#L10-L40`,
    a URL, an issue id, or `user said 2026-09-06`. Recall returns it so a later run can re-verify.
+   When the text says since when or until when a fact held, set `valid_from` / `valid_to`.
 8. **Do not add outside knowledge.** Only what the source supports.
 9. Pass the original text as `source_text` when you have it (a message, a doc, a diff summary)
    and a `summary` in this shape so lexical recall works well:
@@ -62,16 +71,13 @@ Ask before storing anything personal or sensitive that the user did not explicit
    - <self-contained sentence>
    ```
 
-## Contradictions
+## Contradictions and history
 
-Before `remember`, look at the recalled facts about the same subjects. Two facts contradict
-only when they cannot both be true of the same subject at the same time (mutually exclusive
-values, direct negations). More-specific or additional information is not a contradiction.
-
-When you find one: tell the user plainly which stored fact conflicts with the new one, cite its
-`evidence`, and ask which is current. Then store the new fact with a description that names
-what it replaced ("... replacing the JWT decision of 2026-03") and, only with the user's
-agreement, call `forget` with the stale `relation_id`.
+`remember` returns `hotspots` when a subject now holds several values for one relation, and
+`superseded` when a functional relation replaced an older value automatically. Follow the
+mnemoth-contradictions skill: judge with `contradiction_candidates`, record with `supersede` or
+`mark_contradiction`. Never `forget` a fact that was once true; supersede it so history stays.
+`history(entity=...)` shows the provenance ledger.
 
 ## Merging
 

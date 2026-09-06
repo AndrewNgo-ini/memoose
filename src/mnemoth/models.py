@@ -1,4 +1,4 @@
-"""Tool input and output shapes. These are the contract the skill teaches the Host Model."""
+"""Tool input shapes. These are the contract the skills teach the Host Model."""
 
 from __future__ import annotations
 
@@ -12,77 +12,26 @@ class EntityIn(BaseModel):
 
 
 class RelationIn(BaseModel):
-    source: str = Field(description="Name of the source entity (must be in `entities` or already remembered).")
+    source: str = Field(description="Name of the source entity (in `entities` or already remembered).")
     name: str = Field(description="snake_case relation name, e.g. 'works_at', 'depends_on', 'decided_on'.")
-    target: str = Field(description="Name of the target entity (must be in `entities` or already remembered).")
-    description: str = Field(default="", description="One-sentence fact using the endpoint names, e.g. 'Alice leads the search team at Acme.'")
-    evidence: str | None = Field(default=None, description="Where this fact comes from, e.g. 'repo://src/auth.py#L40-L82', a URL, or 'user said on 2026-09-06'.")
+    target: str = Field(description="Name of the target entity (in `entities` or already remembered).")
+    description: str = Field(default="", description="One-sentence fact using the endpoint names.")
+    evidence: str | None = Field(default=None, description="Where this comes from: 'repo://src/auth.py#L40-L82', a URL, an issue id, 'user said 2026-09-06'.")
+    valid_from: str | None = Field(default=None, description="ISO date when this fact became true, if known.")
+    valid_to: str | None = Field(default=None, description="ISO date when this fact stopped being true, if known.")
 
 
-class StoredEntity(BaseModel):
-    id: str
-    name: str
-    type: str
-    description: str
-    mentions: int
-    merged: bool = Field(description="True if this name already existed and was merged rather than created.")
+class LessonIn(BaseModel):
+    title: str = Field(description="Short title; also the lesson's identity.")
+    text: str = Field(description="One to three sentences that stand alone without the session.")
+    evidence: str | None = Field(default=None, description="Turn, file, or context line the lesson rests on.")
+    applies_to: list[str] = Field(default_factory=list, description="Names of existing or new entities this lesson applies to.")
+    entity_types: dict[str, str] = Field(default_factory=dict, description="Type for any name in applies_to that is not remembered yet.")
 
 
-class StoredRelation(BaseModel):
-    id: str
-    fact: str
-    evidence: str | None = None
-    new: bool
-
-
-class RememberResult(BaseModel):
-    dataset: str
-    entities: list[StoredEntity]
-    relations: list[StoredRelation]
-    chunks_stored: int
-    warnings: list[str] = Field(default_factory=list)
-
-
-class RecalledEntity(BaseModel):
-    id: str
-    name: str
-    type: str
-    description: str
-    mentions: int
-    score: float
-
-
-class RecalledFact(BaseModel):
-    id: str
-    fact: str
+class CrossConnectIn(BaseModel):
     source: str
-    relation: str
+    name: str
     target: str
-    description: str
-    evidence: str | None
-    score: float
-
-
-class RecalledChunk(BaseModel):
-    id: str
-    summary: str | None
-    text: str
-    source: str | None
-    score: float
-
-
-class RecallResult(BaseModel):
-    dataset: str
-    query: str
-    entities: list[RecalledEntity]
-    facts: list[RecalledFact]
-    chunks: list[RecalledChunk]
-    embedder: str
-
-
-class OntologyView(BaseModel):
-    dataset: str
-    entity_types: list[dict]
-    relation_name_rule: str
-    stats: dict
-    embedder: str
+    description: str = ""
+    evidence: str | None = None
