@@ -90,9 +90,10 @@ class SqliteStore:
         mem = str(self.path) == ":memory:"
         if not mem:
             self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(str(self.path))
+        self.conn = sqlite3.connect(str(self.path), timeout=60, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
+        self.conn.execute("PRAGMA busy_timeout = 60000")
         if not mem:
             self.conn.execute("PRAGMA journal_mode = WAL")
         self.schema_version = migrate(self.conn)

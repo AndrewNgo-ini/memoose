@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -39,6 +40,8 @@ def build_server(engine: Engine | None = None) -> MCPServer:
                 return fn(*a, **kw)
             except (OntologyError, ValueError) as e:
                 return {"error": type(e).__name__, "message": str(e)}
+            except sqlite3.OperationalError as e:
+                return {"error": "StoreBusy", "message": f"{e}. The store was busy; retry the same call.", "retryable": True}
         return run
 
     # ----- ontology ------------------------------------------------------------------

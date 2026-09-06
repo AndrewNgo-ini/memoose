@@ -1,0 +1,25 @@
+{
+  "n": 152,
+  "score": 94.7,
+  "by_category": {
+    "multi-hop": {
+      "n": 32,
+      "score": 90.6
+    },
+    "temporal": {
+      "n": 37,
+      "score": 97.3
+    },
+    "open-domain": {
+      "n": 13,
+      "score": 100.0
+    },
+    "single-hop": {
+      "n": 70,
+      "score": 94.3
+    }
+  },
+  "mean_prompt_tokens_est": 4939,
+  "total_cost_usd": 8.44,
+  "retrieval_ms_p50": 25.0
+}

@@ -108,15 +108,32 @@ class Dataset:
             chunk_rows.append(ChunkRow(chunk_id(summary), summary.strip(), summary.strip(), source))
 
         stored_entities, stored_relations, superseded = [], [], []
-        to_embed: list[tuple[str, str, str]] = []
         functional = self.store.functional_relations()
+        # Embed outside the write transaction so concurrent servers hold the SQLite lock briefly.
+        pre_entities = self.store.get_entities([t.id for t in typed])
+        for t in typed:
+            if t.id in pre_entities:
+                ex = pre_entities[t.id]
+                t.description = t.description if len(t.description) > len(ex.description) else ex.description
+                t.name = ex.name
+        endpoints_pre = self.store.get_entities({r.source_id for r in rel_rows} | {r.target_id for r in rel_rows})
+        for t in typed:
+            endpoints_pre.setdefault(t.id, t)
+        to_embed: list[tuple[str, str, str]] = []
+        for t in typed:
+            to_embed.append(("entity", t.id, f"{t.name} ({t.type}). {t.description}".strip()))
+        for r in rel_rows:
+            to_embed.append(("relation", r.id, render_fact(endpoints_pre[r.source_id].name, r.name, endpoints_pre[r.target_id].name, r.description)))
+        for c in chunk_rows:
+            to_embed.append(("chunk", c.id, f"{c.summary}\n\n{c.text}" if c.summary and c.summary != c.text else c.text))
+        vectors = dict(zip([(k, i) for k, i, _ in to_embed], self.embedder.embed([t for _, _, t in to_embed]))) if to_embed else {}
         with self.store.conn:
             for row in typed:
                 stored, merged = self.store.upsert_entity(row)
                 stored_entities.append({"id": stored.id, "name": stored.name, "type": stored.type, "description": stored.description, "mentions": stored.mentions, "merged": merged})
                 text = f"{stored.name} ({stored.type}). {stored.description}".strip()
                 self.store.index_text("entity", stored.id, text)
-                to_embed.append(("entity", stored.id, text))
+                self.store.index_vector("entity", stored.id, self.embedder.name, vectors[("entity", stored.id)])
                 self.store.record(ACTOR, "merge" if merged else "create", "entity", stored.id, {"name": stored.name, "type": stored.type, "session_id": session_id, "source": source})
             self.store.bump_frequency([t.id for t in typed])
             endpoints = self.store.get_entities({r.source_id for r in rel_rows} | {r.target_id for r in rel_rows})
@@ -128,19 +145,16 @@ class Dataset:
                 fact = render_fact(endpoints[r.source_id].name, r.name, endpoints[r.target_id].name, r.description)
                 stored_relations.append({"id": r.id, "fact": fact, "evidence": r.evidence, "new": new})
                 self.store.index_text("relation", r.id, fact)
-                to_embed.append(("relation", r.id, fact))
+                self.store.index_vector("relation", r.id, self.embedder.name, vectors[("relation", r.id)])
                 self.store.record(ACTOR, "assert" if new else "reassert", "relation", r.id, {"fact": fact, "evidence": r.evidence, "session_id": session_id, "source": source})
-                for s in contra.apply_functional_supersession(self.store, r, functional):
-                    superseded.append(s)
-                    self.store.record(ACTOR, "supersede", "relation", s["relation_id"], s)
+                for s_ in contra.apply_functional_supersession(self.store, r, functional):
+                    superseded.append(s_)
+                    self.store.record(ACTOR, "supersede", "relation", s_["relation_id"], s_)
             for c in chunk_rows:
                 self.store.upsert_chunk(c, [t.id for t in typed])
                 text = f"{c.summary}\n\n{c.text}" if c.summary and c.summary != c.text else c.text
                 self.store.index_text("chunk", c.id, text)
-                to_embed.append(("chunk", c.id, text))
-            if to_embed:
-                for (kind, ref_id, _), vec in zip(to_embed, self.embedder.embed([t for _, _, t in to_embed])):
-                    self.store.index_vector(kind, ref_id, self.embedder.name, vec)
+                self.store.index_vector("chunk", c.id, self.embedder.name, vectors[("chunk", c.id)])
         if not relations:
             warnings.append("No relations given: entities alone are weak memory. Prefer facts as source --relation--> target.")
         touched = list(dict.fromkeys([t.id for t in typed] + [r.source_id for r in rel_rows] + [r.target_id for r in rel_rows]))

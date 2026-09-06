@@ -83,7 +83,7 @@ Do this:
    - relations: every fact as source --relation--> target with a description that repeats the names and includes the date {date_iso} when the fact is about this session (e.g. "{a} went camping with friends on {date_iso}."). Put the dia_id(s) in evidence, e.g. "D3:7".
    - source_text: the exact turns of that window, prefixed "[{when}]" and with speaker names, and source: the dia_id range.
    - summary: "This chunk is about:\\n- People: ...\\nFacts:\\n- ..." covering the window.
-2. Do not skip turns. Do not answer questions. When every turn is stored, reply with only: DONE <number of remember calls>.
+2. Do not skip turns. Do not answer questions. Nobody will reply to you: never ask for confirmation. If a tool call returns an error (for example StoreBusy or a validation message), fix the input if needed and retry the same call, up to 5 times. When every turn is stored, reply with only: DONE <number of remember calls>.
 
 Session {sidx} transcript:
 {transcript}

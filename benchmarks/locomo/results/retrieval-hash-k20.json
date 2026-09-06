@@ -1,0 +1,357 @@
+[
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 1.5,
+    "categories": {
+      "multi-hop": {
+        "n": 32,
+        "evidence_recall": 0.599,
+        "hit_any": 0.812
+      },
+      "temporal": {
+        "n": 37,
+        "evidence_recall": 1.0,
+        "hit_any": 1.0
+      },
+      "open-domain": {
+        "n": 11,
+        "evidence_recall": 0.409,
+        "hit_any": 0.455
+      },
+      "single-hop": {
+        "n": 70,
+        "evidence_recall": 0.914,
+        "hit_any": 0.914
+      }
+    },
+    "overall": {
+      "n": 150,
+      "evidence_recall": 0.831,
+      "hit_any": 0.88
+    },
+    "conversation": 0,
+    "chunks": 111,
+    "ingest_s": 0.3,
+    "embedder": "hash"
+  },
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 1.4,
+    "categories": {
+      "multi-hop": {
+        "n": 11,
+        "evidence_recall": 0.615,
+        "hit_any": 0.818
+      },
+      "temporal": {
+        "n": 26,
+        "evidence_recall": 0.962,
+        "hit_any": 0.962
+      },
+      "single-hop": {
+        "n": 44,
+        "evidence_recall": 0.818,
+        "hit_any": 0.818
+      }
+    },
+    "overall": {
+      "n": 81,
+      "evidence_recall": 0.837,
+      "hit_any": 0.864
+    },
+    "conversation": 1,
+    "chunks": 99,
+    "ingest_s": 0.1,
+    "embedder": "hash"
+  },
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 2.3,
+    "categories": {
+      "multi-hop": {
+        "n": 31,
+        "evidence_recall": 0.548,
+        "hit_any": 0.839
+      },
+      "temporal": {
+        "n": 27,
+        "evidence_recall": 0.963,
+        "hit_any": 0.963
+      },
+      "open-domain": {
+        "n": 8,
+        "evidence_recall": 0.219,
+        "hit_any": 0.375
+      },
+      "single-hop": {
+        "n": 86,
+        "evidence_recall": 0.919,
+        "hit_any": 0.919
+      }
+    },
+    "overall": {
+      "n": 152,
+      "evidence_recall": 0.814,
+      "hit_any": 0.882
+    },
+    "conversation": 2,
+    "chunks": 179,
+    "ingest_s": 0.4,
+    "embedder": "hash"
+  },
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 2.2,
+    "categories": {
+      "multi-hop": {
+        "n": 37,
+        "evidence_recall": 0.557,
+        "hit_any": 0.865
+      },
+      "temporal": {
+        "n": 40,
+        "evidence_recall": 0.85,
+        "hit_any": 0.85
+      },
+      "open-domain": {
+        "n": 11,
+        "evidence_recall": 0.455,
+        "hit_any": 0.636
+      },
+      "single-hop": {
+        "n": 111,
+        "evidence_recall": 0.88,
+        "hit_any": 0.883
+      }
+    },
+    "overall": {
+      "n": 199,
+      "evidence_recall": 0.79,
+      "hit_any": 0.859
+    },
+    "conversation": 3,
+    "chunks": 169,
+    "ingest_s": 0.5,
+    "embedder": "hash"
+  },
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 2.3,
+    "categories": {
+      "multi-hop": {
+        "n": 31,
+        "evidence_recall": 0.634,
+        "hit_any": 0.935
+      },
+      "temporal": {
+        "n": 26,
+        "evidence_recall": 0.853,
+        "hit_any": 0.885
+      },
+      "open-domain": {
+        "n": 14,
+        "evidence_recall": 0.637,
+        "hit_any": 0.857
+      },
+      "single-hop": {
+        "n": 107,
+        "evidence_recall": 0.921,
+        "hit_any": 0.925
+      }
+    },
+    "overall": {
+      "n": 178,
+      "evidence_recall": 0.838,
+      "hit_any": 0.916
+    },
+    "conversation": 4,
+    "chunks": 180,
+    "ingest_s": 0.5,
+    "embedder": "hash"
+  },
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 2.3,
+    "categories": {
+      "multi-hop": {
+        "n": 30,
+        "evidence_recall": 0.417,
+        "hit_any": 0.8
+      },
+      "temporal": {
+        "n": 24,
+        "evidence_recall": 0.764,
+        "hit_any": 0.833
+      },
+      "open-domain": {
+        "n": 7,
+        "evidence_recall": 0.226,
+        "hit_any": 0.571
+      },
+      "single-hop": {
+        "n": 62,
+        "evidence_recall": 0.952,
+        "hit_any": 0.952
+      }
+    },
+    "overall": {
+      "n": 123,
+      "evidence_recall": 0.743,
+      "hit_any": 0.87
+    },
+    "conversation": 5,
+    "chunks": 179,
+    "ingest_s": 0.3,
+    "embedder": "hash"
+  },
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 2.3,
+    "categories": {
+      "multi-hop": {
+        "n": 20,
+        "evidence_recall": 0.487,
+        "hit_any": 0.8
+      },
+      "temporal": {
+        "n": 34,
+        "evidence_recall": 0.77,
+        "hit_any": 0.824
+      },
+      "open-domain": {
+        "n": 13,
+        "evidence_recall": 0.538,
+        "hit_any": 0.615
+      },
+      "single-hop": {
+        "n": 83,
+        "evidence_recall": 0.904,
+        "hit_any": 0.904
+      }
+    },
+    "overall": {
+      "n": 150,
+      "evidence_recall": 0.786,
+      "hit_any": 0.847
+    },
+    "conversation": 6,
+    "chunks": 185,
+    "ingest_s": 0.4,
+    "embedder": "hash"
+  },
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 2.3,
+    "categories": {
+      "multi-hop": {
+        "n": 21,
+        "evidence_recall": 0.56,
+        "hit_any": 1.0
+      },
+      "temporal": {
+        "n": 42,
+        "evidence_recall": 0.833,
+        "hit_any": 0.833
+      },
+      "open-domain": {
+        "n": 10,
+        "evidence_recall": 0.56,
+        "hit_any": 0.7
+      },
+      "single-hop": {
+        "n": 118,
+        "evidence_recall": 0.921,
+        "hit_any": 0.941
+      }
+    },
+    "overall": {
+      "n": 191,
+      "evidence_recall": 0.843,
+      "hit_any": 0.911
+    },
+    "conversation": 7,
+    "chunks": 179,
+    "ingest_s": 0.5,
+    "embedder": "hash"
+  },
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 1.9,
+    "categories": {
+      "multi-hop": {
+        "n": 37,
+        "evidence_recall": 0.683,
+        "hit_any": 0.919
+      },
+      "temporal": {
+        "n": 33,
+        "evidence_recall": 0.864,
+        "hit_any": 0.879
+      },
+      "open-domain": {
+        "n": 13,
+        "evidence_recall": 0.298,
+        "hit_any": 0.538
+      },
+      "single-hop": {
+        "n": 73,
+        "evidence_recall": 0.89,
+        "hit_any": 0.89
+      }
+    },
+    "overall": {
+      "n": 156,
+      "evidence_recall": 0.786,
+      "hit_any": 0.865
+    },
+    "conversation": 8,
+    "chunks": 136,
+    "ingest_s": 0.3,
+    "embedder": "hash"
+  },
+  {
+    "k": 20,
+    "mode": "auto",
+    "latency_ms_p50": 2.1,
+    "categories": {
+      "multi-hop": {
+        "n": 32,
+        "evidence_recall": 0.495,
+        "hit_any": 0.75
+      },
+      "temporal": {
+        "n": 32,
+        "evidence_recall": 0.719,
+        "hit_any": 0.719
+      },
+      "open-domain": {
+        "n": 5,
+        "evidence_recall": 0.467,
+        "hit_any": 0.6
+      },
+      "single-hop": {
+        "n": 87,
+        "evidence_recall": 0.897,
+        "hit_any": 0.897
+      }
+    },
+    "overall": {
+      "n": 156,
+      "evidence_recall": 0.764,
+      "hit_any": 0.821
+    },
+    "conversation": 9,
+    "chunks": 154,
+    "ingest_s": 0.4,
+    "embedder": "hash"
+  }
+]

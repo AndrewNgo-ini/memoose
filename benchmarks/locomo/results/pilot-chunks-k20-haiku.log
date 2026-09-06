@@ -7,3 +7,47 @@
 [conv 0] 40/152 done
 [conv 0] 50/152 done
 [conv 0] 60/152 done
+[conv 0] 70/152 done
+[conv 0] 80/152 done
+[conv 0] 90/152 done
+[conv 0] 100/152 done
+[conv 0] 110/152 done
+[conv 0] 120/152 done
+[conv 0] 130/152 done
+[conv 0] 140/152 done
+[conv 0] 150/152 done
+[conv 0] {"n": 152, "score": 94.7, "by_category": {"multi-hop": {"n": 32, "score": 90.6}, "temporal": {"n": 37, "score": 97.3}, "open-domain": {"n": 13, "score": 100.0}, "single-hop": {"n": 70, "score": 94.3}}, "mean_prompt_tokens_est": 4939, "total_cost_usd": 8.44, "retrieval_ms_p50": 25.0}
+{
+  "n": 152,
+  "score": 94.7,
+  "by_category": {
+    "multi-hop": {
+      "n": 32,
+      "score": 90.6
+    },
+    "temporal": {
+      "n": 37,
+      "score": 97.3
+    },
+    "open-domain": {
+      "n": 13,
+      "score": 100.0
+    },
+    "single-hop": {
+      "n": 70,
+      "score": 94.3
+    }
+  },
+  "mean_prompt_tokens_est": 4939,
+  "total_cost_usd": 8.44,
+  "retrieval_ms_p50": 25.0,
+  "tag": "pilot-chunks-k20-haiku",
+  "conversations": [
+    0
+  ],
+  "ingest": "chunks",
+  "k": 20,
+  "answerer": "haiku",
+  "judge": "haiku",
+  "embedder": "fastembed"
+}
