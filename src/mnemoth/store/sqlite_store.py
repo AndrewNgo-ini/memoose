@@ -22,6 +22,11 @@ from typing import Iterable
 from .migrations import migrate
 
 _FTS_TOKEN = re.compile(r"[A-Za-z0-9_]+")
+STOPWORDS = frozenset("""a an the and or but if then else of to in on at by for from with without about as into like through after before
+over under again further is are was were be been being am do does did doing have has had having will would shall should can could may
+might must i me my mine we us our ours you your yours he him his she her hers it its they them their theirs what which who whom whose
+this that these those there here where when why how all any both each few more most other some such no nor not only own same so than
+too very s t just don now did does doing ll re ve d m o y up down out off once during""".split())
 
 
 @dataclass
@@ -462,7 +467,9 @@ class SqliteStore:
             self.conn.execute("DELETE FROM embeddings WHERE kind=? AND ref_id=?", (kind, rid))
 
     def lexical_search(self, query: str, limit: int = 20, kinds: Iterable[str] | None = None) -> list[Hit]:
-        toks = [t for t in _FTS_TOKEN.findall(query) if len(t) > 1]
+        toks = [t for t in _FTS_TOKEN.findall(query) if len(t) > 1 and t.casefold() not in STOPWORDS]
+        if not toks:
+            toks = [t for t in _FTS_TOKEN.findall(query) if len(t) > 1]
         if not toks:
             return []
         match = " OR ".join(f'"{t}"' for t in dict.fromkeys(toks))

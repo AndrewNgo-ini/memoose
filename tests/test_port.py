@@ -251,4 +251,4 @@ def test_history_for_entity_aggregates_relations(ds):
 def test_merge_by_name_keeps_stats_and_schema_version(ds):
     seed(ds)
     st = ds.store.stats()
-    assert st["schema_version"] == 2 and st["entities"] == 6 and st["relations"] == 4
+    assert st["schema_version"] == 3 and st["entities"] == 6 and st["relations"] == 4

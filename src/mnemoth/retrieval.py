@@ -164,16 +164,16 @@ class Recaller:
         return {
             "entities": self._entities_payload(entity_hits),
             "facts": self._facts_payload(fact_scores, limit, inc),
-            "chunks": self._chunks_payload(by.get("chunk", [])[: max(2, limit // 3)]),
+            "chunks": self._chunks_payload(by.get("chunk", [])[:limit]),
         }
 
     def _mode_facts(self, query: str, limit: int, inc: bool, hops: int) -> dict:
-        by = self._fused(query, ("relation", "entity"), limit * 6)
+        by = self._fused(query, ("relation", "entity", "chunk"), limit * 6)
         fact_scores = {rid: s for rid, s in by.get("relation", [])}
         for eid, es in by.get("entity", [])[:3]:
             for rel in self.store.relations_for_entities([eid], limit_per_entity=10, include_superseded=inc):
                 fact_scores[rel.id] = max(fact_scores.get(rel.id, 0.0), es * 0.8)
-        return {"entities": [], "facts": self._facts_payload(fact_scores, limit, inc), "chunks": []}
+        return {"entities": [], "facts": self._facts_payload(fact_scores, limit, inc), "chunks": self._chunks_payload(by.get("chunk", [])[:limit])}
 
     def _mode_neighbourhood(self, query: str, limit: int, inc: bool, hops: int) -> dict:
         by = self._fused(query, ("entity",), limit * 4)
@@ -195,7 +195,7 @@ class Recaller:
         return {
             "entities": self._entities_payload(seeds) + [{"id": e.id, "name": e.name, "type": e.type, "description": e.description, "mentions": e.mentions, "score": 0.0} for eid, e in ents.items() if eid not in dict(seeds)][: limit * 2],
             "facts": self._facts_payload(fact_scores, limit * 2, inc),
-            "chunks": [],
+            "chunks": self._chunks_payload(self._fused(query, ("chunk",), limit * 2).get("chunk", [])[:limit]),
         }
 
     def _mode_lexical(self, query: str, limit: int, inc: bool, hops: int) -> dict:
@@ -214,12 +214,15 @@ class Recaller:
 
     def _mode_temporal(self, query: str, limit: int, inc: bool, hops: int) -> dict:
         dates = _dates_in(query)
-        by = self._fused(query, ("relation", "entity"), limit * 8)
+        by = self._fused(query, ("relation", "entity", "chunk"), limit * 8)
         fact_scores = {rid: s for rid, s in by.get("relation", [])}
         for eid, es in by.get("entity", [])[:5]:
             for rel in self.store.relations_for_entities([eid], limit_per_entity=20, include_superseded=True):
                 fact_scores[rel.id] = max(fact_scores.get(rel.id, 0.0), es * 0.8)
         facts = self._facts_payload(fact_scores, limit * 3, True)
+        chunks = self._chunks_payload(by.get("chunk", [])[:limit])
+        if dates:
+            chunks.sort(key=lambda c: (not any(d[:4] in (c["text"] or "") for d in dates), -c["score"]))
         dated = []
         for f in facts:
             when = f["valid_from"] or next((d for d in _dates_in(f["description"] + " " + f["target"] + " " + f["source"])), None)
@@ -228,7 +231,7 @@ class Recaller:
                 continue
             dated.append(f)
         dated.sort(key=lambda f: (f["when"] is None, f["when"] or "", -f["score"]))
-        return {"entities": [], "facts": dated[:limit], "chunks": [], "query_dates": dates}
+        return {"entities": [], "facts": dated[:limit], "chunks": chunks, "query_dates": dates}
 
     def _mode_rules(self, query: str, limit: int, inc: bool, hops: int) -> dict:
         ctx = self.store.context(sections=("rules", "preferences", "lessons_learned", "tool_rules", "success_patterns", "failure_lessons", "environment_facts"))
@@ -240,9 +243,9 @@ class Recaller:
         scored.sort(key=lambda x: x[0], reverse=True)
         rules = [{"id": c["id"], "section": c["section"], "content": c["content"], "confidence": c["confidence"], "session_id": c["session_id"], "score": s} for s, c in scored[:limit]]
         lessons = [{"id": l["id"], "title": l["title"], "text": l["text"], "evidence": l["evidence"]} for l in self.store.lessons(limit)]
-        by = self._fused(query, ("relation",), limit * 2)
+        by = self._fused(query, ("relation", "chunk"), limit * 2)
         fact_scores = {rid: s for rid, s in by.get("relation", []) if s > 0}
-        return {"entities": [], "facts": self._facts_payload(fact_scores, limit // 2 or 1, inc), "chunks": [], "rules": rules, "lessons": lessons}
+        return {"entities": [], "facts": self._facts_payload(fact_scores, limit // 2 or 1, inc), "chunks": self._chunks_payload(by.get("chunk", [])[:limit]), "rules": rules, "lessons": lessons}
 
     def _mode_session(self, query: str, limit: int, inc: bool, hops: int) -> dict:
         # Caller passes session turns via engine; here we search the fast cache lexically.

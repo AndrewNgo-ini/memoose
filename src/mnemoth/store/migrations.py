@@ -75,7 +75,7 @@ V2_COLUMNS = {
     "entity_types": [("parent", "TEXT"), ("source_id", "TEXT"), ("aliases", "TEXT NOT NULL DEFAULT '[]'")],
 }
 
-CURRENT = 2
+CURRENT = 3
 
 
 def _columns(conn: sqlite3.Connection, table: str) -> set[str]:
@@ -94,6 +94,27 @@ def migrate(conn: sqlite3.Connection) -> int:
                 if name not in have:
                     conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl}")
         version = 2
+    if version < 3:
+        conn.executescript(
+            "DROP TABLE IF EXISTS fts;"
+            "CREATE VIRTUAL TABLE fts USING fts5(kind UNINDEXED, ref_id UNINDEXED, text, tokenize='porter unicode61 remove_diacritics 2');"
+        )
+        _reindex_fts(conn)
+        version = 3
     conn.execute("INSERT OR REPLACE INTO meta VALUES ('schema_version', ?)", (str(version),))
     conn.commit()
     return version
+
+
+def _reindex_fts(conn: sqlite3.Connection) -> None:
+    """Rebuild the lexical index from the tables after a tokenizer change."""
+    for r in conn.execute("SELECT id, name, type, description FROM entities"):
+        conn.execute("INSERT INTO fts(kind, ref_id, text) VALUES ('entity', ?, ?)", (r[0], f"{r[1]} ({r[2]}). {r[3]}"))
+    ents = {r[0]: r[1] for r in conn.execute("SELECT id, name FROM entities")}
+    for r in conn.execute("SELECT id, source_id, target_id, name, description FROM relations"):
+        if r[1] in ents and r[2] in ents:
+            fact = f"{ents[r[1]]} --{r[3]}--> {ents[r[2]]}" + (f": {r[4]}" if r[4] else "")
+            conn.execute("INSERT INTO fts(kind, ref_id, text) VALUES ('relation', ?, ?)", (r[0], fact))
+    for r in conn.execute("SELECT id, text, summary FROM chunks"):
+        text = f"{r[2]}\n\n{r[1]}" if r[2] and r[2] != r[1] else r[1]
+        conn.execute("INSERT INTO fts(kind, ref_id, text) VALUES ('chunk', ?, ?)", (r[0], text))
