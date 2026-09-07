@@ -127,8 +127,8 @@ no API key, ~1 second**, so it runs in CI on every commit. A fact was revised, t
 where did this come from, we learned this before. mnemoth scores 18/18; three of the cases are
 negative controls that fail if a system over-reacts. Passing our own benchmark proves little, and the
 README says so — what it did prove is a real supersession bug it caught at 14/18 on the first run.
-The cases are written against behaviour any memory system could implement, so port them and use them
-against us.
+The cases are restated in the README as API-neutral requirements, so port them and use them against
+us.
 
 ```sh
 uv run python benchmarks/maintained/run_maintained.py    # ~1 s, no key

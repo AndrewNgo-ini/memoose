@@ -104,9 +104,8 @@ them. **So we built one.** `benchmarks/maintained/` asks exactly those four ques
 reuse, in 18 cases and 66 assertions, with **no model and no API key** — it asserts on what the tools
 return, so it finishes in about a second and runs in CI on every commit, which no LLM-judged suite
 can. We score 18/18, which proves nothing about being better than anyone; what it proved is a real
-bug in our own supersession, caught at 14/18 on its first run before anything was tuned. The cases
-are written against behaviour any memory system could implement, so they can be ported and used
-against us. We would rather publish a benchmark someone beats us on than keep claiming things
+bug in our own supersession, caught at 14/18 on its first run before anything was tuned. All 18 cases are
+also restated as API-neutral requirements, so they can be ported and used against us. We would rather publish a benchmark someone beats us on than keep claiming things
 nothing measures.
 
 ## Principles

@@ -50,6 +50,13 @@ Rules:
   (source --snake_case_name--> target) with a one-sentence description using the endpoint names.
 - Put where each fact came from in `evidence`, e.g. "user said {today}" or a file path.
 - Reuse existing names: call `recall` first when a name may already be known.
+- Set `valid_from` (YYYY-MM-DD) whenever the exchange says when a fact became true.
+- When a fact CHANGED (a new owner, a new version, a new region, a new gateway): call
+  `declare_functional_relations` for that relation name, then store BOTH values with the SAME
+  relation name, oldest `valid_from` first, and never invent a name for the old value such as
+  `previously_owned_by` or `former_owner`. The store then marks the old value superseded and keeps
+  it queryable as history, so "who owns it now" and "who owned it before" both have answers.
+  Dropping the old value loses the history; renaming the relation hides the change.
 - Pass dataset: "{dataset}" on every call except facts about the user themselves, which go to dataset "user".
 - If nothing here is worth remembering, store nothing and reply exactly: NOTHING.
 

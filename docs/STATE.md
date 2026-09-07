@@ -122,33 +122,58 @@ so the resume offset holds and turns are never captured twice.
    which by design never grows large — the feature looked broken exactly when someone first tried
    it. `score_floor` now drops the floor below 8 indexed rows and lets the FTS match be the gate.
 
-Still open, found in the same run and **not** fixed:
+**The capture/currency gap, found in the same run and now closed.** Capture originally expressed the
+ownership handover as `previously_owned_by` and never called `declare_functional_relations`, so the
+currency machinery the benchmark proves correct was *not exercised by the automatic path at all* —
+the store did supersession properly and nothing asked it to. Fixed by one instruction added to all
+three surfaces that drive extraction (`hooks/capture.py`'s prompt, `skills/mnemoth/SKILL.md`,
+`agents/memory-keeper.md`): for a relation holding one current value per subject, declare it
+functional and store **both** values under the **same** relation name, oldest `valid_from` first.
 
-- Capture wrote the user's hard rule as a **bare entity with no relations**, which `remember` itself
-  warns about ("entities alone are weak memory"). The capture prompt does not act on that warning.
-- Capture expressed the handover as `previously_owned_by` rather than asserting `owned_by` and
-  letting supersession run, and never calls `declare_functional_relations`. So the currency machinery
-  the benchmark above proves correct **is not exercised by the automatic path at all**. This is the
-  most important open gap: the store does supersession properly and capture never asks it to.
+Two live iterations were needed, which is the useful part of the record:
+
+| attempt | what capture produced |
+| --- | --- |
+| before | `previously_owned_by --> Duc` — a fake relation name, so the store saw no replacement |
+| naming rule only | `owned_by` declared functional, `owned_by --> Mai` with `valid_from` — but Duc **dropped entirely**, trading a wrong name for lost history |
+| final | `owned_by` functional; `owned_by --> Duc` **superseded**, `owned_by --> Mai` current with `valid_from=2026-08-07`; one supersede event in the ledger |
+
+Verified on the final store: default recall answers Mai and only Mai; `include_superseded=True`
+returns Duc flagged superseded and pointing at Mai's relation id; `history` holds the supersede
+event. So `currency` and `history` are now demonstrated on the **automatic** path, not only through
+direct tool calls.
+
+Note that `states_later_value` (the backfill fix) is only load-bearing when facts carry `valid_from`,
+which is why the same instruction asks for it. Before this, the live path produced no `valid_from` at
+all and the fix was inert in production while passing in the benchmark.
+
+Still open, found in the same runs and **not** fixed:
+
+- Capture writes the user's hard rule to the `user` Dataset as a **bare entity with no relations**,
+  which `remember` itself warns about ("entities alone are weak memory"). The capture prompt does not
+  act on that warning. The hint hook does surface it, so it is a quality gap rather than a hole.
 
 ## Next steps, in priority order
 
-1. **Close the capture/currency gap.** Teach the capture prompt and the `mnemoth` skill to declare
-   functional relations and to re-assert an ownership-style fact so supersession runs, instead of
-   inventing a `previously_*` relation name. Then add a `maintained/` case that drives the *capture
-   path* rather than the tools directly, so the two halves are tested together.
+1. **A `maintained/` tier that drives the capture path.** The suite tests the tools directly and the
+   capture/currency gap above was invisible to it — two halves each correct, not connected. A case
+   that runs a transcript through `hooks/capture.py` and then asserts on the store would have caught
+   it, and would keep catching it. Needs a model call, so it belongs in a second tier, not in the
+   ~1 s CI suite.
 2. **A model-graded tier for `maintained/`.** The suite proves the store hands over the lesson and
    flags the contradiction; it cannot show the host model *acts* on either. That needs a judge and is
-   the honest remaining half of the `reuse` and `conflict` claims.
-3. **One model-matched LoCoMo run** (`--answerer sonnet --judge sonnet`, same 160 sampled questions,
+   the honest remaining half of the `reuse` and `conflict` claims. Fold in (1).
+3. **Teach capture to give the `user` Dataset relations, not bare entities** — the one quality gap
+   left open above.
+4. **One model-matched LoCoMo run** (`--answerer sonnet --judge sonnet`, same 160 sampled questions,
    new `--tag`) to retire the "flattering small answerer" confound, then stop touching LoCoMo. Not
    started: it shares the interactive usage limit, so it will pause whatever session launches it.
    Item 1 of the previous list — the k=20 headline sample — **was already complete**: 160 rows,
    147 correct, 91.9, in `RESULTS.md`.
-4. **Real-project soak.** Run mnemoth on its own development and report what it gets wrong. The two
+5. **Real-project soak.** Run mnemoth on its own development and report what it gets wrong. The two
    bugs above were both found by one live run, which is the argument for doing this continuously
    rather than in bursts.
-5. **Consider LongMemEval** (mem0 reports 94.4) as a second, less saturated retrieval dataset — lower
+6. **Consider LongMemEval** (mem0 reports 94.4) as a second, less saturated retrieval dataset — lower
    priority than everything above, since it measures the half we are already at parity on.
 
 ## Traps already hit, do not rediscover
@@ -164,3 +189,6 @@ Still open, found in the same run and **not** fixed:
   collapses toward 0 on a small index. Gate on corpus size, or on token overlap, not on a bare score.
 - `stats()["relations"]` counts **only non-superseded** rows; superseded ones are in
   `stats()["superseded_relations"]`. "Nothing was deleted" is the sum of the two.
+- The provenance table's payload column is `payload`, not `data`.
+- Telling an extraction prompt what *not* to do is half an instruction. "Do not invent
+  `previously_owned_by`" made capture drop the old owner instead. Say what to produce as well.

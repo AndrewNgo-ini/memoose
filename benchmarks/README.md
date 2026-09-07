@@ -27,7 +27,8 @@ context contain the first session's rule. Three cases are negative controls that
 over-reacts, so a system that flags everything cannot pass.
 
 mnemoth scores **18/18** on both embedders. That is not evidence mnemoth is better than anything —
-it is our own suite — and [`maintained/README.md`](./maintained/README.md) says so plainly. The
+it is our own suite — and [`maintained/README.md`](./maintained/README.md) says so plainly, and
+restates all 18 cases as API-neutral requirements so another system can be scored on them. The
 evidence it did produce is a bug: on its first run it scored 14/18 and caught functional supersession
 being decided by write order alone, so backfilling a 2024 fact after the 2025 value was known
 silently made 2024 current again. LoCoMo could never have shown that, because LoCoMo has no notion

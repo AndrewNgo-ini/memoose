@@ -34,7 +34,7 @@ MIN_SCORE = float(__import__("os").environ.get("MNEMOTH_HINT_MIN_SCORE", "0.5"))
 MAX_CHARS = 900
 MIN_PROMPT_WORDS = 3
 USER_RESERVE = 1  # the user's standing rules must not be crowded out by project facts
-MIN_DISCRIMINATING_ROWS = 8  # below this, bm25 cannot rank, so the match itself is the gate
+MIN_DISCRIMINATING_ROWS = 8  # a round number with margin: bm25 starts discriminating around 5 rows
 
 
 def score_floor(conn, configured: float = MIN_SCORE) -> float:

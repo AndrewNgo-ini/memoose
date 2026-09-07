@@ -27,6 +27,20 @@ user rather than this project go to `dataset: "user"`.
 **Precision beats volume.** You are often called automatically, on material nobody chose to save, so a
 wrong or noisy fact is worse than a missing one. When in doubt, leave it out.
 
+## Facts that change
+
+Some relations hold one current value per subject: `owned_by`, `reports_to`, `deployed_in`,
+`current_version`, `assigned_to`, `charges_through`. When one of those changes, never invent a second
+name for the old value (`previously_owned_by`, `former_owner`) — the store cannot see a replacement
+in a different relation name, so both values stay current and the change leaves no history. Instead
+call `declare_functional_relations(["owned_by"])` once and `remember` **both** values under the
+**same** relation name, oldest `valid_from` first; supersession then happens for you and the old
+value stays queryable. Do not simply drop the old value either — that keeps the present correct and
+throws the history away.
+
+Set `valid_from` when the source says when a fact became true, so which value is current does not
+depend on the order you happened to write them.
+
 ## Contradictions
 
 If `remember` returns `hotspots`, or recall shows a subject with two values for one relation, judge

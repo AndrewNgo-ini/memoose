@@ -93,6 +93,32 @@ Ask before storing anything personal or sensitive that the user did not explicit
    - <self-contained sentence>
    ```
 
+## Facts that change: one current value per subject
+
+Some relations hold exactly **one** current value per subject: `owned_by`, `reports_to`,
+`deployed_in`, `current_version`, `assigned_to`, `lives_in`, `charges_through`. When a fact like that
+changes, do **not** coin a second relation name for the old value — no `previously_owned_by`,
+`former_owner`, `old_version`. A `previously_*` name is a new fact about a different relation, so the
+store cannot see that anything was replaced: recall keeps returning both values, `history` shows no
+change, and nobody can ask what the current answer is.
+
+Instead:
+
+1. `declare_functional_relations(["owned_by"])` once for that relation name.
+2. `remember` **both** values under the **same** relation name, oldest `valid_from` first.
+
+The store then marks the old value superseded, keeps it queryable as history, and records the change
+in the provenance ledger. Nothing is deleted, and both "who owns it now" and "who owned it before"
+have answers.
+
+Dropping the old value is the other way to get this wrong: it leaves the current fact correct and the
+history gone. When the source says who or what it used to be, store that too.
+
+Set `valid_from` whenever the source says when a fact became true ("since June", "took over last
+month", a date in the text). Without it, which value is current is decided by the order the facts
+happened to be written, which is wrong as soon as you learn history out of order — and learning the
+past after the present is the normal case.
+
 ## Contradictions and history
 
 `remember` returns `hotspots` when a subject now holds several values for one relation, and

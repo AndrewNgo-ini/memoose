@@ -65,10 +65,10 @@ semantics, not ranking.
 **Read this honestly.** A suite written for our own system, which our own system passes, is
 *not* evidence that mnemoth is better than anything. It is evidence that the claims are now
 checked instead of asserted, and that they stay checked. The number that would mean
-something is what *another* system scores, and the cases are written against behaviour any
-memory system could implement, not against our API shape — porting them is a day's work.
-We would rather publish a benchmark that someone beats us on than keep claiming things
-nothing measures.
+something is what *another* system scores — so the requirements are restated below in
+API-neutral terms, because the assertions in `cases.py` are written against mnemoth's tool
+surface and nobody else has a `mark_contradiction`. We would rather publish a benchmark
+someone beats us on than keep claiming things nothing measures.
 
 ### What the first run found
 
@@ -105,6 +105,43 @@ uv run pytest tests/test_maintained.py -q                              # as CI r
 Exit code is 0 only when every case passes. Stored results are in `results/`;
 `baseline-prefix-hash.json` is the pre-fix 14/18 run, kept as the record of what the suite
 caught.
+
+## Porting it to another memory system
+
+`cases.py` asserts against mnemoth's own tools and field names — `declare_functional_relations`,
+`supersede`, `contradiction_candidates`, and flags like `superseded_by` and `contested`. Those names
+are ours; the **requirements** are not. Below is each case as a behavioural requirement in terms any
+memory system has: *write a fact*, *ask a question*, *ask for history*. Port by restating the
+right-hand column in the target's API, not by emulating ours.
+
+Where a system has no equivalent of a step, that is a result, not a blocker: "cannot express this"
+is the honest score for that case. A system with no notion of superseded history simply fails
+`history/*`, which is the comparison the suite exists to make.
+
+| case | requirement, in any API |
+| --- | --- |
+| `currency/functional-supersedes` | Write "X is owned by A", then "X is owned by B". Asking who owns X returns **B** and not A. |
+| `currency/three-generations-with-distractor` | Three owners of X over 13 months, plus a second thing Y with its own owner. Asking about X returns only the newest owner; Y's owner is unaffected. |
+| `currency/non-functional-is-not-silently-picked` *(control)* | Write "X depends on P" and "X depends on Q" — a relationship that legitimately holds many values. Both are still current. Nothing was replaced. A system that overwrites blindly fails here. |
+| `currency/explicit-supersede` | Two values that were both current, then an explicit instruction that the first is out of date. Only the second is returned afterwards. |
+| `currency/late-arriving-old-fact` | Write the 2025 value first, then *learn* the 2024 value afterwards. The 2025 value is still current — recency of *the fact*, not of the write. |
+| `history/superseded-still-retrievable` | After two replacements, a request for history returns the replaced values, each marked as replaced, each pointing at what replaced it, each keeping its own source. |
+| `history/change-is-explained` | For each replacement, history can say what replaced it and why, ordered newest first. |
+| `history/nothing-true-is-deleted` | After two replacements, all three values are still recoverable. Nothing that was once true is gone. |
+| `conflict/hotspot-surfaced` | Two sources give different answers to the same question, both claiming to be current. The system can enumerate the clash, with each side's source, rather than answering as if there were one value. |
+| `conflict/contested-after-judgment` | Once the clash is confirmed as a real incompatibility, **both** values still come back, both marked as disputed, with the reason, and the dispute stays open until something resolves it. Hiding one side fails. |
+| `conflict/compatible-facts-are-not-flagged` *(control)* | Three facts that merely differ — different relationships about the same subject — are **not** reported as a clash. A system that flags everything fails here. |
+| `conflict/resolved-by-supersede` | When the clash turns out to be a change over time, resolving it closes the dispute, leaves the survivor current and undisputed, and drops the replaced value from default answers. |
+| `provenance/evidence-survives-recall` | Every fact returned can name where it came from, and a file-range pointer comes back byte-identical to what was stored. |
+| `provenance/ledger-names-actor-and-action` | For any fact, the system can say who wrote it, when, and what kind of change it was. |
+| `provenance/evidence-is-not-invented` *(control)* | A fact stored **without** a source comes back with no source, not a plausible-looking one. |
+| `reuse/lesson-returns-in-next-session` | A rule and a lesson recorded in session A are handed to session B unprompted, without B asking for them. |
+| `reuse/lesson-ranks-for-the-work-at-hand` | Given two stored rules on different topics, a question about one puts that one first; a question about the other flips the order. Discrimination, not just retrieval. |
+| `reuse/lesson-is-linked-into-the-graph` | The lesson is reachable from the subject it applies to, not only from the session that produced it. |
+
+The fixtures are deliberately tiny and stated in plain domain terms — services, owners, payment
+gateways, regions, dependencies — so they translate without carrying our ontology across. If you port
+these and mnemoth loses, tell us; that result is more useful to us than the 18/18 above.
 
 ## Adding a case
 
