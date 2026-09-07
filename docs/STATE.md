@@ -143,9 +143,22 @@ returns Duc flagged superseded and pointing at Mai's relation id; `history` hold
 event. So `currency` and `history` are now demonstrated on the **automatic** path, not only through
 direct tool calls.
 
-Note that `states_later_value` (the backfill fix) is only load-bearing when facts carry `valid_from`,
-which is why the same instruction asks for it. Before this, the live path produced no `valid_from` at
-all and the fix was inert in production while passing in the benchmark.
+**What is *not* established about `valid_from` on the live path.** `states_later_value` (the backfill
+fix) only decides anything when *both* facts carry `valid_from`; otherwise it falls through to write
+order. Two live runs, with the previous owner mentioned last and then first:
+
+| run | Duc `valid_from` | Mai `valid_from` | written first | outcome |
+| --- | --- | --- | --- | --- |
+| previous owner mentioned last | `None` | 2026-08-07 | Duc | Mai current, correct |
+| previous owner mentioned first | 2026-08-07 | 2026-09-07 | Duc | Mai current, correct |
+
+The outcome was right both times, but in neither run was the guard the deciding mechanism: in the
+first only one side had a date, and in the second write order happened to agree with date order.
+**The guard is proven by the benchmark case and unexercised in production.** Worse, the dates are
+approximate — the second run gave Mai *today's* date although the exchange says she took over "last
+month", and dated Duc's tenure from the day it ended. So a genuinely out-of-order capture (learn the
+2025 owner, then learn the 2024 one) is not yet known to come out right on the automatic path. A
+capture-path benchmark tier (next step 1) is what would settle it.
 
 Still open, found in the same runs and **not** fixed:
 
