@@ -70,10 +70,16 @@ extra for full RDF parsing; a Turtle/RDF-XML fallback parser is built in.
 
 ## Benchmarks
 
-LoCoMo, mem0's protocol with their answerer and judge prompts vendored verbatim, host model via
-Claude Code. Pilot on conversation 0: 94.7 with chunks-only ingest and Haiku as answerer and
-judge. Full results, retrieval-only numbers, and how to reproduce: `benchmarks/README.md` and
-`benchmarks/locomo/RESULTS.md`.
+LoCoMo, under mem0's protocol with their answerer and judge prompts vendored verbatim, host model
+via Claude Code. On a 160-question stratified sample: **91.9** (95% CI 86.6–95.2) against mem0's
+published **92.5**, using **4,728 prompt tokens vs their 6,956** and a much smaller answerer
+(Claude Haiku 4.5). Retrieval takes 35 ms against a local SQLite file.
+
+Two results worth stating plainly: the knowledge graph does *not* beat plain chunk retrieval on
+LoCoMo (paired McNemar p = 1.00) at 77% more tokens, and raising the retrieval budget lifts evidence
+recall without lifting the judged score. LoCoMo asks needle questions over conversations that fit in
+a context window, so it does not test what the graph is for. See `benchmarks/locomo/RESULTS.md` for
+the tables, `benchmarks/SETUP.md` to reproduce, and `docs/STATE.md` for where the work stands.
 
 ## Develop
 

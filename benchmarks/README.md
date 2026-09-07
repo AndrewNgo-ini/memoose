@@ -34,9 +34,19 @@ it is the RAG-style floor of the system). `agent` is the real product path: a Cl
 the mnemoth plugin reads each session and calls `remember` itself, so the graph, dates, and
 evidence come from skill-driven extraction.
 
-Results are appended to `locomo/RESULTS.md` as runs complete, with model names, k, and cost.
+Full tables live in `locomo/RESULTS.md`. Headline findings:
+
+- 91.9 on a 160-question stratified sample (95% CI 86.6–95.2) vs mem0's published 92.5, at 4,728
+  prompt tokens vs their 6,956, with a much smaller answerer (Claude Haiku 4.5).
+- The graph does not beat plain chunk retrieval here (paired McNemar p = 1.00) and costs 77% more
+  tokens. LoCoMo does not test what the graph is for.
+- Raising the retrieval budget lifts evidence recall but not the judged score (p = 1.00), so k=20 at
+  4 turns per chunk is the default.
 
 ## Reproduce
+
+See **[SETUP.md](./SETUP.md)** for a fresh machine (dependencies, headless Claude Code auth, dataset
+fetch, and the operational traps). Short version:
 
 ```sh
 uv sync --extra fastembed --group dev
@@ -45,4 +55,5 @@ uv run python benchmarks/locomo/run_locomo.py --conv 0 --ingest chunks --k 20   
 uv run python benchmarks/locomo/run_locomo.py --conv 0 --ingest agent --k 20     # real skill-driven ingest
 ```
 
-Runs resume: rerunning with the same `--tag` skips finished questions.
+Runs resume: rerunning with the same `--tag` skips finished questions, and a usage limit pauses the
+run rather than corrupting it. The LoCoMo dataset is downloaded on first use, not committed.
