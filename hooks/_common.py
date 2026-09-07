@@ -40,6 +40,14 @@ def dataset_path(cwd: str | os.PathLike | None) -> Path:
     return data_dir() / f"{dataset_name(cwd)}.sqlite"
 
 
+USER_DATASET = "user"
+
+
+def user_dataset_path() -> Path:
+    """The user-global Dataset, which holds standing rules and preferences about the person."""
+    return data_dir() / f"{USER_DATASET}.sqlite"
+
+
 def connect(path: Path) -> sqlite3.Connection | None:
     """Read-only connection, or None when there is no memory yet."""
     if not path.exists():
@@ -174,6 +182,13 @@ def search_memory(conn: sqlite3.Connection, query: str, limit: int = 5) -> list[
         if len(out) >= limit:
             break
     return out
+
+
+def indexed_rows(conn: sqlite3.Connection) -> int:
+    try:
+        return int(conn.execute("SELECT count(*) FROM fts").fetchone()[0])
+    except sqlite3.Error:
+        return 0
 
 
 def superseded_ids(conn: sqlite3.Connection) -> set[str]:

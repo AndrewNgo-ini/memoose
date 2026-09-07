@@ -290,6 +290,54 @@ def test_recommend_needs_no_model_and_is_fast(tmp_path):
     assert _t.perf_counter() - t0 < 5
 
 
+def test_recommend_reaches_the_user_dataset(tmp_path):
+    """`recall` searches project then user; the hint must too, or standing rules never surface.
+
+    The capture hook deliberately files facts about the person — their hard rules and
+    preferences — under the user Dataset, so a hint that only reads the project Dataset drops
+    exactly the memory that applies to every prompt.
+    """
+    data, proj = _seed(tmp_path)
+    eng = Engine(embedder=HashEmbedder(), data_dir=data)
+    eng.dataset("user").remember(
+        [EntityIn(name="Approve new dependencies first", type="Requirement",
+                  description="A hard rule that no new dependency may be added without explicit approval.")],
+        [],
+    )
+    eng.close()
+    r = run_hook("recommend.py",
+                 {"cwd": str(proj), "prompt": "can I add the requests library as a dependency?"},
+                 {"MNEMOTH_DATA_DIR": str(data)})
+    assert r.returncode == 0 and r.stdout.strip(), "the user's standing rule must reach the hint"
+    assert "dependency" in json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+
+
+def test_recommend_relevance_floor_is_corpus_aware(tmp_path):
+    """A fixed bm25 floor silences memory exactly when it is new.
+
+    bm25's IDF term is zero for a token present in every indexed row, so in a store with a
+    handful of rows even a perfect keyword match scores ~0.0. With a fixed floor of 0.5 the
+    hint hook stayed silent for the first sessions on a project, and permanently for the
+    user Dataset, which never grows large.
+    """
+    data, proj = tmp_path / "data", tmp_path / "proj"
+    proj.mkdir()
+    eng = Engine(embedder=HashEmbedder(), data_dir=data)
+    eng.dataset(_common.dataset_name(str(proj))).remember(
+        [EntityIn(name="Never force-push to main", type="Requirement", description="Force-pushing to main is forbidden on this project.")],
+        [],
+    )
+    eng.close()
+    r = run_hook("recommend.py", {"cwd": str(proj), "prompt": "can I force-push this branch to main?"},
+                 {"MNEMOTH_DATA_DIR": str(data)})
+    assert r.returncode == 0 and r.stdout.strip(), "a one-fact store must still be able to raise its hand"
+    assert "force-push" in json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+
+    quiet = run_hook("recommend.py", {"cwd": str(proj), "prompt": "what is the capital of France?"},
+                     {"MNEMOTH_DATA_DIR": str(data)})
+    assert quiet.stdout.strip() == "", "dropping the floor must not make a tiny store chatty"
+
+
 def test_capture_prompt_pins_the_dataset(tmp_path):
     """A capture running in a temp cwd must not invent a dataset named after that temp dir."""
     long_text = "We chose PostgreSQL for billing because MySQL could not handle the reporting joins. " * 8
