@@ -11,7 +11,12 @@ mnemoth ports cognee's memory-management logic, whose pipelines call an LLM seve
 - **Engine-driven Completion Requests.** The server returns cognee's prompts and schemas and the agent answers them through a `submit` tool. Rejected: it makes the server orchestrate the Host Model, which the project explicitly does not want; the library must be a pure memory engine.
 - **MCP sampling.** Rejected: no target Host grants it.
 - **Optional BYO API key.** Rejected: violates the no-key principle.
-- **Host-specific hooks extension.** Rejected: the harness surface is skills and MCP only, so session-start recall and session-end distillation are skill instructions, not hooks.
+- **Host-specific hooks extension.** Rejected as a *replacement* for the portable surface, and that
+  still holds: skills plus MCP remain the core and every capability is reachable through them alone.
+  [ADR 0003](./0003-proactive-background-memory.md) later **adds** hooks as an optional third surface
+  on top, for hosts that support them, so memory can also maintain itself without waiting to be
+  called. Nothing in this ADR changes: the library still never calls, prompts, or orchestrates a
+  model, and no API key is ever required.
 
 ## Consequences
 

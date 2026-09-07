@@ -28,6 +28,10 @@ tools. Everything that needs judgment (what is an entity, which facts contradict
 remembering, what a session taught) is written down as skills, and the model the host is *already
 running* does that thinking while it calls the tools.
 
+Memory work also never happens on the expensive model, and never on the user's clock. Extraction and
+maintenance are delegated to a **small model** — Haiku, or whatever small model the host offers — running
+as a **background job**, so the conversation is not paused to do bookkeeping.
+
 The consequences are the point:
 
 - **No API key, ever.** Not optional, not a fallback path. There is no code path in the library that
@@ -40,8 +44,26 @@ The consequences are the point:
 - **Intelligence improves for free.** When the host's model gets better, extraction and judgment get
   better without shipping anything.
 
-The cost of the bet is honest: quality depends on the host model following a skill, and we cannot
-run anything in the background, because memory only changes when the agent calls a tool.
+The cost of the bet is honest: quality depends on the host model following a skill, and on the host
+having something to delegate to.
+
+## Three surfaces, in order
+
+**Skills and MCP tools are the core** and are fully functional alone: every capability is reachable
+through a tool call, on any host that speaks MCP ([ADR 0001](./docs/adr/0001-skills-and-mcp-only.md)).
+On top of that, and never in place of it, memory also maintains *itself*
+([ADR 0003](./docs/adr/0003-proactive-background-memory.md)):
+
+| surface | what it does | needs |
+| --- | --- | --- |
+| **MCP tools** | the deterministic store: typed graph, ontology, ranking, supersession, provenance | any MCP host |
+| **Skills** | teach the host model to extract, judge, and *delegate memory work to a cheap background subagent* | any host with skills |
+| **Hooks** | capture and recall with nobody asking: at session start, when a turn ends, before compaction | hosts with hooks |
+
+Relying only on the agent choosing to call `remember` is how memory plugins fail: the agent is busy
+with the user's real task, so bookkeeping is the first thing dropped. So the hooks run it
+automatically where they exist, and everywhere else the skills tell the agent to hand it to a
+background subagent. Explicit tool calls keep working; they are just no longer the only path.
 
 ## What mnemoth is for
 

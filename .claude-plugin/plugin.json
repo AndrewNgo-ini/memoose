@@ -2,7 +2,7 @@
   "name": "mnemoth",
   "displayName": "mnemoth",
   "version": "0.2.0",
-  "description": "Persistent project memory for coding agents: cognee-style typed knowledge graph exposed as MCP tools and a skill. No API key.",
+  "description": "Persistent memory for coding agents: typed knowledge graph with evidence, contradictions and supersession, maintained in the background on a small model. No API key; nothing leaves your machine.",
   "author": {
     "name": "Hieu Ngo"
   },

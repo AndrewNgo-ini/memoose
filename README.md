@@ -1,17 +1,43 @@
 # mnemoth
 
-Memory harness for coding agents. mnemoth adapts the deterministic parts of
-[cognee](https://github.com/topoteretes/cognee)'s memory-management logic
-(typed knowledge graph, ontology, chunking, hybrid retrieval) and exposes them
-as plain MCP tools plus a skill, packaged as an
-[Agent Plugin](https://agent-plugins.org/). The library never calls a model:
-the host model (Claude Code, Codex, ...) does the thinking while it calls the tools.
+**Persistent memory for coding agents. No API key. Nothing leaves your machine.**
 
-No API key. One SQLite file per dataset. Install once, works in any host that speaks
-skills + MCP.
+Your agent forgets everything between sessions, and every fix for that costs you a second LLM
+subscription, ships your project's context to someone else's server, or only works in one tool.
+mnemoth is memory that runs on the model your agent is *already paying for*, stores everything in a
+single SQLite file on your disk, and installs the same way into Claude Code, Codex, OpenCode, and
+Cursor.
 
-**[VISION.md](./VISION.md)** says why this exists and where it is going. `CONTEXT.md` is the
-glossary, `docs/adr/` the decisions, `docs/STATE.md` the current state of the work.
+```sh
+mnemoth install claude      # or: codex | opencode | cursor
+```
+
+## Why it is different
+
+**No API key, ever.** Not a fallback, not an optional path. mnemoth's library contains no code that
+calls a model. The thinking is written down as skills and done by the model your host is already
+running, so there is no second inference bill and no second vendor.
+
+**Seamless, not another chore.** Memory that waits to be asked is memory that never gets written: the
+agent is busy with your actual task, so bookkeeping is the first thing dropped. mnemoth captures on
+its own through host hooks, and where hooks do not exist its skills tell the agent to hand the work
+to a background subagent.
+
+**Fast, and cheap by design.** Memory work never blocks your conversation and never runs on the
+expensive model. Extraction and maintenance are delegated to a small model in the background, while
+retrieval itself takes about 35 ms against a local file.
+
+**Private and inspectable.** One SQLite file per project, plus one for facts about you that hold
+everywhere. Open it, copy it, back it up, delete it. Nothing is uploaded.
+
+**Memory that stays true.** Facts are typed and carry evidence pointers, so an agent can re-check
+where a claim came from. When a fact changes, the old one is superseded rather than deleted, and
+history stays queryable. When two sources disagree, the system says so instead of silently picking
+one. The knowledge-graph philosophy is adapted from [cognee](https://github.com/topoteretes/cognee);
+what is new is that none of it needs a key.
+
+**[VISION.md](./VISION.md)** explains the bet in full. `CONTEXT.md` is the glossary, `docs/adr/` the
+decisions, `docs/STATE.md` the current state of the work.
 
 ## Install
 
