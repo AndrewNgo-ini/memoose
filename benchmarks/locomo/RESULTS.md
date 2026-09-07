@@ -56,10 +56,31 @@ recall gains have a shrinking judged payoff.
 Same 45 questions (conversation 0, multi-hop + open-domain), same retrieval budget (k=30), same answerer
 and judge (claude-haiku-4-5). The only difference is ingest.
 
-| arm | ingest | graph built | score | multi-hop | open-domain |
-| --- | --- | --- | --- | --- | --- |
-| A | `chunks` (deterministic, no model) | 21 entities, 1 relation, 144 chunks | 93.3 | 90.6 | 100.0 |
-| B | `agent` (skill-driven `remember`) | 225 entities, 381 relations, 95 chunks | _running_ | | |
+| arm | ingest | graph built | score | multi-hop | open-domain | prompt tokens | facts returned |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| A | `chunks` (deterministic, no model) | 21 entities, 1 relation, 144 chunks | 93.3 | 90.6 | 100.0 | 5,451 | 1.0 |
+| B | `agent` (skill-driven `remember`) | 225 entities, 381 relations, 95 chunks | 95.6 | 96.9 | 92.3 | 9,654 | 29.7 |
+
+Because both arms answered the same 45 questions, the paired (McNemar) test is the right one, and it is
+unambiguous:
+
+| both right | only chunks | only graph | neither |
+| --- | --- | --- | --- |
+| 40 | 2 | 3 | 0 |
+
+**Exact two-sided p = 1.00.** The graph does not measurably beat plain chunk retrieval here, and it costs
+77% more prompt tokens. The three questions only the graph answered are all multi-hop ("Where did Caroline
+move from 4 years ago?", "What kind of art does Caroline make?", "How many times has Melanie gone to the
+beach in 2023?"), which is the direction a graph should help; the two only chunks answered are an
+open-domain inference and a multi-hop detail. Three against two on 45 questions is noise.
+
+Read this as a scoping result, not a defect. LoCoMo asks needle questions over conversations of 16k–26k
+tokens; chunk retrieval already finds the needles, and the answerer does the multi-hop joining itself from
+raw text. What the graph is actually for — contradiction detection, temporal supersession, provenance,
+cross-session consolidation, typed ontology queries — LoCoMo does not test at all. On this benchmark the
+cheaper `chunks` path is the better engineering choice, and that is the configuration reported above.
+One conversation is also the limit of this experiment: it has the power to rule out a large effect, not a
+small one.
 
 Evidence recall tracks the judged score closely per category (open-domain 0.579 vs 60.9 judged), so this
 model-free benchmark is the tuning instrument and the judged run is the confirmation.
