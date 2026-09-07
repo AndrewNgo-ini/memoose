@@ -63,6 +63,7 @@ def evaluate(ds, qa: list[dict], k: int, mode: str | None) -> dict:
     per_cat: dict[int, list[float]] = defaultdict(list)
     per_cat_any: dict[int, list[float]] = defaultdict(list)
     lat = []
+    ctx_chars: list[int] = []
     for q in qa:
         if q["category"] == 5 or not q.get("evidence"):
             continue
@@ -70,13 +71,15 @@ def evaluate(ds, qa: list[dict], k: int, mode: str | None) -> dict:
         res = ds.recall(q["question"], mode=mode, limit=k)
         lat.append(time.perf_counter() - t0)
         got: set[str] = set()
+        ctx_chars.append(sum(len(c.get("text") or "") for c in res.get("chunks", [])) + sum(len(f.get("fact") or "") for f in res.get("facts", [])))
         for c in res.get("chunks", []):
             got |= set((c.get("source") or "").split(","))
         gold = set(q["evidence"])
         frac = len(gold & got) / len(gold)
         per_cat[q["category"]].append(frac)
         per_cat_any[q["category"]].append(1.0 if gold & got else 0.0)
-    out = {"k": k, "mode": mode or "auto", "latency_ms_p50": round(statistics.median(lat) * 1000, 1) if lat else None, "categories": {}}
+    out = {"k": k, "mode": mode or "auto", "latency_ms_p50": round(statistics.median(lat) * 1000, 1) if lat else None,
+           "ctx_tokens_est": round(statistics.mean(ctx_chars) / 4) if ctx_chars else None, "categories": {}}
     all_frac, all_any = [], []
     for cat in sorted(per_cat):
         out["categories"][CATEGORIES[cat]] = {"n": len(per_cat[cat]), "evidence_recall": round(statistics.mean(per_cat[cat]), 3), "hit_any": round(statistics.mean(per_cat_any[cat]), 3)}

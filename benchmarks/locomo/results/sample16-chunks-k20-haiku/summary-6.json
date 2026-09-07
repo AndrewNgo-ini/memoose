@@ -1,0 +1,35 @@
+{
+  "n": 16,
+  "score": 93.8,
+  "ci95": [
+    71.7,
+    98.9
+  ],
+  "by_category": {
+    "temporal": {
+      "n": 6,
+      "score": 83.3,
+      "ci95": [
+        43.6,
+        97.0
+      ]
+    },
+    "single-hop": {
+      "n": 10,
+      "score": 100.0,
+      "ci95": [
+        72.2,
+        100.0
+      ]
+    }
+  },
+  "by_conversation": {
+    "6": {
+      "n": 16,
+      "score": 93.8
+    }
+  },
+  "mean_prompt_tokens_est": 4270,
+  "total_cost_usd": 0.82,
+  "retrieval_ms_p50": 60.6
+}

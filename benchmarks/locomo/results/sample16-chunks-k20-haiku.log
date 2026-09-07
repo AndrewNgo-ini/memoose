@@ -1,0 +1,143 @@
+Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]Fetching 5 files:  20%|██        | 1/5 [00:00<00:03,  1.23it/s]Fetching 5 files:  80%|████████  | 4/5 [00:00<00:00,  5.16it/s]Fetching 5 files: 100%|██████████| 5/5 [00:03<00:00,  1.32it/s]
+[conv 0] reused 16 scored rows from full-chunks-k20-haiku
+[conv 0] 16 questions, 0 to run, reference date October 22, 2023
+[conv 0] {"n": 16, "score": 87.5, "ci95": [64.0, 96.5], "by_category": {"multi-hop": {"n": 2, "score": 50.0, "ci95": [9.5, 90.5]}, "temporal": {"n": 4, "score": 100.0, "ci95": [51.0, 100.0]}, "single-hop": {"n": 10, "score": 90.0, "ci95": [59.6, 98.2]}}, "by_conversation": {"0": {"n": 16, "score": 87.5}}, "mean_prompt_tokens_est": 5207, "total_cost_usd": 0.96, "retrieval_ms_p50": 29.5}
+[conv 1] reused 16 scored rows from full-chunks-k20-haiku
+[conv 1] 16 questions, 0 to run, reference date July 23, 2023
+[conv 1] {"n": 16, "score": 87.5, "ci95": [64.0, 96.5], "by_category": {"multi-hop": {"n": 2, "score": 100.0, "ci95": [34.2, 100.0]}, "temporal": {"n": 7, "score": 100.0, "ci95": [64.6, 100.0]}, "single-hop": {"n": 7, "score": 71.4, "ci95": [35.9, 91.8]}}, "by_conversation": {"1": {"n": 16, "score": 87.5}}, "mean_prompt_tokens_est": 4455, "total_cost_usd": 0.83, "retrieval_ms_p50": 28.9}
+[conv 2] reused 16 scored rows from full-chunks-k20-haiku
+[conv 2] 16 questions, 0 to run, reference date August 16, 2023
+[conv 2] {"n": 16, "score": 87.5, "ci95": [64.0, 96.5], "by_category": {"multi-hop": {"n": 3, "score": 100.0, "ci95": [43.8, 100.0]}, "temporal": {"n": 3, "score": 100.0, "ci95": [43.8, 100.0]}, "open-domain": {"n": 3, "score": 33.3, "ci95": [6.1, 79.2]}, "single-hop": {"n": 7, "score": 100.0, "ci95": [64.6, 100.0]}}, "by_conversation": {"2": {"n": 16, "score": 87.5}}, "mean_prompt_tokens_est": 4616, "total_cost_usd": 0.83, "retrieval_ms_p50": 27.9}
+[conv 3] reused 16 scored rows from full-chunks-k20-haiku
+[conv 3] 16 questions, 0 to run, reference date November 11, 2022
+[conv 3] {"n": 16, "score": 87.5, "ci95": [64.0, 96.5], "by_category": {"multi-hop": {"n": 2, "score": 50.0, "ci95": [9.5, 90.5]}, "temporal": {"n": 4, "score": 100.0, "ci95": [51.0, 100.0]}, "open-domain": {"n": 3, "score": 66.7, "ci95": [20.8, 93.9]}, "single-hop": {"n": 7, "score": 100.0, "ci95": [64.6, 100.0]}}, "by_conversation": {"3": {"n": 16, "score": 87.5}}, "mean_prompt_tokens_est": 4560, "total_cost_usd": 0.88, "retrieval_ms_p50": 26.1}
+[conv 4] reused 9 scored rows from full-chunks-k20-haiku
+[conv 4] 16 questions, 7 to run, reference date January 12, 2024
+[conv 4] {"n": 16, "score": 93.8, "ci95": [71.7, 98.9], "by_category": {"multi-hop": {"n": 1, "score": 100.0, "ci95": [20.7, 100.0]}, "temporal": {"n": 2, "score": 100.0, "ci95": [34.2, 100.0]}, "open-domain": {"n": 1, "score": 100.0, "ci95": [20.7, 100.0]}, "single-hop": {"n": 12, "score": 91.7, "ci95": [64.6, 98.5]}}, "by_conversation": {"4": {"n": 16, "score": 93.8}}, "mean_prompt_tokens_est": 5010, "total_cost_usd": 0.88, "retrieval_ms_p50": 32.4}
+[conv 5] reused 0 scored rows from full-chunks-k20-haiku
+[conv 5] 16 questions, 16 to run, reference date November 22, 2023
+[conv 5] 10/16 done
+[conv 5] {"n": 16, "score": 100.0, "ci95": [80.6, 100.0], "by_category": {"multi-hop": {"n": 6, "score": 100.0, "ci95": [61.0, 100.0]}, "temporal": {"n": 1, "score": 100.0, "ci95": [20.7, 100.0]}, "open-domain": {"n": 1, "score": 100.0, "ci95": [20.7, 100.0]}, "single-hop": {"n": 8, "score": 100.0, "ci95": [67.6, 100.0]}}, "by_conversation": {"5": {"n": 16, "score": 100.0}}, "mean_prompt_tokens_est": 4935, "total_cost_usd": 0.84, "retrieval_ms_p50": 34.6}
+[conv 6] reused 0 scored rows from full-chunks-k20-haiku
+[conv 6] 16 questions, 16 to run, reference date November 07, 2022
+[conv 6] 10/16 done
+[conv 6] {"n": 16, "score": 93.8, "ci95": [71.7, 98.9], "by_category": {"temporal": {"n": 6, "score": 83.3, "ci95": [43.6, 97.0]}, "single-hop": {"n": 10, "score": 100.0, "ci95": [72.2, 100.0]}}, "by_conversation": {"6": {"n": 16, "score": 93.8}}, "mean_prompt_tokens_est": 4270, "total_cost_usd": 0.82, "retrieval_ms_p50": 60.6}
+[conv 7] reused 0 scored rows from full-chunks-k20-haiku
+[conv 7] 16 questions, 16 to run, reference date September 20, 2023
+[conv 7] 10/16 done
+[conv 7] {"n": 16, "score": 87.5, "ci95": [64.0, 96.5], "by_category": {"multi-hop": {"n": 1, "score": 100.0, "ci95": [20.7, 100.0]}, "temporal": {"n": 3, "score": 100.0, "ci95": [43.8, 100.0]}, "single-hop": {"n": 12, "score": 83.3, "ci95": [55.2, 95.3]}}, "by_conversation": {"7": {"n": 16, "score": 87.5}}, "mean_prompt_tokens_est": 4430, "total_cost_usd": 0.84, "retrieval_ms_p50": 54.9}
+[conv 8] reused 0 scored rows from full-chunks-k20-haiku
+[conv 8] 16 questions, 16 to run, reference date January 11, 2024
+[conv 8] 10/16 done
+[conv 8] {"n": 16, "score": 93.8, "ci95": [71.7, 98.9], "by_category": {"multi-hop": {"n": 6, "score": 100.0, "ci95": [61.0, 100.0]}, "open-domain": {"n": 3, "score": 66.7, "ci95": [20.8, 93.9]}, "single-hop": {"n": 7, "score": 100.0, "ci95": [64.6, 100.0]}}, "by_conversation": {"8": {"n": 16, "score": 93.8}}, "mean_prompt_tokens_est": 4513, "total_cost_usd": 0.84, "retrieval_ms_p50": 49.4}
+[conv 9] reused 0 scored rows from full-chunks-k20-haiku
+[conv 9] 16 questions, 16 to run, reference date November 17, 2023
+[conv 9] 10/16 done
+[conv 9] {"n": 16, "score": 100.0, "ci95": [80.6, 100.0], "by_category": {"multi-hop": {"n": 4, "score": 100.0, "ci95": [51.0, 100.0]}, "temporal": {"n": 2, "score": 100.0, "ci95": [34.2, 100.0]}, "open-domain": {"n": 1, "score": 100.0, "ci95": [20.7, 100.0]}, "single-hop": {"n": 9, "score": 100.0, "ci95": [70.1, 100.0]}}, "by_conversation": {"9": {"n": 16, "score": 100.0}}, "mean_prompt_tokens_est": 5288, "total_cost_usd": 0.89, "retrieval_ms_p50": 71.3}
+{
+  "n": 160,
+  "score": 91.9,
+  "ci95": [
+    86.6,
+    95.2
+  ],
+  "by_category": {
+    "multi-hop": {
+      "n": 27,
+      "score": 92.6,
+      "ci95": [
+        76.6,
+        97.9
+      ]
+    },
+    "temporal": {
+      "n": 32,
+      "score": 96.9,
+      "ci95": [
+        84.3,
+        99.4
+      ]
+    },
+    "open-domain": {
+      "n": 12,
+      "score": 66.7,
+      "ci95": [
+        39.1,
+        86.2
+      ]
+    },
+    "single-hop": {
+      "n": 89,
+      "score": 93.3,
+      "ci95": [
+        86.1,
+        96.9
+      ]
+    }
+  },
+  "by_conversation": {
+    "0": {
+      "n": 16,
+      "score": 87.5
+    },
+    "1": {
+      "n": 16,
+      "score": 87.5
+    },
+    "2": {
+      "n": 16,
+      "score": 87.5
+    },
+    "3": {
+      "n": 16,
+      "score": 87.5
+    },
+    "4": {
+      "n": 16,
+      "score": 93.8
+    },
+    "5": {
+      "n": 16,
+      "score": 100.0
+    },
+    "6": {
+      "n": 16,
+      "score": 93.8
+    },
+    "7": {
+      "n": 16,
+      "score": 87.5
+    },
+    "8": {
+      "n": 16,
+      "score": 93.8
+    },
+    "9": {
+      "n": 16,
+      "score": 100.0
+    }
+  },
+  "mean_prompt_tokens_est": 4728,
+  "total_cost_usd": 8.61,
+  "retrieval_ms_p50": 34.6,
+  "tag": "sample16-chunks-k20-haiku",
+  "conversations": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "ingest": "chunks",
+  "k": 20,
+  "answerer": "haiku",
+  "judge": "haiku",
+  "embedder": "fastembed",
+  "sample_per_conversation": 16,
+  "seed": 1
+}

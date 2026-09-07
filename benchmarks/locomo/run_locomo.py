@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 import re
 import subprocess
 import sys
@@ -215,12 +216,29 @@ def answer_and_judge(q: dict, ret: dict, answerer: str, judge: str, cwd: Path) -
     }
 
 
+def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
+    """95% confidence interval for a proportion, so a sampled score reports its own precision."""
+    if n == 0:
+        return (0.0, 0.0)
+    p = k / n
+    d = 1 + z * z / n
+    c = p + z * z / (2 * n)
+    m = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5)
+    return (round(100 * (c - m) / d, 1), round(100 * (c + m) / d, 1))
+
+
 def summarize(rows: list[dict]) -> dict:
-    out = {"n": len(rows), "score": round(100 * sum(r["correct"] for r in rows) / max(1, len(rows)), 1), "by_category": {}}
+    k = sum(r["correct"] for r in rows)
+    out = {"n": len(rows), "score": round(100 * k / max(1, len(rows)), 1), "ci95": wilson(k, len(rows)), "by_category": {}}
     for c, name in CATS.items():
         sub = [r for r in rows if r["category"] == c]
         if sub:
-            out["by_category"][name] = {"n": len(sub), "score": round(100 * sum(r["correct"] for r in sub) / len(sub), 1)}
+            sk = sum(r["correct"] for r in sub)
+            out["by_category"][name] = {"n": len(sub), "score": round(100 * sk / len(sub), 1), "ci95": wilson(sk, len(sub))}
+    by_conv = {}
+    for r in rows:
+        by_conv.setdefault(r.get("conversation"), []).append(r["correct"])
+    out["by_conversation"] = {str(c): {"n": len(v), "score": round(100 * sum(v) / len(v), 1)} for c, v in sorted(by_conv.items(), key=lambda x: (x[0] is None, x[0]))}
     out["mean_prompt_tokens_est"] = round(sum(r["prompt_chars"] for r in rows) / max(1, len(rows)) / 4)
     out["total_cost_usd"] = round(sum((r["answer_cost"] or 0) + (r["judge_cost"] or 0) for r in rows), 2)
     out["retrieval_ms_p50"] = sorted(r["retrieval_ms"] for r in rows)[len(rows) // 2] if rows else None
@@ -238,7 +256,10 @@ def main() -> None:
     ap.add_argument("--ingest-model", default="sonnet")
     ap.add_argument("--embedder", default="auto")
     ap.add_argument("--workers", type=int, default=6)
-    ap.add_argument("--limit", type=int, default=None, help="max questions per conversation (pilot runs)")
+    ap.add_argument("--limit", type=int, default=None, help="first N questions per conversation (pilot runs)")
+    ap.add_argument("--sample", type=int, default=None, help="deterministic random sample of N questions per conversation (stratified estimate)")
+    ap.add_argument("--seed", type=int, default=0, help="sample seed")
+    ap.add_argument("--reuse-rows-from", default=None, help="tag directory whose already-scored rows should be reused when they fall in the sample")
     ap.add_argument("--tag", default=None)
     ap.add_argument("--data-dir", default=None, help="reuse an existing ingested data dir")
     args = ap.parse_args()
@@ -278,9 +299,19 @@ def main() -> None:
         last = max((parse_locomo_date(w) for _, w, _ in sessions_of(conv) if parse_locomo_date(w)), default=None)
         reference_date = last.strftime("%B %d, %Y") if last else "2023"
         qa = [q for q in sample["qa"] if q["category"] in CATS]
-        if args.limit:
+        if args.sample:
+            rnd = random.Random(f"{args.seed}:{ci}")
+            qa = sorted(rnd.sample(qa, min(args.sample, len(qa))), key=lambda q: q["category"])
+        elif args.limit:
             qa = qa[: args.limit]
         rows_path = out_dir / f"rows-{ci}.jsonl"
+        if args.reuse_rows_from:
+            src = HERE / "results" / args.reuse_rows_from / f"rows-{ci}.jsonl"
+            if src.exists() and not rows_path.exists():
+                wanted = {q["question"] for q in qa}
+                keep = [l for l in src.read_text().splitlines() if json.loads(l)["question"] in wanted]
+                rows_path.write_text("\n".join(keep) + ("\n" if keep else ""))
+                log(f"[conv {ci}] reused {len(keep)} scored rows from {args.reuse_rows_from}")
         done = set()
         if rows_path.exists():
             for line in rows_path.read_text().splitlines():
@@ -308,7 +339,8 @@ def main() -> None:
         log(f"[conv {ci}] {json.dumps(s)}")
     eng.close()
     total = summarize(all_rows)
-    total.update({"tag": tag, "conversations": args.conv, "ingest": args.ingest, "k": args.k, "answerer": args.answerer, "judge": args.judge, "embedder": embedder.name})
+    total.update({"tag": tag, "conversations": args.conv, "ingest": args.ingest, "k": args.k, "answerer": args.answerer, "judge": args.judge, "embedder": embedder.name,
+                  "sample_per_conversation": args.sample, "seed": args.seed if args.sample else None})
     (out_dir / "summary.json").write_text(json.dumps(total, indent=2))
     print(json.dumps(total, indent=2))
 

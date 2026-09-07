@@ -1,0 +1,21 @@
+{
+  "n": 81,
+  "score": 92.6,
+  "by_category": {
+    "multi-hop": {
+      "n": 11,
+      "score": 100.0
+    },
+    "temporal": {
+      "n": 26,
+      "score": 100.0
+    },
+    "single-hop": {
+      "n": 44,
+      "score": 86.4
+    }
+  },
+  "mean_prompt_tokens_est": 4728,
+  "total_cost_usd": 4.29,
+  "retrieval_ms_p50": 29.8
+}

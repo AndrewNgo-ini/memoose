@@ -1,1 +1,71 @@
 [conv 0] 152 questions, 104 to run, reference date October 22, 2023
+[conv 0] 10/104 done
+[conv 0] 20/104 done
+[conv 0] 30/104 done
+[conv 0] 40/104 done
+[conv 0] 50/104 done
+[conv 0] 60/104 done
+[conv 0] 70/104 done
+[conv 0] 80/104 done
+[conv 0] 90/104 done
+[conv 0] 100/104 done
+[conv 0] {"n": 152, "score": 94.7, "by_category": {"multi-hop": {"n": 32, "score": 90.6}, "temporal": {"n": 37, "score": 100.0}, "open-domain": {"n": 13, "score": 100.0}, "single-hop": {"n": 70, "score": 92.9}}, "mean_prompt_tokens_est": 4941, "total_cost_usd": 8.34, "retrieval_ms_p50": 29.9}
+[conv 1] 81 questions, 81 to run, reference date July 23, 2023
+[conv 1] 10/81 done
+[conv 1] 20/81 done
+[conv 1] 30/81 done
+[conv 1] 40/81 done
+[conv 1] 50/81 done
+[conv 1] 60/81 done
+[conv 1] 70/81 done
+[conv 1] 80/81 done
+[conv 1] {"n": 81, "score": 92.6, "by_category": {"multi-hop": {"n": 11, "score": 100.0}, "temporal": {"n": 26, "score": 100.0}, "single-hop": {"n": 44, "score": 86.4}}, "mean_prompt_tokens_est": 4728, "total_cost_usd": 4.29, "retrieval_ms_p50": 29.8}
+[conv 2] 152 questions, 152 to run, reference date August 16, 2023
+[conv 2] 10/152 done
+[conv 2] 20/152 done
+[conv 2] 30/152 done
+[conv 2] 40/152 done
+[conv 2] 50/152 done
+[conv 2] 60/152 done
+[conv 2] 70/152 done
+[conv 2] 80/152 done
+[conv 2] 90/152 done
+[conv 2] 100/152 done
+[conv 2] 110/152 done
+[conv 2] 120/152 done
+[conv 2] 130/152 done
+[conv 2] 140/152 done
+[conv 2] 150/152 done
+[conv 2] {"n": 152, "score": 91.4, "by_category": {"multi-hop": {"n": 31, "score": 90.3}, "temporal": {"n": 27, "score": 92.6}, "open-domain": {"n": 8, "score": 62.5}, "single-hop": {"n": 86, "score": 94.2}}, "mean_prompt_tokens_est": 4814, "total_cost_usd": 8.0, "retrieval_ms_p50": 28.4}
+[conv 3] 199 questions, 199 to run, reference date November 11, 2022
+[conv 3] 10/199 done
+[conv 3] 20/199 done
+[conv 3] 30/199 done
+[conv 3] 40/199 done
+[conv 3] 50/199 done
+[conv 3] 60/199 done
+[conv 3] 70/199 done
+[conv 3] 80/199 done
+[conv 3] 90/199 done
+[conv 3] 100/199 done
+[conv 3] 110/199 done
+[conv 3] 120/199 done
+[conv 3] 130/199 done
+[conv 3] 140/199 done
+[conv 3] 150/199 done
+[conv 3] 160/199 done
+[conv 3] 170/199 done
+[conv 3] 180/199 done
+[conv 3] 190/199 done
+[conv 3] {"n": 199, "score": 88.9, "by_category": {"multi-hop": {"n": 37, "score": 81.1}, "temporal": {"n": 40, "score": 92.5}, "open-domain": {"n": 11, "score": 36.4}, "single-hop": {"n": 111, "score": 95.5}}, "mean_prompt_tokens_est": 4466, "total_cost_usd": 10.87, "retrieval_ms_p50": 27.1}
+[conv 4] 178 questions, 178 to run, reference date January 12, 2024
+[conv 4] 10/178 done
+[conv 4] 20/178 done
+[conv 4] 30/178 done
+[conv 4] 40/178 done
+[conv 4] 50/178 done
+[conv 4] 60/178 done
+[conv 4] 70/178 done
+[conv 4] 80/178 done
+  usage limit hit ("You've hit your session limit · resets 12:50am (Asia/Ho_Chi_Minh)"); pausing all calls, retrying every 5 min
+[conv 4] 90/178 done

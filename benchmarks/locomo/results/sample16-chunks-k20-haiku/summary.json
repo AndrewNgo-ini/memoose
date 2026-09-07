@@ -1,0 +1,107 @@
+{
+  "n": 160,
+  "score": 91.9,
+  "ci95": [
+    86.6,
+    95.2
+  ],
+  "by_category": {
+    "multi-hop": {
+      "n": 27,
+      "score": 92.6,
+      "ci95": [
+        76.6,
+        97.9
+      ]
+    },
+    "temporal": {
+      "n": 32,
+      "score": 96.9,
+      "ci95": [
+        84.3,
+        99.4
+      ]
+    },
+    "open-domain": {
+      "n": 12,
+      "score": 66.7,
+      "ci95": [
+        39.1,
+        86.2
+      ]
+    },
+    "single-hop": {
+      "n": 89,
+      "score": 93.3,
+      "ci95": [
+        86.1,
+        96.9
+      ]
+    }
+  },
+  "by_conversation": {
+    "0": {
+      "n": 16,
+      "score": 87.5
+    },
+    "1": {
+      "n": 16,
+      "score": 87.5
+    },
+    "2": {
+      "n": 16,
+      "score": 87.5
+    },
+    "3": {
+      "n": 16,
+      "score": 87.5
+    },
+    "4": {
+      "n": 16,
+      "score": 93.8
+    },
+    "5": {
+      "n": 16,
+      "score": 100.0
+    },
+    "6": {
+      "n": 16,
+      "score": 93.8
+    },
+    "7": {
+      "n": 16,
+      "score": 87.5
+    },
+    "8": {
+      "n": 16,
+      "score": 93.8
+    },
+    "9": {
+      "n": 16,
+      "score": 100.0
+    }
+  },
+  "mean_prompt_tokens_est": 4728,
+  "total_cost_usd": 8.61,
+  "retrieval_ms_p50": 34.6,
+  "tag": "sample16-chunks-k20-haiku",
+  "conversations": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "ingest": "chunks",
+  "k": 20,
+  "answerer": "haiku",
+  "judge": "haiku",
+  "embedder": "fastembed",
+  "sample_per_conversation": 16,
+  "seed": 1
+}
