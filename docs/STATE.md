@@ -1,6 +1,7 @@
 # State of play
 
-Last updated 2026-09-08, at the point of moving benchmark work to a VPS.
+Last updated 2026-09-07, after building the maintained-memory benchmark and verifying the proactive
+path live.
 
 ## What is done
 
@@ -26,10 +27,11 @@ core, never replacing it, so a host without hooks loses automation and keeps eve
 | standing rules, preferences and lessons at session start | `hooks/session_start.py` | live — the agent repeated a seeded rule verbatim |
 | background capture on a small model after a turn and before compaction, async and non-blocking, behind a relevance gate, a per-session lock and a resume offset | `hooks/capture.py` | unit-tested; does **not** fire in `-p` print mode |
 | in-session delegation for hosts without hooks | `agents/memory-keeper.md` (`model: haiku`) | wired, not yet exercised live |
+| **the write→read loop, end to end** | `hooks/capture.py` → `hooks/recommend.py` | **live — see "What the live run established" below** |
 | what is live here, what is stored, how to opt out | `skills/mnemoth-onboard/SKILL.md` | — |
 
 Kill switches: `MNEMOTH_HINTS`, `MNEMOTH_AUTO_RECALL`, `MNEMOTH_AUTO_CAPTURE`. Every hook exits 0 on
-any failure. 52 tests.
+any failure. 73 tests.
 
 Note for benchmarking: none of this is visible to the LoCoMo harness, which calls the MCP tools
 directly and never goes through a hook. The benchmark measures the store and the retrieval, not the
@@ -68,21 +70,86 @@ without a model at all. The retrieval algorithm itself is conventional (BM25 + l
 by reciprocal rank, plus one-hop graph expansion); the differentiator is the architecture, not the
 ranking.
 
+## The maintained-memory benchmark (roadmap item 3, done)
+
+`benchmarks/maintained/` — 18 cases, 66 assertions, **no model, no API key, ~1 s**, wired into
+pytest. It asks the five questions mnemoth claims and LoCoMo cannot: a fact changed (does recall
+return the current one), can the old one still be shown and why it changed, do two disagreeing
+sources get reported or silently resolved, does evidence survive, does an earlier session's lesson
+come back. Full write-up in `benchmarks/maintained/README.md`.
+
+Result: **18/18 cases, 66/66 checks**, identical on the `hash` and `fastembed` embedders, ~1 s.
+Three cases are negative controls (must *not* supersede a multi-valued relation, must *not* flag
+compatible facts, must *not* invent evidence) so a system that says yes to everything scores 0 on
+them.
+
+**Passing our own suite is not evidence of superiority and the README says so.** Its value is (a) the
+claims are now checked on every commit rather than asserted, and (b) what it caught on the first
+run, at 14/18 before anything was tuned. Three of those failures were bugs in the cases. One was
+real:
+
+> Functional supersession was decided by **write order alone**. Backfilling a fact that was true in
+> 2024, after the 2025 value was already known, silently made the 2024 value current again — learning
+> the past overwrote the present. Fixed by `states_later_value` in `src/mnemoth/contradictions.py`:
+> `valid_from` decides when both facts carry one, and a backfilled arrival is stored as superseded
+> history. Write order still decides when a date is missing, and an undated arrival is presumed
+> current, so the ordinary path is unchanged.
+
+Pre-fix rows are kept at `benchmarks/maintained/results/baseline-prefix-hash.json`.
+
+## What the live run established
+
+The proactive surface had never been driven end to end (the LoCoMo harness calls MCP tools directly
+and bypasses every hook). Driving a real transcript through `hooks/capture.py` on haiku, then the
+resulting store back through `hooks/recommend.py`:
+
+**Capture works, and the extraction quality is good.** 42 s, exit 0, 7 entities and 5 facts, every
+one with an evidence pointer: the decision *and its reason*, an ownership handover, and a convention
+linked to the incident that motivated it. It correctly filed the user's own hard rule under the
+`user` Dataset rather than the project one. Re-running on the same transcript was a **0.07 s no-op**,
+so the resume offset holds and turns are never captured twice.
+
+**The read half then dropped it on the floor, twice.** Both are fixed and regression-tested:
+
+1. `recommend.py` opened only the project Dataset. `recall` searches project *then* user with a
+   reserve; the hint did not, so it silently discarded the class of memory that applies to every
+   prompt — the standing rules capture deliberately files under `user`. Now searched, with one
+   reserved slot.
+2. The relevance floor was an absolute `0.5` against a **corpus-relative** score. bm25's IDF term is
+   zero for a token present in every indexed row, so in a small store a *perfect* keyword match
+   scores 0.0 and was rejected. Measured: the floor admits nothing until the index holds ~5 rows. So
+   hints stayed silent for the first sessions on a project, and *permanently* for the user Dataset,
+   which by design never grows large — the feature looked broken exactly when someone first tried
+   it. `score_floor` now drops the floor below 8 indexed rows and lets the FTS match be the gate.
+
+Still open, found in the same run and **not** fixed:
+
+- Capture wrote the user's hard rule as a **bare entity with no relations**, which `remember` itself
+  warns about ("entities alone are weak memory"). The capture prompt does not act on that warning.
+- Capture expressed the handover as `previously_owned_by` rather than asserting `owned_by` and
+  letting supersession run, and never calls `declare_functional_relations`. So the currency machinery
+  the benchmark above proves correct **is not exercised by the automatic path at all**. This is the
+  most important open gap: the store does supersession properly and capture never asks it to.
+
 ## Next steps, in priority order
 
-1. **Finish the headline sample at k=20** on all 10 conversations for a clean, comparable number.
-   Partial rows already exist under `benchmarks/locomo/results/sample16-chunks-k20-haiku/`; rerunning
-   with the same `--tag` resumes and only costs the missing questions. The k=30 run was abandoned
-   once the paired test showed k=30 is not better; its partial rows (conv 0–6, 97 questions) are kept
-   for that comparison only.
-2. **One model-matched run.** Everything so far used Haiku as answerer; mem0 used a GPT-4o-class
-   stack. Run the same 160 sampled questions with `--answerer sonnet` and report both, so the
-   comparison is like-for-like rather than flattering in either direction.
-3. **Benchmark what the graph is actually for.** LoCoMo cannot show it. A benchmark that would:
-   conflicting facts asserted over time (does recall return the current one?), superseded history
-   (`include_superseded`), provenance-checkable claims, cross-session lesson reuse. This is the
-   honest way to justify the graph, and none of the published memory benchmarks test it.
-4. **Consider LongMemEval** (mem0 reports 94.4) as a second, less saturated dataset.
+1. **Close the capture/currency gap.** Teach the capture prompt and the `mnemoth` skill to declare
+   functional relations and to re-assert an ownership-style fact so supersession runs, instead of
+   inventing a `previously_*` relation name. Then add a `maintained/` case that drives the *capture
+   path* rather than the tools directly, so the two halves are tested together.
+2. **A model-graded tier for `maintained/`.** The suite proves the store hands over the lesson and
+   flags the contradiction; it cannot show the host model *acts* on either. That needs a judge and is
+   the honest remaining half of the `reuse` and `conflict` claims.
+3. **One model-matched LoCoMo run** (`--answerer sonnet --judge sonnet`, same 160 sampled questions,
+   new `--tag`) to retire the "flattering small answerer" confound, then stop touching LoCoMo. Not
+   started: it shares the interactive usage limit, so it will pause whatever session launches it.
+   Item 1 of the previous list — the k=20 headline sample — **was already complete**: 160 rows,
+   147 correct, 91.9, in `RESULTS.md`.
+4. **Real-project soak.** Run mnemoth on its own development and report what it gets wrong. The two
+   bugs above were both found by one live run, which is the argument for doing this continuously
+   rather than in bursts.
+5. **Consider LongMemEval** (mem0 reports 94.4) as a second, less saturated retrieval dataset — lower
+   priority than everything above, since it measures the half we are already at parity on.
 
 ## Traps already hit, do not rediscover
 
@@ -93,3 +160,7 @@ ranking.
 - `pkill -f run_locomo` from inside a Claude Code session kills the agent's own shell. Kill by PID.
 - Parallel agent-ingest sessions write one SQLite file; embeddings are computed outside the write
   transaction and the store has a 60 s busy timeout so they do not deadlock.
+- An absolute threshold on a bm25 score is a bug waiting to happen: bm25 is corpus-relative and
+  collapses toward 0 on a small index. Gate on corpus size, or on token overlap, not on a bare score.
+- `stats()["relations"]` counts **only non-superseded** rows; superseded ones are in
+  `stats()["superseded_relations"]`. "Nothing was deleted" is the sum of the two.

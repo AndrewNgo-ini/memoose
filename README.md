@@ -36,11 +36,14 @@ retrieval itself takes about 35 ms against a local file.
 **Private and inspectable.** One SQLite file per project, plus one for facts about you that hold
 everywhere. Open it, copy it, back it up, delete it. Nothing is uploaded.
 
-**Memory that stays true.** Facts are typed and carry evidence pointers, so an agent can re-check
-where a claim came from. When a fact changes, the old one is superseded rather than deleted, and
-history stays queryable. When two sources disagree, the system says so instead of silently picking
-one. The knowledge-graph philosophy is adapted from [cognee](https://github.com/topoteretes/cognee);
-what is new is that none of it needs a key.
+**Memory that stays true — and a benchmark that proves it.** Facts are typed and carry evidence
+pointers, so an agent can re-check where a claim came from. When a fact changes, the old one is
+superseded rather than deleted, and history stays queryable. When two sources disagree, the system
+says so instead of silently picking one. Those are the claims every memory system makes and none of
+them measures, so we wrote the suite that checks them: 18 cases, no model, about a second, running
+in CI on every commit ([`benchmarks/maintained/`](./benchmarks/maintained/README.md)). It caught a
+real bug in our own supersession on its first run. The knowledge-graph philosophy is adapted from
+[cognee](https://github.com/topoteretes/cognee); what is new is that none of it needs a key.
 
 **[VISION.md](./VISION.md)** explains the bet in full. `CONTEXT.md` is the glossary, `docs/adr/` the
 decisions, `docs/STATE.md` the current state of the work.
@@ -116,21 +119,38 @@ extra for full RDF parsing; a Turtle/RDF-XML fallback parser is built in.
 
 ## Benchmarks
 
-LoCoMo, under mem0's protocol with their answerer and judge prompts vendored verbatim, host model
-via Claude Code. On a 160-question stratified sample: **91.9** (95% CI 86.6–95.2) against mem0's
-published **92.5**, using **4,728 prompt tokens vs their 6,956** and a much smaller answerer
-(Claude Haiku 4.5). Retrieval takes 35 ms against a local SQLite file.
+Two questions, and it matters which one a number answers.
 
-Two results worth stating plainly: the knowledge graph does *not* beat plain chunk retrieval on
-LoCoMo (paired McNemar p = 1.00) at 77% more tokens, and raising the retrieval budget lifts evidence
+**Does memory stay true as facts change?** Our own suite, because nothing published asks it:
+[`benchmarks/maintained/`](./benchmarks/maintained/README.md) — 18 cases, 66 assertions, **no model,
+no API key, ~1 second**, so it runs in CI on every commit. A fact was revised, two sources disagree,
+where did this come from, we learned this before. mnemoth scores 18/18; three of the cases are
+negative controls that fail if a system over-reacts. Passing our own benchmark proves little, and the
+README says so — what it did prove is a real supersession bug it caught at 14/18 on the first run.
+The cases are written against behaviour any memory system could implement, so port them and use them
+against us.
+
+```sh
+uv run python benchmarks/maintained/run_maintained.py    # ~1 s, no key
+```
+
+**Can you find a fact that was stated once?** LoCoMo, under mem0's protocol with their answerer and
+judge prompts vendored verbatim, host model via Claude Code. On a 160-question stratified sample:
+**91.9** (95% CI 86.6–95.2) against mem0's published **92.5**, using **4,728 prompt tokens vs their
+6,956** and a much smaller answerer (Claude Haiku 4.5). Retrieval takes 35 ms against a local SQLite
+file. That is parity, not a win.
+
+Two LoCoMo results worth stating plainly: the knowledge graph does *not* beat plain chunk retrieval
+there (paired McNemar p = 1.00) at 77% more tokens, and raising the retrieval budget lifts evidence
 recall without lifting the judged score. LoCoMo asks needle questions over conversations that fit in
-a context window, so it does not test what the graph is for. See `benchmarks/locomo/RESULTS.md` for
-the tables, `benchmarks/SETUP.md` to reproduce, and `docs/STATE.md` for where the work stands.
+a context window, so it does not test what the graph is for — which is why `maintained/` exists. See
+`benchmarks/locomo/RESULTS.md` for the tables, `benchmarks/SETUP.md` to reproduce, and
+`docs/STATE.md` for where the work stands.
 
 ## Develop
 
 ```sh
-uv sync --group dev
-uv run pytest
+uv sync --extra fastembed --group dev
+uv run pytest                                            # 73 tests, includes the maintained-memory suite
 claude plugin validate .
 ```

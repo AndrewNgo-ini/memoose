@@ -100,8 +100,14 @@ graph exists to answer:
 - We solved this before. What did we learn, and does it apply here?
 
 Those are the questions that make memory worth maintaining, and no published memory benchmark tests
-them. **Building that benchmark is on our roadmap**, because we would rather be measured on what we
-claim than score well on what is convenient.
+them. **So we built one.** `benchmarks/maintained/` asks exactly those four questions plus lesson
+reuse, in 18 cases and 66 assertions, with **no model and no API key** — it asserts on what the tools
+return, so it finishes in about a second and runs in CI on every commit, which no LLM-judged suite
+can. We score 18/18, which proves nothing about being better than anyone; what it proved is a real
+bug in our own supersession, caught at 14/18 on its first run before anything was tuned. The cases
+are written against behaviour any memory system could implement, so they can be ported and used
+against us. We would rather publish a benchmark someone beats us on than keep claiming things
+nothing measures.
 
 ## Principles
 
@@ -133,14 +139,19 @@ Ingesting audio and images. Replacing the host's own context management. Winning
 
 ## Roadmap
 
-**Now.** Finish the honest LoCoMo numbers, including a model-matched run, so parity is documented
-rather than asserted.
+**Done.** The maintained-memory benchmark, and the LoCoMo headline sample at parity (91.9 vs mem0's
+92.5, at a third fewer tokens on a much smaller model).
 
-**Next.** A benchmark for maintained memory: conflicting facts asserted over time, superseded
-history, evidence that must be re-checked, lessons reused across sessions. Publish it whether or not
-we win it.
+**Now.** Close the gap the live run exposed: automatic capture never triggers the currency machinery
+the benchmark proves correct — it invents a `previously_owned_by` relation instead of re-asserting
+`owned_by` and letting supersession run. The store keeps facts true; the automation does not yet ask
+it to. Then a model-graded tier, for the half the model-free suite cannot reach: does the host model
+*act* on the lesson it was handed, and *notice* the contradiction it was shown.
 
-**Then.** Real-project soak: run mnemoth on its own development for a month and report what it got
-wrong. Consolidation that runs without being asked. An export a human can read.
+**Next.** Real-project soak: run mnemoth on its own development and report what it gets wrong. One
+live run found two bugs, which is the argument for doing it continuously. One model-matched LoCoMo
+run to retire the answerer confound, and then stop touching LoCoMo.
+
+**Then.** Consolidation that runs without being asked. An export a human can read.
 
 **Not yet.** Other storage backends, other hosts beyond the four, a service.
