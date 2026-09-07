@@ -10,7 +10,8 @@ the host model (Claude Code, Codex, ...) does the thinking while it calls the to
 No API key. One SQLite file per dataset. Install once, works in any host that speaks
 skills + MCP.
 
-See `CONTEXT.md` for the glossary and `docs/adr/` for the decisions.
+**[VISION.md](./VISION.md)** says why this exists and where it is going. `CONTEXT.md` is the
+glossary, `docs/adr/` the decisions, `docs/STATE.md` the current state of the work.
 
 ## Install
 
