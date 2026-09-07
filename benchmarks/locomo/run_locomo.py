@@ -37,6 +37,7 @@ sys.path.insert(0, str(HERE))
 import mem0_prompts as P  # noqa: E402
 from retrieval_bench import ingest as ingest_chunks  # noqa: E402
 from retrieval_bench import sessions_of  # noqa: E402
+from fetch_dataset import ensure_dataset  # noqa: E402
 
 from mnemoth.embeddings import HashEmbedder, default_embedder  # noqa: E402
 from mnemoth.engine import Engine  # noqa: E402
@@ -265,7 +266,7 @@ def main() -> None:
     ap.add_argument("--data-dir", default=None, help="reuse an existing ingested data dir")
     args = ap.parse_args()
 
-    data = json.load(open(HERE / "locomo10.json"))
+    data = json.load(open(ensure_dataset()))
     tag = args.tag or f"{args.ingest}-k{args.k}-{args.answerer}-{time.strftime('%Y%m%d-%H%M')}"
     out_dir = HERE / "results" / tag
     out_dir.mkdir(parents=True, exist_ok=True)

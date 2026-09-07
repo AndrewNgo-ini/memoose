@@ -22,11 +22,13 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mnemoth.embeddings import HashEmbedder, default_embedder  # noqa: E402
 from mnemoth.engine import Engine  # noqa: E402
 from mnemoth.ids import chunk_id  # noqa: E402
 from mnemoth.models import EntityIn, RelationIn  # noqa: E402
 from mnemoth.store.sqlite_store import ChunkRow  # noqa: E402
+from fetch_dataset import ensure_dataset  # noqa: E402
 
 CATEGORIES = {1: "multi-hop", 2: "temporal", 3: "open-domain", 4: "single-hop", 5: "adversarial"}
 
@@ -98,7 +100,7 @@ def main() -> None:
     ap.add_argument("--embedder", default="auto", help="auto|hash|fastembed")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
-    data = json.load(open(Path(__file__).with_name("locomo10.json")))
+    data = json.load(open(ensure_dataset()))
     convs = args.conv if args.conv is not None else list(range(len(data)))
     embedder = HashEmbedder() if args.embedder == "hash" else default_embedder()
     results = []

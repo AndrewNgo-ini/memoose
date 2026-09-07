@@ -17,6 +17,7 @@ Host model via Claude Code `claude -p`. Retrieval = mnemoth `recall` (auto-route
 | pilot-chunks-k20-haiku | 0 | chunks (no model) | 20 | claude-haiku-4-5 | claude-haiku-4-5 | 152 | **94.7** | 90.6 | 100.0 | 100.0 | 92.9 | 4,941 | $8.34 |
 | sample16-chunks-k20-haiku | all 10 (16 sampled each, seed 1) | chunks (no model) | 20 | claude-haiku-4-5 | claude-haiku-4-5 | 160 | **91.9** (95% CI 86.6–95.2) | 92.6 | 96.9 | 66.7 | 93.3 | 4,728 | $8.61 |
 | full-chunks-k20-haiku (partial, conv 0–4) | 0–4 | chunks (no model) | 20 | claude-haiku-4-5 | claude-haiku-4-5 | 676 | 90.2 | 88.7 | 94.9 | 60.9 | 92.8 | ~4,700 | — |
+| sample16-chunks-k30-haiku (partial, conv 0–6) | 0–6 (16 each) | chunks (no model) | 30 | claude-haiku-4-5 | claude-haiku-4-5 | 97 | 89.7 | — | — | — | — | ~6,200 | $6.5 |
 
 Published (all 10 conversations): mem0 2026 92.5 (top-200, gpt-4o class), Zep 75.1, full-context ~73, mem0 2025 66.9.
 mem0 per-category (avg top_10–200): single-hop 91.2, multi-hop 91.3, temporal 92.0, open-domain 72.7, mean 6,956 prompt tokens.
@@ -41,15 +42,23 @@ skill-driven `agent` ingest fills.
 | 6 | 30 | 0.926 | 0.806 | 0.962 | 0.686 | 0.979 | ~8,180 |
 | 4 | 40 | 0.932 | 0.824 | 0.950 | 0.702 | 0.987 | ~7,500 |
 
-Retrieval budget, not ranking, is the binding constraint: every question saturates the chunk cap, and
-raising it lifts recall monotonically. **4 turns per chunk at k=30 is the reported default**: it beats the
-old k=20 on every category and still costs ~12% fewer prompt tokens than mem0's 6,956, so the comparison
-is not bought with context. k=40 scores higher (0.932) but spends ~8% more than mem0.
+Every question saturates the chunk cap, and raising it lifts *evidence recall* monotonically. **It does
+not lift the judged score.** The same 97 sampled questions scored at k=20 and k=30 give:
 
-Caveat on how far this transfers to the judged score: of 13 failures in the 160-question sample, only 3
-said the memories lacked the information; the other 10 answered confidently and wrong. Above ~90 the
-benchmark is dominated by answerer reasoning and by disputable LoCoMo gold answers, not by memory, so
-recall gains have a shrinking judged payoff.
+| | k=20 | k=30 |
+| --- | --- | --- |
+| judged score (paired, n=97) | 90.7 | 89.7 |
+| evidence recall (all 10 conv) | 0.876 | 0.906 |
+| prompt tokens | ~4,730 | ~6,200 |
+
+Discordant pairs: 2 only-k20, 1 only-k30, **McNemar exact p = 1.00**. Retrieval depth is therefore *not*
+the bottleneck, and the extra ~30% of context is wasted. **k=20 stays the default.**
+
+This is the central lesson of the sweep: evidence recall is a proxy, and past ~0.88 it decouples from the
+judged score. The reason is visible in the failures — of 13 wrong answers in the 160-question sample, only
+3 said the memories lacked the information; the other 10 answered confidently and wrong. Above ~90 the
+benchmark is dominated by answerer reasoning and by disputable LoCoMo gold answers, not by memory. Tuning
+retrieval further optimises the wrong quantity.
 
 ## Two-arm test: does the graph beat plain chunk retrieval?
 
