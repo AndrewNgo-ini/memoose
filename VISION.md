@@ -58,12 +58,27 @@ On top of that, and never in place of it, memory also maintains *itself*
 | --- | --- | --- |
 | **MCP tools** | the deterministic store: typed graph, ontology, ranking, supersession, provenance | any MCP host |
 | **Skills** | teach the host model to extract, judge, and *delegate memory work to a cheap background subagent* | any host with skills |
-| **Hooks** | capture and recall with nobody asking: at session start, when a turn ends, before compaction | hosts with hooks |
+| **Hooks** | capture and recall with nobody asking: hints before each prompt, standing context at session start, capture when a turn ends and before compaction | hosts with hooks |
 
 Relying only on the agent choosing to call `remember` is how memory plugins fail: the agent is busy
 with the user's real task, so bookkeeping is the first thing dropped. So the hooks run it
 automatically where they exist, and everywhere else the skills tell the agent to hand it to a
 background subagent. Explicit tool calls keep working; they are just no longer the only path.
+
+### Recommendation as a memory
+
+The same problem applies to *reading*. An agent only recalls when it thinks to, and it usually does
+not think to. So mnemoth does not wait to be queried: it reads each incoming prompt, searches memory
+locally, and when something genuinely matches it hands the agent a hint before the agent starts
+thinking — what memory already holds, and the `recall` query that would fetch the rest.
+
+The recommendation is deliberately dumb and therefore free: BM25 over the local index, a relevance
+floor, a hard cap on how much it injects, and silence when nothing matches. No model, a few
+milliseconds, so it can run on every prompt without anyone noticing. Memory raises its hand instead
+of waiting to be asked, and the agent keeps full control over whether to follow the hint.
+
+Because we cannot see how any given machine is configured, a `mnemoth-onboard` skill walks the user
+through what is actually live on their host, what is being stored, and how to turn any of it off.
 
 ## What mnemoth is for
 

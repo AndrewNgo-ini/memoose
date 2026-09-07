@@ -26,5 +26,9 @@
         "MNEMOTH_DATA_DIR": "${CLAUDE_PLUGIN_DATA}"
       }
     }
-  }
+  },
+  "hooks": "./hooks/hooks.json",
+  "agents": [
+    "./agents/memory-keeper.md"
+  ]
 }

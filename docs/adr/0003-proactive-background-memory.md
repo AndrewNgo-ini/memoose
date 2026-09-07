@@ -15,8 +15,9 @@ Skills plus MCP remain the core and stay fully functional on their own. We **add
 top, neither of which is required for correctness:
 
 1. **Hooks, where the host has them.** Host lifecycle events drive capture and recall without the
-   agent deciding to: context injected at session start, facts extracted when a turn ends, memory
-   rescued before compaction discards it. Claude Code command hooks take `async: true`, which runs
+   agent deciding to: a relevance hint injected before each prompt (*recommendation as a memory* —
+   BM25 over the local index, no model, silent when nothing matches), standing context injected at
+   session start, facts extracted when a turn ends, memory rescued before compaction discards it. Claude Code command hooks take `async: true`, which runs
    in the background without blocking and without timeout enforcement, and `asyncRewake` to surface
    a failure later. They ship in a reverse-domain namespace, which the agent-plugins.org spec
    reserves for exactly this, so the portable core is untouched.
@@ -50,5 +51,11 @@ key and no second vendor.
   matter more here than in the pull model, or the graph fills with noise.
 - Background capture writes to the same SQLite file as foreground calls, which is why embeddings are
   computed outside the write transaction and the store carries a 60 s busy timeout.
+- We cannot see how a user's host is configured, so a `mnemoth-onboard` skill reports what is
+  actually live, what is being stored, and how to switch each part off, rather than the plugin
+  guessing or silently editing host configuration.
+- Injected hints are hints, not answers: they carry the follow-up `recall` query and say plainly that
+  they are memory rather than user instructions, so the agent does not treat a partial match as the
+  whole truth.
 - Anything automation stores must stay visible and reversible: the provenance ledger records the
   actor, and the user must be able to see and delete what was captured without having to ask.

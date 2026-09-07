@@ -23,6 +23,12 @@ agent is busy with your actual task, so bookkeeping is the first thing dropped. 
 its own through host hooks, and where hooks do not exist its skills tell the agent to hand the work
 to a background subagent.
 
+**Recommendation as a memory.** Reading has the same problem: an agent only recalls when it thinks
+to. So mnemoth reads each prompt, searches memory locally, and hands the agent a hint *before* it
+starts thinking — what is already known, and the `recall` that would fetch the rest. Pure BM25 over a
+local index, so it costs no model call and a few milliseconds, and stays silent when nothing
+matches.
+
 **Fast, and cheap by design.** Memory work never blocks your conversation and never runs on the
 expensive model. Extraction and maintenance are delegated to a small model in the background, while
 retrieval itself takes about 35 ms against a local file.
@@ -58,6 +64,18 @@ Or load it as a plugin directly in Claude Code:
 claude --plugin-dir /path/to/mnemoth
 ```
 
+## What runs without you asking
+
+| when | what happens | cost |
+| --- | --- | --- |
+| you submit a prompt | memory is searched locally; a short hint is injected if something matches | ~ms, no model |
+| a session starts | standing rules, preferences and recent lessons are put in front of the agent | ~ms, no model |
+| a turn ends, or before compaction | a background job on a small model stores what was learned | small model, off your critical path |
+
+Every one of these is a convenience over the tools, never a replacement: on a host without hooks you
+lose the automation and keep every capability. Switches are documented in the `mnemoth-onboard`
+skill; `MNEMOTH_HINTS=0`, `MNEMOTH_AUTO_RECALL=0` and `MNEMOTH_AUTO_CAPTURE=0` turn the three off.
+
 ## Tools
 
 | area | tools |
@@ -71,6 +89,7 @@ claude --plugin-dir /path/to/mnemoth
 
 | skill | teaches the host model |
 | --- | --- |
+| `mnemoth-onboard` | what is live on this host, what is stored, and how to turn any of it off |
 | `mnemoth` | when to recall, how to extract entities, relations, evidence, summaries (cognee's extraction rules) |
 | `mnemoth-contradictions` | judging hotspots, supersede vs mark_contradiction, functional relations |
 | `mnemoth-sessions` | context sections during work, curator and writer rules for distilling lessons |

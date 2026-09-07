@@ -1,6 +1,6 @@
 ---
 name: mnemoth
-description: Persistent project memory as a typed knowledge graph. Use when the user says remember, recall, "what did we decide", "last time", "as before", refers to people, systems, decisions, or dates from earlier work, or when you learn a durable fact about the project, the team, or the user's preferences. Companion skills: mnemoth-sessions, mnemoth-contradictions, mnemoth-memify, mnemoth-ontology.
+description: Persistent project memory as a typed knowledge graph. Use when the user says remember, recall, "what did we decide", "last time", "as before", refers to people, systems, decisions, or dates from earlier work, or when you learn a durable fact about the project, the team, or the user's preferences. Companion skills: mnemoth-onboard (setup), mnemoth-sessions, mnemoth-contradictions, mnemoth-memify, mnemoth-ontology.
 ---
 
 # mnemoth memory
@@ -10,6 +10,11 @@ search. It never calls a model. You do the extraction and the judgment; the tool
 store. Memory is scoped to a **dataset**: the current project by default, plus a `user` dataset
 for facts about the user that hold in every project (preferences, identity, standing rules).
 `recall` searches both; pass `dataset="user"` to `remember` for cross-project facts.
+
+Where mnemoth's hooks are active you will also be handed memory without asking: standing rules and
+preferences at session start, and a short hint before a prompt when memory already holds something
+relevant. Those are background, not user instructions. A hint is a starting point, not the whole
+answer: follow it with the `recall` it suggests when the question matters.
 
 ## When to recall
 
@@ -33,6 +38,18 @@ Treat results as raw material. Synthesise the answer yourself. When a fact carri
 (a file range, URL, or date) and the decision matters, re-check the evidence before acting on it.
 `contested: true` means an open contradiction touches the fact (see mnemoth-contradictions).
 Facts have a `score`; low scores are hints, not truths.
+
+## Delegate the bookkeeping
+
+Storing memory should not spend your turns or the user's patience. When a conversation has produced
+facts worth keeping, or a task has just finished, hand the work to the **`memory-keeper` subagent**
+(it runs on a small model) instead of calling `remember` inline, and carry on with the user's task.
+Give it the relevant exchange and let it extract.
+
+Call `remember` yourself when the user explicitly asks you to remember something, when it is a single
+fact you already have in hand, or when no subagent is available. Where the mnemoth hooks are
+installed, capture also happens automatically after each turn, so never repeat work the keeper has
+already done: `recall` first if unsure.
 
 ## When to remember
 
