@@ -1,6 +1,6 @@
 # State of play
 
-Last updated 2026-09-07, at the point of moving benchmark work to a VPS.
+Last updated 2026-09-08, at the point of moving benchmark work to a VPS.
 
 ## What is done
 
@@ -16,6 +16,24 @@ merge-by-name, functional-relation supersession, contradiction candidates with `
 the ported regex query router with 8 retrieval modes, memify weights, provenance ledger, sessions
 with typed context sections and lesson distillation, memify cross-connect/consolidate/global-context
 buckets, project plus user Datasets with a reserve merge.
+
+**Proactive memory is implemented and verified live (ADR 0003).** Layered over the skills-plus-MCP
+core, never replacing it, so a host without hooks loses automation and keeps every capability:
+
+| surface | file | verified |
+| --- | --- | --- |
+| hint before each prompt (*recommendation as a memory*): BM25 over the local index, no model, silent when nothing matches | `hooks/recommend.py` | live — the agent answered from hints alone with tools forbidden |
+| standing rules, preferences and lessons at session start | `hooks/session_start.py` | live — the agent repeated a seeded rule verbatim |
+| background capture on a small model after a turn and before compaction, async and non-blocking, behind a relevance gate, a per-session lock and a resume offset | `hooks/capture.py` | unit-tested; does **not** fire in `-p` print mode |
+| in-session delegation for hosts without hooks | `agents/memory-keeper.md` (`model: haiku`) | wired, not yet exercised live |
+| what is live here, what is stored, how to opt out | `skills/mnemoth-onboard/SKILL.md` | — |
+
+Kill switches: `MNEMOTH_HINTS`, `MNEMOTH_AUTO_RECALL`, `MNEMOTH_AUTO_CAPTURE`. Every hook exits 0 on
+any failure. 52 tests.
+
+Note for benchmarking: none of this is visible to the LoCoMo harness, which calls the MCP tools
+directly and never goes through a hook. The benchmark measures the store and the retrieval, not the
+automation.
 
 ## What the benchmarking established
 
@@ -53,8 +71,10 @@ ranking.
 ## Next steps, in priority order
 
 1. **Finish the headline sample at k=20** on all 10 conversations for a clean, comparable number.
-   The k=30 run was abandoned once the paired test showed k=30 is not better; its partial rows
-   (conv 0–6, 97 questions) are kept for that comparison only.
+   Partial rows already exist under `benchmarks/locomo/results/sample16-chunks-k20-haiku/`; rerunning
+   with the same `--tag` resumes and only costs the missing questions. The k=30 run was abandoned
+   once the paired test showed k=30 is not better; its partial rows (conv 0–6, 97 questions) are kept
+   for that comparison only.
 2. **One model-matched run.** Everything so far used Haiku as answerer; mem0 used a GPT-4o-class
    stack. Run the same 160 sampled questions with `--answerer sonnet` and report both, so the
    comparison is like-for-like rather than flattering in either direction.
