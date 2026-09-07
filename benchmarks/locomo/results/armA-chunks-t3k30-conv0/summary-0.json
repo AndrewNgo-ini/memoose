@@ -1,0 +1,35 @@
+{
+  "n": 45,
+  "score": 93.3,
+  "ci95": [
+    82.1,
+    97.7
+  ],
+  "by_category": {
+    "multi-hop": {
+      "n": 32,
+      "score": 90.6,
+      "ci95": [
+        75.8,
+        96.8
+      ]
+    },
+    "open-domain": {
+      "n": 13,
+      "score": 100.0,
+      "ci95": [
+        77.2,
+        100.0
+      ]
+    }
+  },
+  "by_conversation": {
+    "0": {
+      "n": 45,
+      "score": 93.3
+    }
+  },
+  "mean_prompt_tokens_est": 5451,
+  "total_cost_usd": 2.71,
+  "retrieval_ms_p50": 72.9
+}

@@ -31,11 +31,35 @@ skill-driven `agent` ingest fills.
 
 ## Retrieval sweep (model-free, all 10 conversations, fastembed)
 
-| turns per chunk | k | evidence recall | multi-hop | temporal | open-domain | single-hop |
-| --- | --- | --- | --- | --- | --- | --- |
-| 4 | 20 | 0.876 | 0.688 | 0.919 | 0.579 | 0.956 |
-| 2 | 20 | 0.806 | 0.581 | 0.844 | 0.504 | 0.900 |
-| 2 | 40 | 0.879 | 0.712 | 0.914 | 0.587 | 0.955 |
+| turns per chunk | k | evidence recall | multi-hop | temporal | open-domain | single-hop | prompt tokens |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 4 | 20 | 0.876 | 0.688 | 0.919 | 0.579 | 0.956 | ~4,730 |
+| 2 | 20 | 0.806 | 0.581 | 0.844 | 0.504 | 0.900 | — |
+| 2 | 40 | 0.879 | 0.712 | 0.914 | 0.587 | 0.955 | — |
+| 3 | 30 | 0.894 | 0.727 | 0.930 | 0.624 | 0.965 | — |
+| **4** | **30** | **0.906** | 0.768 | 0.930 | 0.635 | 0.974 | **~6,130** |
+| 6 | 30 | 0.926 | 0.806 | 0.962 | 0.686 | 0.979 | ~8,180 |
+| 4 | 40 | 0.932 | 0.824 | 0.950 | 0.702 | 0.987 | ~7,500 |
+
+Retrieval budget, not ranking, is the binding constraint: every question saturates the chunk cap, and
+raising it lifts recall monotonically. **4 turns per chunk at k=30 is the reported default**: it beats the
+old k=20 on every category and still costs ~12% fewer prompt tokens than mem0's 6,956, so the comparison
+is not bought with context. k=40 scores higher (0.932) but spends ~8% more than mem0.
+
+Caveat on how far this transfers to the judged score: of 13 failures in the 160-question sample, only 3
+said the memories lacked the information; the other 10 answered confidently and wrong. Above ~90 the
+benchmark is dominated by answerer reasoning and by disputable LoCoMo gold answers, not by memory, so
+recall gains have a shrinking judged payoff.
+
+## Two-arm test: does the graph beat plain chunk retrieval?
+
+Same 45 questions (conversation 0, multi-hop + open-domain), same retrieval budget (k=30), same answerer
+and judge (claude-haiku-4-5). The only difference is ingest.
+
+| arm | ingest | graph built | score | multi-hop | open-domain |
+| --- | --- | --- | --- | --- | --- |
+| A | `chunks` (deterministic, no model) | 21 entities, 1 relation, 144 chunks | 93.3 | 90.6 | 100.0 |
+| B | `agent` (skill-driven `remember`) | 225 entities, 381 relations, 95 chunks | _running_ | | |
 
 Evidence recall tracks the judged score closely per category (open-domain 0.579 vs 60.9 judged), so this
 model-free benchmark is the tuning instrument and the judged run is the confirmation.

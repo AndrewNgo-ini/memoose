@@ -1,3 +1,7 @@
 turns=4 k=20 recall 0.876 {'multi-hop': 0.688, 'temporal': 0.919, 'open-domain': 0.579, 'single-hop': 0.956}
 turns=2 k=20 recall 0.806 {'multi-hop': 0.581, 'temporal': 0.844, 'open-domain': 0.504, 'single-hop': 0.9}
 turns=2 k=40 recall 0.879 {'multi-hop': 0.712, 'temporal': 0.914, 'open-domain': 0.587, 'single-hop': 0.955}
+turns=3 k=30 recall 0.894 {'multi-hop': 0.727, 'temporal': 0.93, 'open-domain': 0.624, 'single-hop': 0.965}
+turns=1 k=40 recall 0.819 {'multi-hop': 0.634, 'temporal': 0.867, 'open-domain': 0.541, 'single-hop': 0.894}
+turns=2 k=60 recall 0.913 {'multi-hop': 0.787, 'temporal': 0.943, 'open-domain': 0.65, 'single-hop': 0.973}
+turns=3 k=45 recall 0.923 {'multi-hop': 0.802, 'temporal': 0.96, 'open-domain': 0.677, 'single-hop': 0.976}

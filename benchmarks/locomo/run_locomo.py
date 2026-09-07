@@ -258,6 +258,7 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--limit", type=int, default=None, help="first N questions per conversation (pilot runs)")
     ap.add_argument("--sample", type=int, default=None, help="deterministic random sample of N questions per conversation (stratified estimate)")
+    ap.add_argument("--categories", type=int, nargs="*", default=None, help="restrict to these LoCoMo categories (1 multi-hop, 2 temporal, 3 open-domain, 4 single-hop)")
     ap.add_argument("--seed", type=int, default=0, help="sample seed")
     ap.add_argument("--reuse-rows-from", default=None, help="tag directory whose already-scored rows should be reused when they fall in the sample")
     ap.add_argument("--tag", default=None)
@@ -298,7 +299,8 @@ def main() -> None:
             log(f"[conv {ci}] ingested: {ingest_info['stats']}")
         last = max((parse_locomo_date(w) for _, w, _ in sessions_of(conv) if parse_locomo_date(w)), default=None)
         reference_date = last.strftime("%B %d, %Y") if last else "2023"
-        qa = [q for q in sample["qa"] if q["category"] in CATS]
+        wanted_cats = set(args.categories) if args.categories else set(CATS)
+        qa = [q for q in sample["qa"] if q["category"] in CATS and q["category"] in wanted_cats]
         if args.sample:
             rnd = random.Random(f"{args.seed}:{ci}")
             qa = sorted(rnd.sample(qa, min(args.sample, len(qa))), key=lambda q: q["category"])
@@ -340,7 +342,8 @@ def main() -> None:
     eng.close()
     total = summarize(all_rows)
     total.update({"tag": tag, "conversations": args.conv, "ingest": args.ingest, "k": args.k, "answerer": args.answerer, "judge": args.judge, "embedder": embedder.name,
-                  "sample_per_conversation": args.sample, "seed": args.seed if args.sample else None})
+                  "sample_per_conversation": args.sample, "seed": args.seed if args.sample else None,
+                  "categories": args.categories, "turns_per_chunk": args.turns_per_chunk if args.ingest == "chunks" else None})
     (out_dir / "summary.json").write_text(json.dumps(total, indent=2))
     print(json.dumps(total, indent=2))
 

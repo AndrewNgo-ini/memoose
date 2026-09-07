@@ -1,0 +1,147 @@
+{
+  "2": {
+    "result": "DONE 3",
+    "cost": 0.23462800000000003,
+    "wall_s": 94.7,
+    "turns": 6,
+    "error": false
+  },
+  "1": {
+    "result": "All 18 turns stored across 3 remember calls.\n\nDONE 3",
+    "cost": 0.27026880000000003,
+    "wall_s": 108.4,
+    "turns": 6,
+    "error": false
+  },
+  "3": {
+    "result": " a self-relation validation error, and another due to a missing entity).\n\nDONE 4",
+    "cost": 0.29485700000000004,
+    "wall_s": 121.0,
+    "turns": 8,
+    "error": false
+  },
+  "4": {
+    "result": "ave been stored across 4 remember calls (plus one supersede correction).\n\nDONE 4",
+    "cost": 0.30503179999999996,
+    "wall_s": 131.1,
+    "turns": 10,
+    "error": false
+  },
+  "5": {
+    "result": "DONE 3",
+    "cost": 0.1994616,
+    "wall_s": 76.1,
+    "turns": 6,
+    "error": false
+  },
+  "6": {
+    "result": "All 16 turns stored across three windows.\n\nDONE 3",
+    "cost": 0.21605219999999994,
+    "wall_s": 89.2,
+    "turns": 6,
+    "error": false
+  },
+  "7": {
+    "result": "rns stored across 5 remember calls (one retried due to ontology errors).\n\nDONE 6",
+    "cost": 0.34656500000000007,
+    "wall_s": 149.0,
+    "turns": 9,
+    "error": false
+  },
+  "8": {
+    "result": "All 39 turns have been stored across 7 remember calls.\n\nDONE 7",
+    "cost": 0.4033954,
+    "wall_s": 145.7,
+    "turns": 11,
+    "error": false
+  },
+  "9": {
+    "result": "DONE 3",
+    "cost": 0.2331306,
+    "wall_s": 97.5,
+    "turns": 5,
+    "error": false
+  },
+  "10": {
+    "result": "DONE 4",
+    "cost": 0.30360960000000004,
+    "wall_s": 116.6,
+    "turns": 10,
+    "error": false
+  },
+  "12": {
+    "result": "e just multiple distinct \"believes\"/\"created\" facts, not contradictions.\n\nDONE 4",
+    "cost": 0.2178642,
+    "wall_s": 81.0,
+    "turns": 7,
+    "error": false
+  },
+  "11": {
+    "result": "successful remember calls total, after 2 retries for validation errors).\n\nDONE 4",
+    "cost": 0.36458460000000004,
+    "wall_s": 146.6,
+    "turns": 10,
+    "error": false
+  },
+  "13": {
+    "result": "All turns stored across 3 remember calls.\n\nDONE 3",
+    "cost": 0.3597126,
+    "wall_s": 140.4,
+    "turns": 10,
+    "error": false
+  },
+  "14": {
+    "result": "or validation fixes, not counted as separate successful remember calls).\n\nDONE 6",
+    "cost": 0.5933564,
+    "wall_s": 243.5,
+    "turns": 16,
+    "error": false
+  },
+  "15": {
+    "result": "calls succeeded (with 2 requiring one retry each for entity-type fixes).\n\nDONE 7",
+    "cost": 0.3766944,
+    "wall_s": 137.4,
+    "turns": 11,
+    "error": false
+  },
+  "16": {
+    "result": "All 20 turns stored across 5 remember calls.\n\nDONE 5",
+    "cost": 0.2598546,
+    "wall_s": 92.6,
+    "turns": 7,
+    "error": false
+  },
+  "17": {
+    "result": "DONE 5",
+    "cost": 0.28507860000000007,
+    "wall_s": 102.8,
+    "turns": 8,
+    "error": false
+  },
+  "18": {
+    "result": " stored across 4 remember calls (one retried due to a validation error).\n\nDONE 4",
+    "cost": 0.2928018,
+    "wall_s": 100.0,
+    "turns": 9,
+    "error": false
+  },
+  "19": {
+    "result": "All 15 turns stored across 3 remember calls.\n\nDONE 3",
+    "cost": 0.23897040000000003,
+    "wall_s": 91.4,
+    "turns": 6,
+    "error": false
+  },
+  "seconds": 1144.0,
+  "stats": {
+    "entities": 225,
+    "relations": 381,
+    "superseded_relations": 1,
+    "chunks": 95,
+    "entity_types": 17,
+    "open_contradictions": 0,
+    "sessions": 0,
+    "lessons": 0,
+    "schema_version": 3
+  }
+}

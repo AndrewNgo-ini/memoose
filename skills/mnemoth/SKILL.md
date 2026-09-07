@@ -24,6 +24,11 @@ temporal, rules, session) and tells you which in `route`; pass `mode` to overrid
 for exact lexical search. Ask "when" for temporal ordering. Ask for rules or conventions to get
 session rules and lessons.
 
+`limit` is a budget, not a filter: recall returns at most that many items per channel, and benchmarking
+showed retrieval depth to be the usual reason an answer is missing. If the first results do not contain
+what you need, call `recall` again with a larger `limit` (30–40) or a different `mode` before concluding
+the memory is not there.
+
 Treat results as raw material. Synthesise the answer yourself. When a fact carries `evidence`
 (a file range, URL, or date) and the decision matters, re-check the evidence before acting on it.
 `contested: true` means an open contradiction touches the fact (see mnemoth-contradictions).

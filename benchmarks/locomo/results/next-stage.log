@@ -1,0 +1,8 @@
+=== ARM B (agent ingest, graph) ===
+{"n": 45, "score": 95.6, "ci95": [85.2, 98.8], "by_category": {"multi-hop": {"n": 32, "score": 96.9, "ci95": [84.3, 99.4]}, "open-domain": {"n": 13, "score": 92.3, "ci95": [66.7, 98.6]}}, "mean_prompt_tokens_est": 9654, "total_cost_usd": 3.25}
+=== ARM A (chunks, same questions) ===
+{"n": 45, "score": 93.3, "ci95": [82.1, 97.7], "by_category": {"multi-hop": {"n": 32, "score": 90.6, "ci95": [75.8, 96.8]}, "open-domain": {"n": 13, "score": 100.0, "ci95": [77.2, 100.0]}}, "mean_prompt_tokens_est": 5451, "total_cost_usd": 2.71}
+=== headline sample at tuned config (turns=4, k=30) ===
+[conv 0] ingest (chunks) ...
+[conv 0] ingested: {'entities': 21, 'relations': 1, 'superseded_relations': 0, 'chunks': 111, 'entity_types': 17, 'open_contradictions': 0, 'sessions': 0, 'lessons': 0, 'schema_version': 3}
+[conv 0] 16 questions, 16 to run, reference date October 22, 2023
