@@ -1,0 +1,592 @@
+{
+  "benchmark": "maintained-memory",
+  "embedder": "hash",
+  "model_calls": 0,
+  "summary": {
+    "overall": {
+      "cases": 18,
+      "cases_passed": 18,
+      "checks": 66,
+      "checks_passed": 66,
+      "case_score": 100.0,
+      "check_score": 100.0
+    },
+    "by_claim": {
+      "currency": {
+        "cases": 5,
+        "cases_passed": 5,
+        "checks": 16,
+        "checks_passed": 16,
+        "case_score": 100.0,
+        "check_score": 100.0
+      },
+      "history": {
+        "cases": 3,
+        "cases_passed": 3,
+        "checks": 12,
+        "checks_passed": 12,
+        "case_score": 100.0,
+        "check_score": 100.0
+      },
+      "conflict": {
+        "cases": 4,
+        "cases_passed": 4,
+        "checks": 16,
+        "checks_passed": 16,
+        "case_score": 100.0,
+        "check_score": 100.0
+      },
+      "provenance": {
+        "cases": 3,
+        "cases_passed": 3,
+        "checks": 10,
+        "checks_passed": 10,
+        "case_score": 100.0,
+        "check_score": 100.0
+      },
+      "reuse": {
+        "cases": 3,
+        "cases_passed": 3,
+        "checks": 12,
+        "checks_passed": 12,
+        "case_score": 100.0,
+        "check_score": 100.0
+      }
+    },
+    "negative_controls": {
+      "cases": 3,
+      "passed": 3
+    },
+    "failed": []
+  },
+  "results": [
+    {
+      "id": "currency/functional-supersedes",
+      "claim": "currency",
+      "asks": "Two owners in sequence: does recall name the second?",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "remember reported the supersession",
+          "ok": true,
+          "detail": "superseded=[{'relation_id': '9a2a1567-dbc7-591b-bc63-70b3cfa261af', 'superseded_by': '7f969912-f400-58ae-938f-e0b8f28f2e2e', 'reason': \"functional relation 'owned_by': newer assertion 7f969912-f400-58ae-938f-e0b8f28f2e2e replaces this one\"}]"
+        },
+        {
+          "name": "current owner is recalled",
+          "ok": true,
+          "detail": "['billing-service --owned_by--> Wei: billing-service is owned by Wei as of 2024-06-01.']"
+        },
+        {
+          "name": "previous owner is not recalled by default",
+          "ok": true,
+          "detail": "['billing-service --owned_by--> Wei: billing-service is owned by Wei as of 2024-06-01.']"
+        }
+      ],
+      "error": null,
+      "ms": 61.8
+    },
+    {
+      "id": "currency/three-generations-with-distractor",
+      "claim": "currency",
+      "asks": "Three owners over 13 months, and another service alongside: only the newest is current.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "newest owner is recalled",
+          "ok": true,
+          "detail": "['billing-service --owned_by--> Dana: billing-service is owned by Dana as of 2025-02-10.', 'search-service --owned_by--> Tomas: search-service is owned by Tomas as of 2024-01-15.']"
+        },
+        {
+          "name": "both earlier owners are gone from default recall",
+          "ok": true,
+          "detail": "['billing-service --owned_by--> Dana: billing-service is owned by Dana as of 2025-02-10.', 'search-service --owned_by--> Tomas: search-service is owned by Tomas as of 2024-01-15.']"
+        },
+        {
+          "name": "the distractor service kept its own owner",
+          "ok": true,
+          "detail": "['search-service --owned_by--> Tomas: search-service is owned by Tomas as of 2024-01-15.', 'billing-service --owned_by--> Dana: billing-service is owned by Dana as of 2025-02-10.']"
+        }
+      ],
+      "error": null,
+      "ms": 52.0
+    },
+    {
+      "id": "currency/non-functional-is-not-silently-picked",
+      "claim": "currency",
+      "asks": "A relation that legitimately holds many values must NOT be superseded.",
+      "negative": true,
+      "passed": true,
+      "checks": [
+        {
+          "name": "nothing was superseded",
+          "ok": true,
+          "detail": "superseded=[]"
+        },
+        {
+          "name": "both dependencies are still current",
+          "ok": true,
+          "detail": "['billing-service --depends_on--> Postgres: billing-service depends on Postgres.', 'billing-service --depends_on--> Redis: billing-service depends on Redis.']"
+        },
+        {
+          "name": "the multi-valued subject is raised as a hotspot to judge",
+          "ok": true,
+          "detail": "hotspots=1"
+        }
+      ],
+      "error": null,
+      "ms": 56.0
+    },
+    {
+      "id": "currency/explicit-supersede",
+      "claim": "currency",
+      "asks": "For a relation nobody declared functional, an explicit supersede must still take effect.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "both regions were current before the judgment",
+          "ok": true,
+          "detail": "['billing-service --deployed_in--> eu-west-1: billing-service is deployed in eu-west-1.', 'billing-service --deployed_in--> eu-central-1: billing-service is deployed in eu-central-1 after the migration.']"
+        },
+        {
+          "name": "supersede reported success",
+          "ok": true,
+          "detail": "{'dataset': 'maintained', 'superseded': True, 'old': '84d751eb-eb10-572f-b422-603c982b6098', 'new': '48c6e569-15ee-5708-8b69-7ce8282b0e9b'}"
+        },
+        {
+          "name": "the old region left default recall",
+          "ok": true,
+          "detail": "['billing-service --deployed_in--> eu-central-1: billing-service is deployed in eu-central-1 after the migration.']"
+        },
+        {
+          "name": "the new region stayed",
+          "ok": true,
+          "detail": "['billing-service --deployed_in--> eu-central-1: billing-service is deployed in eu-central-1 after the migration.']"
+        }
+      ],
+      "error": null,
+      "ms": 53.9
+    },
+    {
+      "id": "currency/late-arriving-old-fact",
+      "claim": "currency",
+      "asks": "An older fact learned late must not displace the newer one it predates.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "the 2025 owner is still the current one",
+          "ok": true,
+          "detail": "['billing-service --owned_by--> Dana: billing-service is owned by Dana as of 2025-02-10.']"
+        },
+        {
+          "name": "the backfilled 2024 owner is not current",
+          "ok": true,
+          "detail": "['billing-service --owned_by--> Dana: billing-service is owned by Dana as of 2025-02-10.']"
+        },
+        {
+          "name": "the backfilled fact was recorded as the superseded one",
+          "ok": true,
+          "detail": "superseded=[{'relation_id': '9a2a1567-dbc7-591b-bc63-70b3cfa261af', 'superseded_by': 'c980ea12-6dc8-53f9-a3fb-c1ff378bdd6a', 'reason': \"functional relation 'owned_by': c980ea12-6dc8-53f9-a3fb-c1ff378bdd6a states a later value (2025-02-10), so this fact is backfilled history\"}]"
+        }
+      ],
+      "error": null,
+      "ms": 63.3
+    },
+    {
+      "id": "history/superseded-still-retrievable",
+      "claim": "history",
+      "asks": "Ask for history and the replaced fact comes back, flagged and linked to its replacement.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "the first owner is retrievable on request",
+          "ok": true,
+          "detail": "['billing-service --owned_by--> Priya: billing-service is owned by Priya as of 2024-01-15.', 'billing-service --owned_by--> Dana: billing-service is owned by Dana as of 2025-02-10.', 'billing-service --owned_by--> Wei: billing-service is owned by Wei as of 2024-06-01.', 'search-service --owned_by--> Tomas: search-service is owned by Tomas as of 2024-01-15.']"
+        },
+        {
+          "name": "the middle owner is retrievable on request",
+          "ok": true,
+          "detail": "['billing-service --owned_by--> Priya: billing-service is owned by Priya as of 2024-01-15.', 'billing-service --owned_by--> Dana: billing-service is owned by Dana as of 2025-02-10.', 'billing-service --owned_by--> Wei: billing-service is owned by Wei as of 2024-06-01.', 'search-service --owned_by--> Tomas: search-service is owned by Tomas as of 2024-01-15.']"
+        },
+        {
+          "name": "replaced facts are flagged superseded",
+          "ok": true,
+          "detail": "priya=True wei=True"
+        },
+        {
+          "name": "each points at what replaced it",
+          "ok": true,
+          "detail": "superseded_by=c980ea12-6dc8-53f9-a3fb-c1ff378bdd6a"
+        },
+        {
+          "name": "the replaced facts kept their own evidence",
+          "ok": true,
+          "detail": "priya='handover doc 2024-01-15' wei='rota 2024-06-01'"
+        }
+      ],
+      "error": null,
+      "ms": 56.8
+    },
+    {
+      "id": "history/change-is-explained",
+      "claim": "history",
+      "asks": "The ledger says the fact was superseded, by which fact, and why.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "both handovers are in the ledger",
+          "ok": true,
+          "detail": "2 supersede events"
+        },
+        {
+          "name": "each supersession names its replacement",
+          "ok": true,
+          "detail": "['{\\'at\\': 1788801628.3501763, \\'actor\\': \\'host-model\\', \\'action\\': \\'supersede\\', \\'kind\\': \\'relation\\', \\'ref_id\\': \\'7f969912-f400-58ae-938f-e0b8f28f2e2e\\', \\'payload\\': {\\'relation_id\\': \\'7f969912-f400-58ae-938f-e0b8f28f2e2e\\', \\'superseded_by\\': \\'c980ea12-6dc8-53f9-a3fb-c1ff378bdd6a\\', \\'r"
+        },
+        {
+          "name": "each supersession carries a reason",
+          "ok": true,
+          "detail": "['{\\'at\\': 1788801628.3501763, \\'actor\\': \\'host-model\\', \\'action\\': \\'supersede\\', \\'kind\\': \\'relation\\', \\'ref_id\\': \\'7f969912-f400-58ae-938f-e0b8f28f2e2e\\', \\'payload\\': {\\'relation_id\\': \\'7f969912-f400-58ae-938f-e0b8f28f2e2e\\', \\'superseded_by\\': \\'c980ea12-6dc8-53f9-a3fb-c1ff378bdd6a\\', \\'r"
+        },
+        {
+          "name": "the ledger is ordered newest first",
+          "ok": true,
+          "detail": "out of order"
+        }
+      ],
+      "error": null,
+      "ms": 66.7
+    },
+    {
+      "id": "history/nothing-true-is-deleted",
+      "claim": "history",
+      "asks": "After two handovers, all three facts are still stored.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "all four ownership facts are still in the store",
+          "ok": true,
+          "detail": "current=2 superseded=2"
+        },
+        {
+          "name": "the two replaced facts are held as superseded, not dropped",
+          "ok": true,
+          "detail": "superseded=2"
+        },
+        {
+          "name": "all three billing-service owners are recoverable",
+          "ok": true,
+          "detail": "owners=['Dana', 'Priya', 'Wei']"
+        }
+      ],
+      "error": null,
+      "ms": 61.4
+    },
+    {
+      "id": "conflict/hotspot-surfaced",
+      "claim": "conflict",
+      "asks": "Two sources give different answers to the same question: is the clash offered up?",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "remember warned that a subject now holds two values",
+          "ok": true,
+          "detail": "['1 subject(s) now hold several values for one relation; run contradiction_candidates and judge them.']"
+        },
+        {
+          "name": "the clash is offered as a hotspot",
+          "ok": true,
+          "detail": "1 hotspots: ['billing-service --charges_through']"
+        },
+        {
+          "name": "the hotspot groups both competing values",
+          "ok": true,
+          "detail": "targets=['Adyen', 'Stripe']"
+        },
+        {
+          "name": "the hotspot carries each side's evidence so it can be judged",
+          "ok": true,
+          "detail": "['ARCHITECTURE.md#payments', 'repo://src/billing/gateway.py#L12-L40']"
+        }
+      ],
+      "error": null,
+      "ms": 61.6
+    },
+    {
+      "id": "conflict/contested-after-judgment",
+      "claim": "conflict",
+      "asks": "Once judged incompatible, both facts come back marked contested rather than one being hidden.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "the contradiction was recorded",
+          "ok": true,
+          "detail": "{'dataset': 'maintained', 'contradiction_id': '691ad779-401b-5101-9265-610d8106f0cb', 'contradicts_edge': None}"
+        },
+        {
+          "name": "neither side was hidden",
+          "ok": true,
+          "detail": "['billing-service --charges_through--> Stripe: billing-service charges customers through Stripe.', 'billing-service --charges_through--> Adyen: billing-service charges customers through Adyen.']"
+        },
+        {
+          "name": "both sides are marked contested",
+          "ok": true,
+          "detail": "stripe=True adyen=True"
+        },
+        {
+          "name": "it stays on the open list until someone decides",
+          "ok": true,
+          "detail": "1 open"
+        },
+        {
+          "name": "the reason is stored with it",
+          "ok": true,
+          "detail": "['the code and the architecture doc name different payment gateways; both claim to be current']"
+        }
+      ],
+      "error": null,
+      "ms": 59.4
+    },
+    {
+      "id": "conflict/compatible-facts-are-not-flagged",
+      "claim": "conflict",
+      "asks": "Facts that merely differ must not be reported as a clash.",
+      "negative": true,
+      "passed": true,
+      "checks": [
+        {
+          "name": "no hotspot from three compatible facts",
+          "ok": true,
+          "detail": "hotspots=[]"
+        },
+        {
+          "name": "no warning about multiple values",
+          "ok": true,
+          "detail": "[]"
+        },
+        {
+          "name": "nothing is contested",
+          "ok": true,
+          "detail": "[]"
+        }
+      ],
+      "error": null,
+      "ms": 58.6
+    },
+    {
+      "id": "conflict/resolved-by-supersede",
+      "claim": "conflict",
+      "asks": "When the clash turns out to be a change over time, resolving it closes the contradiction.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "the contradiction is no longer open",
+          "ok": true,
+          "detail": "0 open"
+        },
+        {
+          "name": "the surviving fact is current",
+          "ok": true,
+          "detail": "['billing-service --charges_through--> Adyen: billing-service charges customers through Adyen since the 2025 migration.']"
+        },
+        {
+          "name": "the surviving fact is no longer contested",
+          "ok": true,
+          "detail": "contested=False"
+        },
+        {
+          "name": "the replaced fact left default recall",
+          "ok": true,
+          "detail": "['billing-service --charges_through--> Adyen: billing-service charges customers through Adyen since the 2025 migration.']"
+        }
+      ],
+      "error": null,
+      "ms": 68.9
+    },
+    {
+      "id": "provenance/evidence-survives-recall",
+      "claim": "provenance",
+      "asks": "Every recalled fact can say where it came from.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "every recalled fact carries evidence",
+          "ok": true,
+          "detail": "{'Postgres': 'docs/adr/0007-postgres.md', 'billing-service': 'rota 2024-01-15'}"
+        },
+        {
+          "name": "the evidence is the pointer that was stored, verbatim",
+          "ok": true,
+          "detail": "{'Postgres': 'docs/adr/0007-postgres.md', 'billing-service': 'rota 2024-01-15'}"
+        },
+        {
+          "name": "a file-range pointer survived intact",
+          "ok": true,
+          "detail": "{'Postgres': 'docs/adr/0007-postgres.md', 'billing-service': 'rota 2024-01-15'}"
+        }
+      ],
+      "error": null,
+      "ms": 59.9
+    },
+    {
+      "id": "provenance/ledger-names-actor-and-action",
+      "claim": "provenance",
+      "asks": "The ledger can answer who wrote this fact, when, and as what kind of change.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "the write is in the ledger",
+          "ok": true,
+          "detail": "2 events"
+        },
+        {
+          "name": "the entity's creation is recorded",
+          "ok": true,
+          "detail": "['assert', 'create']"
+        },
+        {
+          "name": "the fact's assertion is recorded",
+          "ok": true,
+          "detail": "['assert', 'create']"
+        },
+        {
+          "name": "every event names an actor",
+          "ok": true,
+          "detail": "['host-model', 'host-model']"
+        },
+        {
+          "name": "every event is timestamped",
+          "ok": true,
+          "detail": "[1788801628.7697744, 1788801628.7694323]"
+        }
+      ],
+      "error": null,
+      "ms": 48.0
+    },
+    {
+      "id": "provenance/evidence-is-not-invented",
+      "claim": "provenance",
+      "asks": "A fact stored without a source must not come back with one.",
+      "negative": true,
+      "passed": true,
+      "checks": [
+        {
+          "name": "the fact is recalled",
+          "ok": true,
+          "detail": "['Priya --owns--> billing-service: Priya owns billing-service.']"
+        },
+        {
+          "name": "its evidence is empty, not fabricated",
+          "ok": true,
+          "detail": "evidence=None"
+        }
+      ],
+      "error": null,
+      "ms": 48.4
+    },
+    {
+      "id": "reuse/lesson-returns-in-next-session",
+      "claim": "reuse",
+      "asks": "A later session is handed the earlier session's rule without asking.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "the new session is new",
+          "ok": true,
+          "detail": "True"
+        },
+        {
+          "name": "standing context arrives unprompted",
+          "ok": true,
+          "detail": "2 entries"
+        },
+        {
+          "name": "the rule from the earlier session is in it",
+          "ok": true,
+          "detail": "Every Stripe webhook handler in billing-service must be idempotent, keyed on the Stripe event id. Prefer structured logging over print in search-service."
+        },
+        {
+          "name": "rules and preferences both carry over",
+          "ok": true,
+          "detail": "['preferences', 'rules']"
+        },
+        {
+          "name": "the distilled lesson is offered too",
+          "ok": true,
+          "detail": "['Stripe webhooks retry, so handlers must be idempotent']"
+        }
+      ],
+      "error": null,
+      "ms": 42.8
+    },
+    {
+      "id": "reuse/lesson-ranks-for-the-work-at-hand",
+      "claim": "reuse",
+      "asks": "Asked about the thing the lesson is about, the lesson ranks first.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "the Stripe rule ranks first for the Stripe question",
+          "ok": true,
+          "detail": "Every Stripe webhook handler in billing-service must be idempotent, keyed on the Stripe event id."
+        },
+        {
+          "name": "the logging rule ranks first for the logging question",
+          "ok": true,
+          "detail": "Prefer structured logging over print in search-service."
+        },
+        {
+          "name": "the lesson text is returned alongside the rules",
+          "ok": true,
+          "detail": "['Stripe redelivers webhooks on any non-2xx reply. Key the han']"
+        },
+        {
+          "name": "the lesson keeps its evidence",
+          "ok": true,
+          "detail": "['session-alpha, double-charge incident']"
+        }
+      ],
+      "error": null,
+      "ms": 70.7
+    },
+    {
+      "id": "reuse/lesson-is-linked-into-the-graph",
+      "claim": "reuse",
+      "asks": "The lesson is reachable from the thing it applies to, not only from the session that made it.",
+      "negative": false,
+      "passed": true,
+      "checks": [
+        {
+          "name": "the lesson is linked to what it applies to",
+          "ok": true,
+          "detail": "[\"Stripe webhooks retry, so handlers must be idempotent --applies_to--> Stripe: Lesson 'Stripe webhooks retry, so handlers must be idempotent' applies to Stripe.\", 'billing-service --charges_through--> Stripe: billing-service charges customers through Stripe.', \"Stripe webhooks retry, so handlers mu"
+        },
+        {
+          "name": "walking out from billing-service reaches the lesson",
+          "ok": true,
+          "detail": "['Stripe', 'Stripe webhooks retry, so handlers must be idempotent', 'billing-service', 'search-service']"
+        },
+        {
+          "name": "the link carries the lesson's evidence",
+          "ok": true,
+          "detail": "['session-alpha, double-charge incident', 'session-alpha, double-charge incident']"
+        }
+      ],
+      "error": null,
+      "ms": 64.6
+    }
+  ]
+}

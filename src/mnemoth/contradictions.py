@@ -57,18 +57,40 @@ GUIDANCE = (
 )
 
 
+def states_later_value(a: RelationRow, b: RelationRow) -> bool:
+    """True when `a` describes a later state of the world than `b`.
+
+    `valid_from` decides it when both facts carry one, because facts are not always learned
+    in the order they became true: a project's history is routinely backfilled long after the
+    present is known. Only when a date is missing does write order stand in for it, and an
+    undated arrival is presumed current. Equal write times fall to the arriving fact, so the
+    ordinary "assert the new owner" path is unchanged.
+    """
+    if a.valid_from and b.valid_from and a.valid_from != b.valid_from:
+        return a.valid_from > b.valid_from
+    return bool(a.updated_at and b.updated_at) and a.updated_at > b.updated_at
+
+
 def apply_functional_supersession(store: SqliteStore, new_rel: RelationRow, functional: set[str]) -> list[dict]:
-    """If new_rel's name is functional, supersede older non-superseded targets of the same subject."""
+    """If new_rel's name is functional, keep exactly one current value for the subject.
+
+    Usually the arriving fact wins and the stored one becomes history. When the stored fact
+    states a later value, the arriving one is backfilled history and is superseded instead —
+    so learning the past does not overwrite the present. Nothing is deleted either way.
+    """
     if new_rel.name not in functional:
         return []
     superseded = []
     for old in store.relations_from(new_rel.source_id, new_rel.name):
         if old.id == new_rel.id or old.superseded:
             continue
-        if old.updated_at > new_rel.updated_at and new_rel.updated_at:
-            continue  # the stored one is newer; keep it
-        reason = f"functional relation {new_rel.name!r}: newer assertion {new_rel.id} replaces this one"
-        if store.supersede(old.id, new_rel.id, reason):
-            store.resolve_contradiction(old.id, f"superseded_by:{new_rel.id}")
-            superseded.append({"relation_id": old.id, "superseded_by": new_rel.id, "reason": reason})
+        if states_later_value(old, new_rel):
+            loser, winner = new_rel, old
+            reason = f"functional relation {new_rel.name!r}: {old.id} states a later value ({old.valid_from or 'later assertion'}), so this fact is backfilled history"
+        else:
+            loser, winner = old, new_rel
+            reason = f"functional relation {new_rel.name!r}: newer assertion {new_rel.id} replaces this one"
+        if store.supersede(loser.id, winner.id, reason):
+            store.resolve_contradiction(loser.id, f"superseded_by:{winner.id}")
+            superseded.append({"relation_id": loser.id, "superseded_by": winner.id, "reason": reason})
     return superseded
