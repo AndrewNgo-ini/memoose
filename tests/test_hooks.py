@@ -353,3 +353,34 @@ def test_capture_prompt_pins_the_dataset(tmp_path):
                  {"MNEMOTH_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"})
     assert r.returncode == 0
     assert f'dataset: "{_common.dataset_name(str(proj))}"' in stdin.read_text()
+
+
+def test_recommend_never_hints_a_superseded_fact(tmp_path):
+    """`recall` drops superseded facts by default; the hint must too.
+
+    Supersession only flips a column — the fts row survives — so a hint built straight off
+    the index will hand the agent the fact that was *replaced*, before it has thought about
+    anything, which is worse than a stale `recall` the agent chose to make.
+    """
+    data, proj = tmp_path / "data", tmp_path / "proj"
+    proj.mkdir()
+    eng = Engine(embedder=HashEmbedder(), data_dir=data)
+    ds = eng.dataset(_common.dataset_name(str(proj)))
+    old = ds.remember(
+        [EntityIn(name="billing-service", type="System", description="Handles invoices."),
+         EntityIn(name="eu-west-1", type="Place", description="An AWS region."),
+         EntityIn(name="eu-central-1", type="Place", description="An AWS region.")],
+        [RelationIn(source="billing-service", name="deployed_in", target="eu-west-1",
+                    description="billing-service is deployed in eu-west-1.", evidence="terraform 2024-03")],
+    )["relations"][0]["id"]
+    new = ds.remember([], [RelationIn(source="billing-service", name="deployed_in", target="eu-central-1",
+                                      description="billing-service is deployed in eu-central-1 after the migration.",
+                                      evidence="terraform 2025-01")])["relations"][0]["id"]
+    assert ds.supersede(old, new, "migrated in January 2025")["superseded"] is True
+    eng.close()
+
+    r = run_hook("recommend.py", {"cwd": str(proj), "prompt": "where is the billing-service deployed right now?"},
+                 {"MNEMOTH_DATA_DIR": str(data)})
+    ctx = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "eu-central-1" in ctx, "the current fact must still be hinted"
+    assert "eu-west-1" not in ctx, "a superseded fact must never be injected as if it were current"

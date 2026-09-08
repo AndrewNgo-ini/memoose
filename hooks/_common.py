@@ -159,7 +159,18 @@ _WORD = re.compile(r"[A-Za-z0-9_]+")
 
 
 def search_memory(conn: sqlite3.Connection, query: str, limit: int = 5) -> list[dict]:
-    """Top memory rows matching `query`, ranked by bm25. Milliseconds, and no model involved."""
+    """Top *current* memory rows matching `query`, ranked by bm25. Milliseconds, no model.
+
+    Superseded relations are excluded, because `supersede` only flips a column and leaves the
+    fts row in place: without this filter a replaced fact still matches, often above the fact
+    that replaced it, and gets pushed at the agent as current before it has thought about
+    anything. `recall` drops them by default (`retrieval.py`) and so must every hook.
+
+    The exclusion is applied in Python rather than in the SQL, because hooks open the store
+    read-only and therefore never migrate it: on a store written before the `superseded`
+    column existed, a WHERE clause naming it would throw and silence memory completely.
+    `superseded_ids` already degrades to an empty set there.
+    """
     toks = [t for t in _WORD.findall(query) if len(t) > 2 and t.casefold() not in _STOP]
     if not toks:
         return []
@@ -172,10 +183,11 @@ def search_memory(conn: sqlite3.Connection, query: str, limit: int = 5) -> list[
         ).fetchall()
     except sqlite3.Error:
         return []
+    stale = superseded_ids(conn)
     out, seen = [], set()
     for r in rows:
         text = " ".join((r["text"] or "").split())
-        if not text or text in seen:
+        if not text or text in seen or r["ref_id"] in stale:
             continue
         seen.add(text)
         out.append({"kind": r["kind"], "text": text, "score": -float(r["rank"])})
