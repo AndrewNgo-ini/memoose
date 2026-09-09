@@ -99,18 +99,22 @@ at all. Designing one other systems can run is
 <a href="https://github.com/AndrewNgo-ini/mnemoth#roadmap">on the roadmap</a>; scoring ourselves on an
 eval of our own making would prove nothing, so we publish no number for it.</p>
 
-<h3>What the standard benchmark says</h3>
-<p>On LoCoMo, the standard conversational-memory benchmark, run under mem0's protocol with their
-answerer and judge prompts vendored verbatim: <strong>91.9</strong> (95% CI 86.6&ndash;95.2) against
-mem0's published <strong>92.5</strong>, using <strong>4,728 prompt tokens against their 6,956</strong>
-and a much smaller answerer. That is parity, not a win, and two results are worth stating plainly: the
-knowledge graph does <em>not</em> beat plain chunk retrieval there (paired McNemar p&nbsp;=&nbsp;1.00)
-at 77% more tokens, and raising the retrieval budget lifts evidence recall without lifting the judged
-score.</p>
-<p>That is not a defect; it is a statement about the benchmark. LoCoMo asks needle questions over
+<h3>What we measured</h3>
+<p>On LoCoMo, the standard benchmark for conversational memory &mdash; a model answers from whatever
+the memory system retrieves, and a second model grades the answer &mdash; Memoose scores
+<strong>90.4</strong> (95% CI 88.8&ndash;91.8) at <strong>4,699 mean prompt tokens</strong> across all
+1,540 questions, run under mem0&rsquo;s protocol with their answerer and judge prompts verbatim.</p>
+<p>By category: single-hop 93.5, temporal 89.7, multi-hop 88.7, open-domain 70.8 &mdash; the last of
+these being the weak one, where the gold answer is a name or a place living in a single turn that
+never reaches the retrieved context. The answerer and judge are both Claude Haiku 4.5, smaller than
+the models other published scores use, and swapping the answerer moves a score more than swapping the
+memory system does: read it as what Memoose does on a small model.</p>
+<p>Two findings from those runs cut against us and are published anyway: the knowledge graph does
+<em>not</em> beat plain chunk retrieval there (paired McNemar p&nbsp;=&nbsp;1.00) at 77% more tokens,
+and raising the retrieval budget does not lift the score. LoCoMo asks needle questions over
 conversations that fit in a context window, so chunk retrieval finds the needles and the answering
-model does the joining. It never asks whether a changed fact is still current, or where a claim came
-from, which is what this page is about.</p>
+model does the joining. It never asks whether a changed fact is still current, which is what this
+page is about.</p>
 
 <footer class="page-foot">
   <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>

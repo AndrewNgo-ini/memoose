@@ -20,6 +20,7 @@ query embedding (7 ms measured), not retrieval.
 
 | run | conversations | ingest | k | answerer | judge | n | score | multi-hop | temporal | open-domain | single-hop | mean prompt tokens | cost |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **full-haiku-k20** | **all 10 (all questions)** | chunks (no model) | 20 | claude-haiku-4-5 | claude-haiku-4-5 | **1540** | **90.4** (95% CI 88.8–91.8) | 88.7 | 89.7 | 70.8 | 93.5 | 4,699 | $88.55 |
 | pilot-chunks-k20-haiku | 0 | chunks (no model) | 20 | claude-haiku-4-5 | claude-haiku-4-5 | 152 | **94.7** | 90.6 | 100.0 | 100.0 | 92.9 | 4,941 | $8.34 |
 | sample16-chunks-k20-haiku | all 10 (16 sampled each, seed 1) | chunks (no model) | 20 | claude-haiku-4-5 | claude-haiku-4-5 | 160 | **91.9** (95% CI 86.6–95.2) | 92.6 | 96.9 | 66.7 | 93.3 | 4,728 | $8.61 |
 | full-chunks-k20-haiku (partial, conv 0–4) | 0–4 | chunks (no model) | 20 | claude-haiku-4-5 | claude-haiku-4-5 | 676 | 90.2 | 88.7 | 94.9 | 60.9 | 92.8 | ~4,700 | — |
@@ -28,7 +29,12 @@ query embedding (7 ms measured), not retrieval.
 Published (all 10 conversations): mem0 2026 92.5 (top-200, gpt-4o class), Zep 75.1, full-context ~73, mem0 2025 66.9.
 mem0 per-category (avg top_10–200): single-hop 91.2, multi-hop 91.3, temporal 92.0, open-domain 72.7, mean 6,956 prompt tokens.
 
-**Read**: the stratified 160-question sample puts memoose level with mem0 overall (91.9 vs 92.5, inside the
+**Read**: the full 1,540-question run scores **90.4** with a 3-point interval, and supersedes the earlier
+160-question sample, which read 91.9 — optimistic by 1.5 points because the draw over-weighted the easier
+early conversations. Per conversation the full run spans 86.5 to 96.3. Open-domain, at 70.8 over 96
+questions, is now measured well enough to state plainly as the weak category rather than as sampling noise.
+
+**Superseded read** (160-question sample): the stratified sample put memoose level with mem0 overall (91.9 vs 92.5, inside the
 interval) while showing 32% fewer prompt tokens, ahead on temporal and single-hop, behind only on
 open-domain. Open-domain failures are needle retrieval misses (a gold such as "Jo", "Indiana", or
 "Nintendo Switch" lives in one turn that never surfaces): every question saturates the 20-chunk cap, so the

@@ -1,12 +1,22 @@
 # Benchmarks
 
-We report LoCoMo, the standard conversational-memory benchmark, because it is the one number that
-puts memoose on the same axis as mem0, Zep and the published baselines.
+Everything here runs against LoCoMo, the standard conversational-memory benchmark, in two tiers.
 
-| suite | asks | model | wall time | cost |
-| --- | --- | --- | --- | --- |
-| `locomo/run_locomo.py` | end-to-end judged answer accuracy | answerer + judge | ~1.5 h | ~$9 |
-| `locomo/retrieval_bench.py` | does the gold evidence come back (recall@k) | none | ~5 min | $0 |
+| suite | asks | model | wall time | cost | run when |
+| --- | --- | --- | --- | --- | --- |
+| `locomo/retrieval_bench.py` | does the gold evidence come back (recall@k) | none | ~5 min | $0 | every change |
+| `locomo/run_locomo.py` | end-to-end judged answer accuracy | answerer + judge | hours | ~$85 full, ~$9 sampled | rarely |
+
+**The judged score is the full 1,540 questions** — `full-haiku-k20`, September 2026, 90.4 at 4,699
+mean prompt tokens, $88.55. It is not re-run on every change: the model-free retrieval benchmark is
+what catches a retrieval regression between commits, at $0 and five minutes.
+
+The consequence for reading these numbers: **every published memory-system score is LLM-as-judge**,
+so recall@k lines up against nobody and exists only to catch our regressions. The judged score is
+comparable in kind, but ours is sampled and uses a smaller answerer than the systems it sits beside,
+and the 2026 LoCoMo leaderboard is mostly self-reported claims on differing model stacks — ZeroMemory
+96.1 and Zep 94.7 are both above us and both unverified, and third-party testing put Zep at 75.1 on
+the same benchmark. Neither of our numbers is a claim to have won anything.
 
 LoCoMo asks *can you find a fact that was stated once*. It does not ask whether a body of facts stays
 trustworthy as it changes — a fact was revised, two sources disagree, where did this come from — which
@@ -36,8 +46,12 @@ CORRECT.
 
 | system | overall | notes |
 | --- | --- | --- |
+| ZeroMemory | 96.1 | self-reported, unverified |
+| Zep (vendor claim) | 94.7 | self-reported |
 | mem0 (2026 algorithm, top-200) | 92.5 | mem0's own harness, gpt-4o class answerer |
-| Zep | 75.1 | Zep's re-run of the mem0 study |
+| ByteRover | 92.2 / 96.1 | vendor published conflicting figures |
+| Dakera | 88.2 | self-reported, no LLM reranking |
+| Zep (third-party) | 75.1 | independently tested on the same benchmark |
 | full-context baseline | ~73 | whole conversation in the prompt |
 | mem0 graph (2025) | ~68 | mem0 paper |
 | mem0 (2025) | 66.9 | mem0 paper |

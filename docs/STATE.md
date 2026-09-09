@@ -85,7 +85,10 @@ Protocol: LoCoMo under mem0's memory-benchmarks methodology, with mem0's answere
 vendored verbatim, Claude Code as the host model. Numbers and tables live in
 `benchmarks/locomo/RESULTS.md`; how to run it lives in `benchmarks/SETUP.md`.
 
-1. **Parity, not superiority.** 91.9 on a 160-question stratified sample (95% CI 86.6–95.2) against
+1. **Full run: 90.4** on all 1,540 questions (95% CI 88.8–91.8), 4,699 mean prompt tokens, $88.55,
+   Haiku answerer and judge — single-hop 93.5, temporal 89.7, multi-hop 88.7, open-domain 70.8. It
+   supersedes the sampled figure below, which was optimistic by 1.5 points.
+1. **Superseded — the sample.** 91.9 on a 160-question stratified sample (95% CI 86.6–95.2) against
    mem0's published 92.5 on the full 1,540, using 32% fewer prompt tokens (4,728 vs 6,956) and a much
    smaller answerer (Claude Haiku 4.5 vs a GPT-4o-class stack). Ahead on temporal (96.9 vs 92.0) and
    single-hop (93.3 vs 91.2), behind on open-domain (66.7 vs 72.7).

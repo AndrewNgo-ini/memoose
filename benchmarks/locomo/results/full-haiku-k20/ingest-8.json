@@ -1,0 +1,15 @@
+{
+  "chunks": 136,
+  "seconds": 2.6,
+  "stats": {
+    "entities": 27,
+    "relations": 1,
+    "superseded_relations": 0,
+    "chunks": 136,
+    "entity_types": 17,
+    "open_contradictions": 0,
+    "sessions": 0,
+    "lessons": 0,
+    "schema_version": 3
+  }
+}

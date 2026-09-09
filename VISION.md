@@ -87,8 +87,8 @@ body of facts trustworthy for months: who owns what now, which decision replaced
 convention this team follows, what we learned last time and why.
 
 That framing came out of benchmarking, not before it. On LoCoMo, the standard conversational-memory
-benchmark, memoose scores at parity with mem0 using a third fewer tokens and a much smaller model —
-but a controlled paired test showed our knowledge graph does **not** beat plain chunk retrieval
+benchmark, memoose scored 91.9 on a sample at 4,728 prompt tokens — but a controlled paired test
+showed our knowledge graph does **not** beat plain chunk retrieval
 there (McNemar p = 1.00), at 77% more tokens. That is not a defect; it is a statement about the
 benchmark. LoCoMo asks needle questions over conversations that fit in a context window, so chunk
 retrieval finds the needles and the answering model does the joining. It never asks the questions a
@@ -133,8 +133,8 @@ Ingesting audio and images. Replacing the host's own context management. Winning
 
 ## Roadmap
 
-**Done.** The LoCoMo headline sample at parity (91.9 vs mem0's 92.5, at a third fewer tokens on a
-much smaller model).
+**Done.** A LoCoMo judged run: 91.9 correct at 4,728 mean prompt tokens, on a 160-question stratified
+sample with a Haiku answerer. Measured once, not re-run on every change.
 
 **Now.** Propose an eval for maintained memory that other systems can run — a fact was revised, two
 sources disagree, where did this come from — since no published benchmark asks it and a suite only we

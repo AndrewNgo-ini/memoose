@@ -1,0 +1,51 @@
+{
+  "n": 152,
+  "score": 94.1,
+  "ci95": [
+    89.1,
+    96.9
+  ],
+  "by_category": {
+    "multi-hop": {
+      "n": 32,
+      "score": 90.6,
+      "ci95": [
+        75.8,
+        96.8
+      ]
+    },
+    "temporal": {
+      "n": 37,
+      "score": 97.3,
+      "ci95": [
+        86.2,
+        99.5
+      ]
+    },
+    "open-domain": {
+      "n": 13,
+      "score": 100.0,
+      "ci95": [
+        77.2,
+        100.0
+      ]
+    },
+    "single-hop": {
+      "n": 70,
+      "score": 92.9,
+      "ci95": [
+        84.3,
+        96.9
+      ]
+    }
+  },
+  "by_conversation": {
+    "0": {
+      "n": 152,
+      "score": 94.1
+    }
+  },
+  "mean_prompt_tokens_est": 4942,
+  "total_cost_usd": 8.64,
+  "retrieval_ms_p50": 11.1
+}

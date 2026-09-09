@@ -202,32 +202,43 @@ Output is compact text; `--json` gives the exact MCP payload, and anything over 
 
 # Benchmarks
 
-LoCoMo is the standard conversational-memory benchmark and the only number that puts Memoose on the
-same axis as everyone else: 10 long conversations, 1,540 scored questions, run under mem0's protocol
-with their answerer and judge prompts verbatim, so the memory system is the only variable.
+Memoose has no model of its own, so what it scores is inseparable from the model driving it. That is
+the design, not a caveat: the library holds only what is deterministic, and every judgment runs on
+the host's model, with bookkeeping delegated to a small one. So the number we report is the one that
+matches how Memoose is meant to run — **a small, fast model throughout**.
 
-| system | score |
-| --- | --- |
-| mem0 (2026 algorithm, top-200) | 92.5 |
-| **Memoose** | **91.9** (95% CI 86.6–95.2, 160-question stratified sample) |
-| Zep | 75.1 |
-| full-context baseline (no memory) | ~73 |
-| mem0 (2025 paper) | 66.9 |
+LoCoMo is the standard benchmark for conversational memory: long multi-session conversations, then
+questions about what was said. A model answers from whatever the memory system retrieves, and a
+second model grades the answer. Run under mem0's protocol with their answerer and judge prompts
+verbatim, so the memory system is the only thing that differs.
 
-Parity, not a win — and reached at **4,728 prompt tokens against mem0's 6,956**, with a much smaller
-answering model. Ahead on temporal (96.9 vs 92.0) and single-hop (93.3 vs 91.2), behind on
-open-domain (66.7 vs 72.7).
+### Self-reported score — Claude Haiku 4.5
 
-Two results worth stating plainly, both from our own runs: the knowledge graph does **not** beat
-plain chunk retrieval on LoCoMo (paired McNemar p = 1.00) at 77% more tokens, and raising the
-retrieval budget lifts evidence recall without lifting the judged score. LoCoMo asks needle questions
-over conversations that fit in a context window, so chunk retrieval finds the needles and the
-answering model does the joining.
+**90.4% correct** on all 1,540 questions, at **4,699 mean prompt tokens**.
 
-Model-free retrieval (evidence recall@k=20, all 10 conversations): **0.876** with local embeddings,
-**0.804** with the keyless hashed fallback.
+| category | questions | score |
+| --- | --- | --- |
+| single-hop | 841 | 93.5 |
+| temporal | 321 | 89.7 |
+| multi-hop | 282 | 88.7 |
+| open-domain | 96 | 70.8 |
 
-Full tables in [`benchmarks/README.md`](./benchmarks/README.md), reproduction steps in
+The full benchmark, run September 2026 — every conversation, every scored question, no sampling.
+Answerer and judge are both Haiku 4.5. Other published scores use larger answering models, and
+swapping the answerer moves a score more than swapping the memory system does, so read this as *what
+Memoose does on a small model* rather than as a like-for-like ranking. Running well on a cheap model
+is the target, not a compromise.
+
+Open-domain is the weak category and the full run makes that unambiguous: those golds are single
+turns holding a name or a place that never reach the retrieved context.
+
+Two findings from those runs that cut against us, published anyway: the knowledge graph does **not**
+beat plain chunk retrieval on LoCoMo (paired McNemar p = 1.00) and costs 77% more tokens, and raising
+the retrieval budget does not lift the score. LoCoMo asks needle questions over conversations that
+fit in a context window, so it does not test what a graph is for.
+
+Protocol, full tables, what other systems report, and the raw per-question rows are in
+**[`benchmarks/`](./benchmarks/README.md)**; setup and the operational traps are in
 [`benchmarks/SETUP.md`](./benchmarks/SETUP.md).
 
 # Learn More
