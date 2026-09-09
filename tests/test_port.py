@@ -2,9 +2,9 @@
 
 import pytest
 
-from mnemoth.models import CrossConnectIn, EntityIn, LessonIn, RelationIn
-from mnemoth.ontology import OntologyError
-from mnemoth.retrieval import route
+from memoose.models import CrossConnectIn, EntityIn, LessonIn, RelationIn
+from memoose.ontology import OntologyError
+from memoose.retrieval import route
 
 E = EntityIn
 R = RelationIn

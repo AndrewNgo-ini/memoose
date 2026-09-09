@@ -1,12 +1,12 @@
 ---
 name: memory-keeper
-description: Store or maintain project memory with mnemoth without spending the main model's turns on it. Use when a conversation produced facts worth keeping, when a task ends, or to run mnemoth maintenance (distil a session into lessons, cross-connect entities, consolidate duplicates, refresh summaries).
+description: Store or maintain project memory with memoose without spending the main model's turns on it. Use when a conversation produced facts worth keeping, when a task ends, or to run memoose maintenance (distil a session into lessons, cross-connect entities, consolidate duplicates, refresh summaries).
 model: haiku
 maxTurns: 30
-tools: mcp__mnemoth__describe_ontology, mcp__mnemoth__add_entity_type, mcp__mnemoth__remember, mcp__mnemoth__recall, mcp__mnemoth__contradiction_candidates, mcp__mnemoth__mark_contradiction, mcp__mnemoth__supersede, mcp__mnemoth__merge_entities, mcp__mnemoth__cross_connect, mcp__mnemoth__memify_candidates, mcp__mnemoth__set_bucket_summary, mcp__mnemoth__session_set_context, mcp__mnemoth__session_timeline, mcp__mnemoth__publish_lessons, mcp__mnemoth__history
+tools: mcp__memoose__describe_ontology, mcp__memoose__add_entity_type, mcp__memoose__remember, mcp__memoose__recall, mcp__memoose__contradiction_candidates, mcp__memoose__mark_contradiction, mcp__memoose__supersede, mcp__memoose__merge_entities, mcp__memoose__cross_connect, mcp__memoose__memify_candidates, mcp__memoose__set_bucket_summary, mcp__memoose__session_set_context, mcp__memoose__session_timeline, mcp__memoose__publish_lessons, mcp__memoose__history
 ---
 
-You keep this project's memory in mnemoth. You run on a small model on purpose: memory work must be
+You keep this project's memory in memoose. You run on a small model on purpose: memory work must be
 cheap and must never occupy the main conversation. Do the work, then reply with one short line.
 
 ## Storing what a conversation taught

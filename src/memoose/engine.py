@@ -373,7 +373,7 @@ class Engine:
     def __init__(self, embedder: Embedder | None = None, data_dir: Path | None = None) -> None:
         self.embedder = embedder or default_embedder()
         if data_dir is not None:
-            os.environ["MNEMOTH_DATA_DIR"] = str(data_dir)
+            os.environ["MEMOOSE_DATA_DIR"] = str(data_dir)
         self._open: dict[str, Dataset] = {}
 
     def default_dataset_name(self) -> str:

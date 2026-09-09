@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Automatic memory &middot; Memoose</title>
+<meta name="description" content="How Memoose captures and recalls without being asked: prompt hints, standing context at session start, background capture on turn end and before compaction, and the onboarding skill.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="skills.html">Skills</a></li>
+      <li><a href="automatic.html" aria-current="page">Automatic memory</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="trust.html">Evidence &amp; history</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<h1>Automatic memory</h1>
+<p class="lede">Memory that waits to be asked is memory that never gets written. On hosts with hooks,
+Memoose runs itself &mdash; and every automatic part is a convenience over the
+<a href="tools.html">tools</a>, never a replacement for one.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>When</th><th>What happens</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>You submit a prompt</td><td>Memory is searched locally; a short hint is injected if something matches</td><td>~ms, no model</td></tr>
+<tr><td>A session starts</td><td>Standing rules, preferences and recent lessons are put in front of the agent</td><td>~ms, no model</td></tr>
+<tr><td>A turn ends, or before compaction</td><td>A background job on a small model stores what was learned</td><td>Small model, off your critical path</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Hints before each prompt</h2>
+<p>An agent only recalls when it thinks to, and it usually does not think to. So the
+<code>UserPromptSubmit</code> hook reads each incoming prompt, searches the local index, and when
+something genuinely matches it hands the agent a hint <em>before</em> the agent starts thinking: what
+memory already holds, and the <code>recall</code> query that would fetch the rest.</p>
+<p>It is deliberately dumb and therefore free &mdash; BM25 over the local index, a relevance floor
+(<code>MEMOOSE_HINT_MIN_SCORE</code>, default <code>0.5</code>), a hard cap on how much it injects
+(<code>MEMOOSE_HINT_COUNT</code>, default <code>4</code>), and silence when nothing matches. No model,
+a few milliseconds, so it can run on every prompt without anyone noticing. The agent keeps full
+control over whether to follow the hint.</p>
+
+<h2>Standing context at session start</h2>
+<p>The <code>SessionStart</code> hook loads what should hold for the whole session before you type
+anything: the rules, goals and preferences stored as session context sections, plus recent lessons.
+It is the same material <code>session_start</code> returns, delivered without anyone calling it.</p>
+
+<h2>Background capture</h2>
+<p>The <code>Stop</code> and <code>PreCompact</code> hooks run capture asynchronously: a turn that
+taught something durable gets extracted and stored by a small model, so what the turn established is
+not lost to compaction. Two guards keep it cheap &mdash; it runs
+<em>after</em> your turn, never during it, and it skips turns shorter than
+<code>MEMOOSE_CAPTURE_MIN_CHARS</code> (default <code>400</code>) rather than spending anything on
+small talk.</p>
+
+<h3>The hooks Memoose registers</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Hook</th><th>Script</th><th>Mode</th></tr></thead>
+<tbody>
+<tr><td><code>UserPromptSubmit</code></td><td><code>hooks/recommend.py</code></td><td>Blocking, 10&nbsp;s timeout</td></tr>
+<tr><td><code>SessionStart</code></td><td><code>hooks/session_start.py</code></td><td>Blocking, 10&nbsp;s timeout</td></tr>
+<tr><td><code>Stop</code></td><td><code>hooks/capture.py</code></td><td>Async</td></tr>
+<tr><td><code>PreCompact</code></td><td><code>hooks/capture.py</code></td><td>Async</td></tr>
+</tbody>
+</table>
+</div>
+<p>They are wired through the plugin manifest, so on a host that runs plugin hooks they are active as
+soon as the plugin is installed &mdash; which today means Claude Code. Memoose never writes hooks into
+your global configuration on its own.</p>
+
+<h2>On a host that does not run them</h2>
+<p>You lose the automation and keep every capability. The <a href="skills.html">skills</a> route the
+same work to the <code>memory-keeper</code> subagent, which needs no hooks: it runs on a small model,
+holds only the Memoose tools, and reports back in one line. Explicit tool calls keep working
+everywhere &mdash; they are just no longer the only path.</p>
+
+<h2>Onboarding: what is actually live here</h2>
+<p>Memoose cannot see how your machine is configured, so the <code>memoose-onboard</code> skill walks
+it with you instead of assuming. Ask the agent to onboard Memoose, or say that automatic memory is not
+working, and it will check each capability against this host:</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Capability</th><th>How it is checked</th><th>If missing</th></tr></thead>
+<tbody>
+<tr><td>Memory tools</td><td><code>list_datasets</code> returns</td><td>The MCP server is not connected &mdash; re-run <a href="install.html">install</a> and restart the host</td></tr>
+<tr><td>Hints on each prompt</td><td>You see a &ldquo;Memoose already holds memory&hellip;&rdquo; line before answers</td><td>Hooks are not running on this host</td></tr>
+<tr><td>Standing context at session start</td><td>The agent has your rules and preferences without asking</td><td>Hooks are not running on this host</td></tr>
+<tr><td>Background capture</td><td>New facts appear without anyone calling <code>remember</code></td><td>Hooks are not running, or capture is switched off</td></tr>
+</tbody>
+</table>
+</div>
+<p>When hooks are not firing, the likely causes in order are: the host does not run plugin hooks (fall
+back to <code>memory-keeper</code>), the host was not restarted after installing, or the switches were
+turned off.</p>
+
+<div class="note">
+<p><strong>Automatic capture writes facts nobody explicitly asked for.</strong> The onboarding skill is
+required to be plain about that: where the SQLite file is, that
+<code>recall</code> shows what is remembered and <code>history</code> shows who stored it and when,
+and that <code>forget</code> removes an entity, a fact, or a whole dataset. It asks before enabling
+capture on a project that contains anything sensitive. The switches are on the
+<a href="configuration.html">Configuration</a> page.</p>
+</div>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

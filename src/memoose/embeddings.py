@@ -64,7 +64,7 @@ class FastembedEmbedder:
 
 
 def default_embedder() -> Embedder:
-    choice = os.environ.get("MNEMOTH_EMBEDDER", "auto").casefold()
+    choice = (os.environ.get("MEMOOSE_EMBEDDER") or os.environ.get("MNEMOTH_EMBEDDER") or "auto").casefold()
     if choice in ("auto", "fastembed"):
         try:
             return FastembedEmbedder()

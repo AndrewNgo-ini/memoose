@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """UserPromptSubmit hook: recommendation-as-a-memory.
 
-Before the agent thinks, mnemoth looks at what the user just asked, searches the project's
+Before the agent thinks, memoose looks at what the user just asked, searches the project's
 memory and the user's own memory locally, and — only when something genuinely matches —
 injects a short *hint*: here is what memory already holds, and here is the recall query that
 would get the rest.
@@ -22,6 +22,7 @@ from _common import (  # noqa: E402
     connect,
     dataset_path,
     enabled,
+    env,
     indexed_rows,
     read_event,
     search_memory,
@@ -29,8 +30,8 @@ from _common import (  # noqa: E402
     user_dataset_path,
 )
 
-MAX_HINTS = int(__import__("os").environ.get("MNEMOTH_HINT_COUNT", "4"))
-MIN_SCORE = float(__import__("os").environ.get("MNEMOTH_HINT_MIN_SCORE", "0.5"))
+MAX_HINTS = int(env("HINT_COUNT") or "4")
+MIN_SCORE = float(env("HINT_MIN_SCORE") or "0.5")
 MAX_CHARS = 900
 MIN_PROMPT_WORDS = 3
 USER_RESERVE = 1  # the user's standing rules must not be crowded out by project facts
@@ -85,7 +86,7 @@ def build_hint(project, user, query: str) -> str:
             break
     if not hits:
         return ""
-    lines = ["mnemoth already holds memory that looks relevant to this request:"]
+    lines = ["memoose already holds memory that looks relevant to this request:"]
     lines += [f"- {h['text']}" for h in hits]
     stale = len(superseded_ids(project)) if project is not None else 0
     terms = " ".join(sorted({w for w in query.split() if len(w) > 3})[:6])
@@ -97,7 +98,7 @@ def build_hint(project, user, query: str) -> str:
 
 
 def main() -> int:
-    if not enabled("MNEMOTH_HINTS"):
+    if not enabled("HINTS"):
         return 0
     event = read_event()
     query = prompt_of(event)

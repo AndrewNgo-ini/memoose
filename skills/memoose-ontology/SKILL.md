@@ -1,9 +1,9 @@
 ---
-name: mnemoth-ontology
-description: Shape mnemoth's ontology. Use when the user has an OWL, RDF, or Turtle ontology to import, wants domain-specific entity types, or when relations like owner, version, or location should hold a single current value.
+name: memoose-ontology
+description: Shape memoose's ontology. Use when the user has an OWL, RDF, or Turtle ontology to import, wants domain-specific entity types, or when relations like owner, version, or location should hold a single current value.
 ---
 
-# Ontology in mnemoth (adapted from cognee)
+# Ontology in memoose (adapted from cognee)
 
 The Ontology is the set of entity types facts are resolved against, plus rules for relation
 names. Defaults are basic (Person, Organization, System, Component, Technology, Concept,

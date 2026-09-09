@@ -1,7 +1,7 @@
 # LoCoMo results
 
 Protocol: mem0 memory-benchmarks (categories 1–4, binary LLM judge, mem0's answerer and judge prompts verbatim).
-Host model via Claude Code `claude -p`. Retrieval = mnemoth `recall` (auto-routed mode, `limit=k` per channel).
+Host model via Claude Code `claude -p`. Retrieval = memoose `recall` (auto-routed mode, `limit=k` per channel).
 
 ## Model-free retrieval (evidence recall@k, all 10 conversations, 1,540 questions)
 
@@ -22,7 +22,7 @@ Host model via Claude Code `claude -p`. Retrieval = mnemoth `recall` (auto-route
 Published (all 10 conversations): mem0 2026 92.5 (top-200, gpt-4o class), Zep 75.1, full-context ~73, mem0 2025 66.9.
 mem0 per-category (avg top_10–200): single-hop 91.2, multi-hop 91.3, temporal 92.0, open-domain 72.7, mean 6,956 prompt tokens.
 
-**Read**: the stratified 160-question sample puts mnemoth level with mem0 overall (91.9 vs 92.5, inside the
+**Read**: the stratified 160-question sample puts memoose level with mem0 overall (91.9 vs 92.5, inside the
 interval) while showing 32% fewer prompt tokens, ahead on temporal and single-hop, behind only on
 open-domain. Open-domain failures are needle retrieval misses (a gold such as "Jo", "Indiana", or
 "Nintendo Switch" lives in one turn that never surfaces): every question saturates the 20-chunk cap, so the

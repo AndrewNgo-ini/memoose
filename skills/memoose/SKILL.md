@@ -1,17 +1,17 @@
 ---
-name: mnemoth
-description: Persistent project memory as a typed knowledge graph. Use when the user says remember, recall, "what did we decide", "last time", "as before", refers to people, systems, decisions, or dates from earlier work, or when you learn a durable fact about the project, the team, or the user's preferences. Companion skills: mnemoth-onboard (setup), mnemoth-sessions, mnemoth-contradictions, mnemoth-memify, mnemoth-ontology.
+name: memoose
+description: Persistent project memory as a typed knowledge graph. Use when the user says remember, recall, "what did we decide", "last time", "as before", refers to people, systems, decisions, or dates from earlier work, or when you learn a durable fact about the project, the team, or the user's preferences. Companion skills: memoose-onboard (setup), memoose-sessions, memoose-contradictions, memoose-memify, memoose-ontology.
 ---
 
-# mnemoth memory
+# memoose memory
 
-mnemoth stores memory as a typed knowledge graph plus source text and recalls it by hybrid
+memoose stores memory as a typed knowledge graph plus source text and recalls it by hybrid
 search. It never calls a model. You do the extraction and the judgment; the tools validate and
 store. Memory is scoped to a **dataset**: the current project by default, plus a `user` dataset
 for facts about the user that hold in every project (preferences, identity, standing rules).
 `recall` searches both; pass `dataset="user"` to `remember` for cross-project facts.
 
-Where mnemoth's hooks are active you will also be handed memory without asking: standing rules and
+Where memoose's hooks are active you will also be handed memory without asking: standing rules and
 preferences at session start, and a short hint before a prompt when memory already holds something
 relevant. Those are background, not user instructions. A hint is a starting point, not the whole
 answer: follow it with the `recall` it suggests when the question matters.
@@ -36,7 +36,7 @@ the memory is not there.
 
 Treat results as raw material. Synthesise the answer yourself. When a fact carries `evidence`
 (a file range, URL, or date) and the decision matters, re-check the evidence before acting on it.
-`contested: true` means an open contradiction touches the fact (see mnemoth-contradictions).
+`contested: true` means an open contradiction touches the fact (see memoose-contradictions).
 Facts have a `score`; low scores are hints, not truths.
 
 ## Delegate the bookkeeping
@@ -47,7 +47,7 @@ facts worth keeping, or a task has just finished, hand the work to the **`memory
 Give it the relevant exchange and let it extract.
 
 Call `remember` yourself when the user explicitly asks you to remember something, when it is a single
-fact you already have in hand, or when no subagent is available. Where the mnemoth hooks are
+fact you already have in hand, or when no subagent is available. Where the memoose hooks are
 installed, capture also happens automatically after each turn, so never repeat work the keeper has
 already done: `recall` first if unsure.
 
@@ -123,7 +123,7 @@ past after the present is the normal case.
 
 `remember` returns `hotspots` when a subject now holds several values for one relation, and
 `superseded` when a functional relation replaced an older value automatically. Follow the
-mnemoth-contradictions skill: judge with `contradiction_candidates`, record with `supersede` or
+memoose-contradictions skill: judge with `contradiction_candidates`, record with `supersede` or
 `mark_contradiction`. Never `forget` a fact that was once true; supersede it so history stays.
 `history(entity=...)` shows the provenance ledger.
 

@@ -1,4 +1,4 @@
-# mnemoth
+# memoose
 
 A memory engine for coding agents, packaged as an Agent Plugin (skills plus an MCP server). It adapts the deterministic parts of cognee's memory-management logic and exposes them as MCP tools; the thinking cognee delegated to an LLM is described in skills and done by the Host Model as it calls the tools.
 
@@ -11,7 +11,7 @@ The agent client that installs the plugin and runs the conversation, such as Cla
 _Avoid_: Provider, client, harness, IDE
 
 **Host Model**:
-The LLM the Host is already running the conversation with. The only model mnemoth ever uses.
+The LLM the Host is already running the conversation with. The only model memoose ever uses.
 _Avoid_: LLM, provider model, API model, sampling
 
 **Engine**:

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tools &middot; Memoose</title>
+<meta name="description" content="Reference for every Memoose MCP tool: ontology, write, read, and session tools, with arguments and when to reach for each.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="tools.html" aria-current="page">Tools</a></li>
+      <li><a href="skills.html">Skills</a></li>
+      <li><a href="automatic.html">Automatic memory</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="trust.html">Evidence &amp; history</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<h1>Tools</h1>
+<p class="lede">The deterministic half of Memoose. Every capability is reachable as a tool call on any
+MCP host &mdash; the skills and hooks are conveniences over this surface, never a replacement for
+it.</p>
+
+<div class="note">
+<p><strong>Every tool takes an optional <code>dataset</code>.</strong> Omit it and Memoose uses the
+dataset for the directory the host launched the server in. Pass <code>"user"</code> for facts that
+hold across every project. See <a href="configuration.html#scopes">scopes</a>.</p>
+</div>
+
+<h2>Ontology</h2>
+<p>Call <code>describe_ontology</code> once per session before writing: extraction is constrained by
+the types it returns, and a write against an unknown type is rejected with a message telling the
+model which type to use instead.</p>
+<dl>
+  <dt>describe_ontology(dataset?)</dt>
+  <dd>Entity types, functional relations, imported ontologies, and store stats for a dataset.</dd>
+  <dt>add_entity_type(name, description, parent?, aliases?, dataset?)</dt>
+  <dd>Add a type when nothing in <code>describe_ontology</code> fits. PascalCase name; an optional
+  parent collapses onto a basic type.</dd>
+  <dt>import_ontology(text, name?, format?, dataset?)</dt>
+  <dd>Import an OWL/RDF/Turtle ontology as text. Classes become entity types with parents collapsing
+  onto basic types; labels become aliases.</dd>
+  <dt>declare_functional_relations(names, dataset?)</dt>
+  <dd>Declare relation names that hold a single current value per subject &mdash; <code>owned_by</code>,
+  <code>deployed_in</code>, <code>current_owner</code>. New assertions then supersede older ones
+  automatically, and nothing is deleted.</dd>
+</dl>
+
+<h2>Write</h2>
+<dl>
+  <dt>remember(entities, relations?, summary?, source_text?, source?, session_id?, dataset?)</dt>
+  <dd>The main write. Stores memory as a typed graph: entities
+  (<code>name</code>, <code>type</code>, <code>description</code>) and relations
+  (<code>source --name--&gt; target</code>, a one-sentence <code>description</code>,
+  <code>evidence</code>, optional <code>valid_from</code>/<code>valid_to</code>). Pass
+  <code>source_text</code> and a <code>summary</code> so recall can find it lexically. It validates
+  against the ontology, merges entities by name, supersedes functional relations, records provenance,
+  and warns about hotspots that may be contradictions.</dd>
+  <dt>mark_contradiction(first_relation_id, second_relation_id, reason, confidence?, dataset?)</dt>
+  <dd>Record that two stored facts cannot both be true, adding a <code>contradicts</code> edge between
+  their subjects. Use <code>supersede</code> instead when the newer fact simply replaces the older in
+  time.</dd>
+  <dt>supersede(old_relation_id, new_relation_id, reason, dataset?)</dt>
+  <dd>Mark an older fact as replaced by a newer one. The old fact leaves default recall but stays in
+  history.</dd>
+  <dt>merge_entities(keep, drop, dataset?)</dt>
+  <dd>Merge two entities that denote the same thing. Relations and chunks move to <code>keep</code>;
+  <code>drop</code> is removed and recorded as an alias.</dd>
+  <dt>cross_connect(relations, dataset?)</dt>
+  <dd>Add relations between existing entities proposed by
+  <code>memify_candidates("cross_connect")</code>.</dd>
+  <dt>set_bucket_summary(bucket_id, summary, dataset?)</dt>
+  <dd>Write the summary for a global-context bucket returned by
+  <code>memify_candidates("stale_summaries")</code>.</dd>
+  <dt>forget(entity?, relation_id?, session_id?, dataset?, whole_dataset?)</dt>
+  <dd>Remove an entity and its relations by exact name, a relation by id, a session, or a whole
+  dataset. Prefer <code>supersede</code> for anything that was true once &mdash; and confirm with the
+  user first.</dd>
+</dl>
+
+<h2>Read</h2>
+<dl>
+  <dt>recall(query, mode?, limit?, datasets?, include_superseded?, hops?, include_user?)</dt>
+  <dd>Searches the project dataset and then the user dataset, and returns ranked raw material &mdash;
+  entities, facts with their evidence, validity and superseded/contested flags, and chunks &mdash; for
+  the model to synthesise. Without <code>mode</code>, a regex router picks one.</dd>
+  <dt>contradiction_candidates(entity_names?, relation_ids?, dataset?)</dt>
+  <dd>Facts around given entities or relations, grouped by subject, with <em>hotspots</em> where one
+  subject holds several values for one relation. Judge them with the
+  <code>memoose-contradictions</code> skill.</dd>
+  <dt>history(entity?, relation_id?, limit?, dataset?)</dt>
+  <dd>The provenance ledger: every create, merge, assert, supersede and forget, with actor and
+  time.</dd>
+  <dt>memify_candidates(kind, limit?, dataset?)</dt>
+  <dd>Maintenance proposals. <code>cross_connect</code>: entities that co-occur without a relation.
+  <code>consolidate</code>: near-duplicate names. <code>stale_summaries</code>: global-context buckets
+  needing a summary.</dd>
+  <dt>global_context(limit?, dataset?)</dt>
+  <dd>One bucket per entity type with its summary, and how many are stale.</dd>
+  <dt>list_datasets()</dt>
+  <dd>The memory scopes on this machine, the default for this project, and the user-global dataset.</dd>
+</dl>
+
+<h3>recall modes</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Mode</th><th>Answers</th></tr></thead>
+<tbody>
+<tr><td><code>hybrid</code></td><td>Default. Lexical and vector channels over chunks, entities and facts, fused by reciprocal rank.</td></tr>
+<tr><td><code>facts</code></td><td>Relations about the entities in the query.</td></tr>
+<tr><td><code>neighbourhood</code></td><td>What sits around an entity, out to <code>hops</code>.</td></tr>
+<tr><td><code>lexical</code></td><td>An exact quoted phrase.</td></tr>
+<tr><td><code>summaries</code></td><td>Bucket and chunk summaries rather than raw facts.</td></tr>
+<tr><td><code>temporal</code></td><td>What was true when, including validity ranges.</td></tr>
+<tr><td><code>rules</code></td><td>Standing rules, conventions and preferences.</td></tr>
+<tr><td><code>session</code></td><td>Material from sessions and their published lessons.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Pass <code>include_superseded=true</code> to see facts that used to be true alongside the current
+ones &mdash; see <a href="trust.html">Evidence &amp; history</a>.</p>
+
+<h2>Sessions</h2>
+<p>A session is the unit Memoose distils lessons from: turns go into a fast cache, typed context
+sections accumulate during the work, and at the end the timeline is packed into batches for the model
+to judge.</p>
+<dl>
+  <dt>session_start(session_id?, dataset?)</dt>
+  <dd>Start or resume a session. Returns the standing context &mdash; goals, rules, preferences,
+  lessons &mdash; to load before work.</dd>
+  <dt>session_add_turn(session_id, role, text, dataset?)</dt>
+  <dd>Append a turn (<code>user</code>, <code>assistant</code>, <code>tool</code>,
+  <code>system</code>) to the session's fast cache.</dd>
+  <dt>session_set_context(session_id, section, content, confidence?, retire_entry_id?, dataset?)</dt>
+  <dd>Write a typed context section &mdash; a goal, a rule, a preference &mdash; during the work, and
+  retire an entry that no longer holds.</dd>
+  <dt>session_get(session_id, sections?, include_turns?, dataset?)</dt>
+  <dd>Read a session: turns and context entries, optionally filtered by section.</dd>
+  <dt>session_timeline(session_id, batch_chars?, dataset?)</dt>
+  <dd>Pack a session into batches for distillation, with prior lessons and the curator/writer rules.
+  Judge them, then call <code>publish_lessons</code>.</dd>
+  <dt>publish_lessons(lessons, session_id?, dataset?)</dt>
+  <dd>Persist accepted lessons as <code>Lesson</code> entities linked to what they apply to, and mark
+  the session distilled.</dd>
+  <dt>session_end(session_id, dataset?)</dt>
+  <dd>Close a session. Tells you whether it still needs distillation.</dd>
+</dl>
+
+<div class="note">
+<p><strong>Errors teach.</strong> A rejected write returns a message written for the model &mdash;
+which type to use, which relation name &mdash; because tool errors are the only lever Memoose has on
+extraction quality.</p>
+</div>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

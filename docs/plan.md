@@ -1,4 +1,4 @@
-# mnemoth — end-to-end port plan
+# memoose — end-to-end port plan
 
 > Status: implemented in v0.2.0. Every row of §1 has a tool or skill section and a test (`tests/test_port.py`).
 
@@ -11,16 +11,16 @@ becomes a skill instruction; the Host Model does the judgment while calling the 
 
 ## 1. Capability map
 
-| cognee capability | where the model was | mnemoth |
+| cognee capability | where the model was | memoose |
 | --- | --- | --- |
-| `add` + `cognify` (classify, chunk, extract graph, summarize, persist) | extract + summarize | `remember` tool; extraction and summary rules in skill `mnemoth` |
+| `add` + `cognify` (classify, chunk, extract graph, summarize, persist) | extract + summarize | `remember` tool; extraction and summary rules in skill `memoose` |
 | Ontology (OWL/RDF via rdflib, closest-match resolution) | none | `import_ontology`, `describe_ontology`, `add_entity_type`; hierarchy collapses to basic types |
 | Deterministic ids (`Entity:<name>`) | none | `ids.py` (done) |
-| `detect_contradictions` (candidate facts around touched nodes → LLM pairs → `contradicts` edge) | pairing | `contradiction_candidates` tool builds the candidate fact list; skill `mnemoth-contradictions` judges; `mark_contradiction` stores the edge with reason + confidence |
+| `detect_contradictions` (candidate facts around touched nodes → LLM pairs → `contradicts` edge) | pairing | `contradiction_candidates` tool builds the candidate fact list; skill `memoose-contradictions` judges; `mark_contradiction` stores the edge with reason + confidence |
 | `resolve_temporal_contradictions` (functional relationships, supersede older) | none | `declare_functional_relations` + automatic supersession inside `remember`; `supersede` tool for manual cases; nothing deleted |
 | `record_provenance` ledger | none | `provenance` table written by every mutating tool; `history` tool |
 | `recall` regex router → 20 search types | most types end in a completion | router ported; search types collapse to retrieval modes (§4); the completion step is the Host Model |
-| Sessions: fast cache of Q&A turns + context entries (goals, rules, preferences, lessons) | context extraction | `session_*` tools; skill `mnemoth-sessions` says what to capture |
+| Sessions: fast cache of Q&A turns + context entries (goals, rules, preferences, lessons) | context extraction | `session_*` tools; skill `memoose-sessions` says what to capture |
 | Session distillation (curate batches → accept/reject lessons → persist) | curator + writer | `session_timeline` packs batches; skill carries curator + writer rules; `publish_lessons` persists accepted lessons into the graph |
 | memify: `cross_connect_entities`, `consolidate_entities`, frequency/feedback weights, global context index | cross-connect, consolidate, summarize | `memify_candidates` (co-occurrence pairs, near-duplicate names) for the agent to judge; `merge_entities`; weights are deterministic tools; `global_context` buckets built deterministically, summaries written by the agent via `set_bucket_summary` |
 | Datasets + permissions | none | project Dataset + user-global Dataset; `recall` searches project then user; single-user, no ACL |
@@ -54,7 +54,7 @@ Existing: `meta`, `entity_types`, `entities`, `relations`, `chunks`, `entity_chu
   `parent TEXT`, `source_id TEXT`, `aliases JSON`.
 - Schema version in `meta`; forward-only migrations in `store/migrations.py`.
 
-User-global Dataset: fixed name `user`, same schema, at `~/.mnemoth/user.sqlite`.
+User-global Dataset: fixed name `user`, same schema, at `~/.memoose/user.sqlite`.
 
 ## 3. Tools (complete surface)
 
@@ -102,19 +102,19 @@ before user Dataset with a fixed reserve for user hits (cognee's `conversational
 
 ## 5. Skills (single-purpose, Agent Skills format)
 
-- `mnemoth` — recall/remember discipline and extraction rules (done; extend with temporal
+- `memoose` — recall/remember discipline and extraction rules (done; extend with temporal
   fields, evidence, dataset choice, functional relations).
-- `mnemoth-contradictions` — cognee's contradiction rules (only mutually exclusive facts;
+- `memoose-contradictions` — cognee's contradiction rules (only mutually exclusive facts;
   never paraphrases), how to use `contradiction_candidates` → `mark_contradiction` →
   `supersede`, and when to ask the user.
-- `mnemoth-sessions` — what to capture into sections during work; at the end of a task or
+- `memoose-sessions` — what to capture into sections during work; at the end of a task or
   session run `session_timeline`, apply the curator rules (propose lessons that are general,
   actionable, non-duplicate), then the writer/rejecter rules (check prior lessons via recall,
   reject duplicates), then `publish_lessons`.
-- `mnemoth-memify` — periodic maintenance: cross-connect co-occurring entities with a
+- `memoose-memify` — periodic maintenance: cross-connect co-occurring entities with a
   described relation, merge near-duplicate entities, write bucket summaries in the
   "This chunk is about / Facts" shape.
-- `mnemoth-ontology` — importing an OWL/Turtle file, extending types, declaring functional
+- `memoose-ontology` — importing an OWL/Turtle file, extending types, declaring functional
   relations such as `current_ceo`, `owned_by`, `deployed_in`.
 
 ## 6. Implementation order (one pass)
@@ -141,5 +141,5 @@ before user Dataset with a fixed reserve for user hits (cognee's `conversational
 - A full session can be run with only the Host Model: remember with evidence, recall by every
   mode, detect and supersede a contradiction, capture session context, distill lessons,
   run memify maintenance, import an ontology, forget.
-- `mnemoth install <host>` works for claude, codex, opencode, cursor; the plugin validates.
+- `memoose install <host>` works for claude, codex, opencode, cursor; the plugin validates.
 - No API key, no model call, no host-specific code outside `integrations.py`.

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overview &middot; Memoose</title>
+<meta name="description" content="Memoose is a memory harness for coding agents: a deterministic store reached through MCP tools, plus skills that teach the model you are already running how to use it. No API key.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html" aria-current="page">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="skills.html">Skills</a></li>
+      <li><a href="automatic.html">Automatic memory</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="trust.html">Evidence &amp; history</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<div class="hero">
+  <img src="memoose-mascot.png" alt="The Memoose mascot: a round 2D cartoon moose with tan antlers, sitting and holding up a blank card, on an ivory background." width="320" height="320">
+  <div>
+    <h1>Memoose</h1>
+    <p class="lede">A memory harness for coding agents. Pick up where you left off &mdash; in
+    whichever agent you open tomorrow.</p>
+  </div>
+</div>
+
+<pre><code>uv run memoose install claude      # or: codex | opencode | cursor</code></pre>
+
+<p>You explained the architecture, the conventions, and the reason behind last week's decision.
+Memoose is how your agent still knows them today &mdash; <strong>a harness rather than a
+database</strong>: a deterministic store reached through <a href="tools.html">MCP tools</a>, plus
+<a href="skills.html">skills</a> that teach the model you are already running how to use it.</p>
+
+<ul class="cards">
+  <li><a href="install.html"><strong>Install</strong><span>Four hosts, one command, from a source checkout.</span></a></li>
+  <li><a href="tools.html"><strong>Tools</strong><span>Every capability as an MCP tool call.</span></a></li>
+  <li><a href="skills.html"><strong>Skills</strong><span>Where the judgment is written down.</span></a></li>
+  <li><a href="automatic.html"><strong>Automatic memory</strong><span>Hooks, background capture, onboarding.</span></a></li>
+  <li><a href="configuration.html"><strong>Configuration</strong><span>Switches, scopes, where the data lives.</span></a></li>
+  <li><a href="trust.html"><strong>Evidence &amp; history</strong><span>Provenance, contradictions, supersession.</span></a></li>
+</ul>
+
+<h2>What a memory harness is</h2>
+<p>Memoose splits memory in two, and the split is the whole design.</p>
+<p>Everything <strong>deterministic</strong> lives in the library: a typed graph store, an ontology,
+chunking, ranking, supersession, a provenance ledger. It is a plain MCP server over one SQLite file,
+and it has no opinions &mdash; it validates, stores, ranks and refuses bad input.</p>
+<p>Everything that needs <strong>judgment</strong> is written down as a skill: what counts as an
+entity, which facts conflict, what is worth remembering, what a session taught. That thinking is done
+by the host's model &mdash; the one you are already running &mdash; while it calls the tools. So
+Memoose ships no model of its own and needs no API key
+(<a href="https://github.com/AndrewNgo-ini/mnemoth/blob/main/docs/adr/0001-skills-and-mcp-only.md">ADR&nbsp;0001</a>).</p>
+<p>Your memory is a typed knowledge graph in one SQLite file on your machine. Recalled facts become
+context for your host's model, the same as anything else it reads.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Surface</th><th>What it does</th><th>Needs</th></tr></thead>
+<tbody>
+<tr><td><a href="tools.html">MCP tools</a></td><td>The deterministic store: typed graph, ontology, ranking, supersession, provenance</td><td>Any MCP host</td></tr>
+<tr><td><a href="skills.html">Skills</a></td><td>Teach the host model to extract, judge, and route memory work to a small-model subagent</td><td>Any host with skills</td></tr>
+<tr><td><a href="automatic.html">Hooks</a></td><td>Capture and recall without being asked: hints before each prompt, standing context at session start, capture when a turn ends and before compaction</td><td>Hosts that run plugin hooks</td></tr>
+</tbody>
+</table>
+</div>
+<p>The core is portable: skills plus an MCP server, on any host that speaks MCP. The capture and
+recall that happen <em>without you asking</em> sit on top of that core and depend on what your host
+supports &mdash; they add no capability the tools do not already have, so where they are unavailable
+you keep everything through the tools, the skills and the delegated subagent.</p>
+
+<h2>What it is built for</h2>
+<p>Long-lived project work: the decisions, conventions and ownership facts that have to stay true for
+months. That makes the interesting questions less about finding a fact once and more about whether the
+body of facts is still trustworthy:</p>
+<ul>
+  <li>A fact changed. Does recall return the current one, and can it still show me the old one?</li>
+  <li>Two sources disagree. Does the system say so, or silently pick one?</li>
+  <li>Why do we believe this? Point me at the file range, the message, the date.</li>
+  <li>We solved this before. What did we learn, and does it apply here?</li>
+</ul>
+<p><a href="trust.html">Evidence &amp; history</a> shows how each one is answered, and the model-free
+suite of 18 cases that asserts it on what the tools return.</p>
+
+<h2>Worth knowing before you install</h2>
+<ul>
+  <li><strong>Judgment quality follows your host's model.</strong> Extraction, contradiction calls and
+  session lessons are a skill the model has to follow, so results vary with the model doing it.</li>
+  <li><strong>The automatic parts are host-dependent.</strong> Hooks ship as a Claude Code plugin
+  manifest today. Elsewhere the tools, the skills and the <code>memory-keeper</code> subagent cover
+  the same ground, with you or the agent asking for it.</li>
+  <li><strong>Recall feeds your host's model.</strong> The store is a local file, and what you recall
+  becomes context in the conversation like any other text the agent reads.</li>
+  <li><strong>Install is from source.</strong> Memoose is not on PyPI yet.</li>
+  <li><strong>It is not built for chat logs, teams, or a service.</strong> No multi-user access
+  control, no hosted service, no UI, no audio or images &mdash; and it does not replace the host's own
+  context management.</li>
+</ul>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

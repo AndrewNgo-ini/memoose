@@ -7,9 +7,9 @@ path live.
 
 **The port is complete and released (v0.2.0).** cognee's memory core is reimplemented as 24 MCP
 tools plus 5 skills, packaged as an Agent Plugin, with no model call anywhere in the library
-(ADR 0001) and one SQLite file per Dataset (ADR 0002). 33 tests pass, including one that drives the
+(ADR 0001) and one SQLite file per Dataset (ADR 0002). 77 tests pass, including one that drives the
 server over MCP stdio the way a host does. `claude plugin validate .` passes. Verified end to end
-inside Claude Code via `--plugin-dir`. `mnemoth install claude|codex|opencode|cursor` writes one MCP
+inside Claude Code via `--plugin-dir`. `memoose install claude|codex|opencode|cursor` writes one MCP
 entry and copies the skills into each host's own locations.
 
 Covered: ontology with OWL/RDF/Turtle import and basic-type collapse, deterministic entity ids and
@@ -28,10 +28,14 @@ core, never replacing it, so a host without hooks loses automation and keeps eve
 | background capture on a small model after a turn and before compaction, async and non-blocking, behind a relevance gate, a per-session lock and a resume offset | `hooks/capture.py` | unit-tested; does **not** fire in `-p` print mode |
 | in-session delegation for hosts without hooks | `agents/memory-keeper.md` (`model: haiku`) | wired, not yet exercised live |
 | **the write→read loop, end to end** | `hooks/capture.py` → `hooks/recommend.py` | **live — see "What the live run established" below** |
-| what is live here, what is stored, how to opt out | `skills/mnemoth-onboard/SKILL.md` | — |
+| what is live here, what is stored, how to opt out | `skills/memoose-onboard/SKILL.md` | — |
 
-Kill switches: `MNEMOTH_HINTS`, `MNEMOTH_AUTO_RECALL`, `MNEMOTH_AUTO_CAPTURE`. Every hook exits 0 on
-any failure. 73 tests.
+Kill switches: `MEMOOSE_HINTS`, `MEMOOSE_AUTO_RECALL`, `MEMOOSE_AUTO_CAPTURE`. Every hook exits 0 on
+any failure. 77 tests.
+
+Renamed from mnemoth. `MEMOOSE_*` is canonical; the `MNEMOTH_*` name of each variable is still read
+as a fallback, `data_dir()` keeps using `~/.mnemoth` when that is the only store on disk, and
+`install` clears a pre-rename MCP entry so a host never runs both servers. Nothing is migrated.
 
 Note for benchmarking: none of this is visible to the LoCoMo harness, which calls the MCP tools
 directly and never goes through a hook. The benchmark measures the store and the retrieval, not the
@@ -73,7 +77,7 @@ ranking.
 ## The maintained-memory benchmark (roadmap item 3, done)
 
 `benchmarks/maintained/` — 18 cases, 66 assertions, **no model, no API key, ~1 s**, wired into
-pytest. It asks the five questions mnemoth claims and LoCoMo cannot: a fact changed (does recall
+pytest. It asks the five questions memoose claims and LoCoMo cannot: a fact changed (does recall
 return the current one), can the old one still be shown and why it changed, do two disagreeing
 sources get reported or silently resolved, does evidence survive, does an earlier session's lesson
 come back. Full write-up in `benchmarks/maintained/README.md`.
@@ -90,7 +94,7 @@ real:
 
 > Functional supersession was decided by **write order alone**. Backfilling a fact that was true in
 > 2024, after the 2025 value was already known, silently made the 2024 value current again — learning
-> the past overwrote the present. Fixed by `states_later_value` in `src/mnemoth/contradictions.py`:
+> the past overwrote the present. Fixed by `states_later_value` in `src/memoose/contradictions.py`:
 > `valid_from` decides when both facts carry one, and a backfilled arrival is stored as superseded
 > history. Write order still decides when a date is missing, and an undated arrival is presumed
 > current, so the ordinary path is unchanged.
@@ -126,7 +130,7 @@ so the resume offset holds and turns are never captured twice.
 ownership handover as `previously_owned_by` and never called `declare_functional_relations`, so the
 currency machinery the benchmark proves correct was *not exercised by the automatic path at all* —
 the store did supersession properly and nothing asked it to. Fixed by one instruction added to all
-three surfaces that drive extraction (`hooks/capture.py`'s prompt, `skills/mnemoth/SKILL.md`,
+three surfaces that drive extraction (`hooks/capture.py`'s prompt, `skills/memoose/SKILL.md`,
 `agents/memory-keeper.md`): for a relation holding one current value per subject, declare it
 functional and store **both** values under the **same** relation name, oldest `valid_from` first.
 
@@ -183,7 +187,7 @@ Still open, found in the same runs and **not** fixed:
    started: it shares the interactive usage limit, so it will pause whatever session launches it.
    Item 1 of the previous list — the k=20 headline sample — **was already complete**: 160 rows,
    147 correct, 91.9, in `RESULTS.md`.
-5. **Real-project soak.** Run mnemoth on its own development and report what it gets wrong. The two
+5. **Real-project soak.** Run memoose on its own development and report what it gets wrong. The two
    bugs above were both found by one live run, which is the argument for doing this continuously
    rather than in bursts.
 6. **Consider LongMemEval** (mem0 reports 94.4) as a second, less saturated retrieval dataset — lower
@@ -194,7 +198,7 @@ Still open, found in the same runs and **not** fixed:
 - A usage limit mid-run once recorded the limit error as 1,492 answers. The harness now pauses and
   retries on limits and never writes a failed call as a row.
 - Claude Code must run with cwd outside the repo, with `--mcp-config … --strict-mcp-config`, because
-  the plugin manifest pins `MNEMOTH_DATA_DIR` and a project-level config inside the repo clashes.
+  the plugin manifest pins `MEMOOSE_DATA_DIR` and a project-level config inside the repo clashes.
 - `pkill -f run_locomo` from inside a Claude Code session kills the agent's own shell. Kill by PID.
 - Parallel agent-ingest sessions write one SQLite file; embeddings are computed outside the write
   transaction and the store has a 60 s busy timeout so they do not deadlock.

@@ -1,13 +1,13 @@
 import pytest
 
-from mnemoth.embeddings import HashEmbedder
-from mnemoth.engine import Engine
+from memoose.embeddings import HashEmbedder
+from memoose.engine import Engine
 
 
 @pytest.fixture
 def engine(tmp_path, monkeypatch):
-    monkeypatch.setenv("MNEMOTH_DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setenv("MNEMOTH_PROJECT_DIR", str(tmp_path / "proj"))
+    monkeypatch.setenv("MEMOOSE_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MEMOOSE_PROJECT_DIR", str(tmp_path / "proj"))
     eng = Engine(embedder=HashEmbedder())
     yield eng
     eng.close()

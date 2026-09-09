@@ -4,7 +4,7 @@ cognee's default memify pipeline cross-connects entities that co-occur, consolid
 duplicate entities, applies frequency and feedback weights, and keeps a global context
 index of bucket summaries. The deterministic parts live here; the parts that needed a
 model (which pair deserves a relation, which names are the same thing, what a bucket
-says) are proposals the Host Model judges through the mnemoth-memify skill.
+says) are proposals the Host Model judges through the memoose-memify skill.
 """
 
 from __future__ import annotations

@@ -1,12 +1,12 @@
 ---
-name: mnemoth-sessions
-description: Track a working session in mnemoth and distill it into lessons at the end. Use at the start of a task (load standing rules and preferences), whenever the user states a goal, rule, preference, or environment fact, and when a task or conversation ends (distill lessons).
+name: memoose-sessions
+description: Track a working session in memoose and distill it into lessons at the end. Use at the start of a task (load standing rules and preferences), whenever the user states a goal, rule, preference, or environment fact, and when a task or conversation ends (distill lessons).
 ---
 
-# Sessions in mnemoth (adapted from cognee)
+# Sessions in memoose (adapted from cognee)
 
 A session is one conversation's short-lived memory: turns plus typed context entries. At the
-end it is distilled into a few durable lessons that join the permanent graph. mnemoth stores and
+end it is distilled into a few durable lessons that join the permanent graph. memoose stores and
 packs; you curate and write.
 
 ## At the start of work

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuration &middot; Memoose</title>
+<meta name="description" content="Every Memoose switch: environment variables for hints, capture and embeddings, where the SQLite files live, and how project and user scopes merge.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="skills.html">Skills</a></li>
+      <li><a href="automatic.html">Automatic memory</a></li>
+      <li><a href="configuration.html" aria-current="page">Configuration</a></li>
+      <li><a href="trust.html">Evidence &amp; history</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<h1>Configuration</h1>
+<p class="lede">All of it is environment variables, all of it defaults to on, and all of it is set
+where the host gives its MCP server and hooks their environment.</p>
+
+<h2>Switches</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Variable</th><th>Default</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td><code>MEMOOSE_HINTS</code></td><td>on</td><td><code>0</code> stops injecting relevant-memory hints before each prompt</td></tr>
+<tr><td><code>MEMOOSE_AUTO_RECALL</code></td><td>on</td><td><code>0</code> stops injecting standing context at session start</td></tr>
+<tr><td><code>MEMOOSE_AUTO_CAPTURE</code></td><td>on</td><td><code>0</code> stops background capture entirely</td></tr>
+<tr><td><code>MEMOOSE_HINT_COUNT</code></td><td><code>4</code></td><td>How many hints may be injected at most</td></tr>
+<tr><td><code>MEMOOSE_HINT_MIN_SCORE</code></td><td><code>0.5</code></td><td>Relevance floor below which Memoose stays silent</td></tr>
+<tr><td><code>MEMOOSE_CAPTURE_MODEL</code></td><td><code>haiku</code></td><td>Which small model does the background extraction</td></tr>
+<tr><td><code>MEMOOSE_CAPTURE_MIN_CHARS</code></td><td><code>400</code></td><td>How substantial a turn must be before capture spends anything</td></tr>
+<tr><td><code>MEMOOSE_CAPTURE_TIMEOUT</code></td><td><code>300</code></td><td>Seconds a background capture job may take</td></tr>
+<tr><td><code>MEMOOSE_DATA_DIR</code></td><td><code>~/.memoose</code></td><td>Where the SQLite files live</td></tr>
+<tr><td><code>MEMOOSE_PROJECT_DIR</code></td><td>host launch directory</td><td>Which directory the default dataset name is derived from</td></tr>
+<tr><td><code>MEMOOSE_EMBEDDER</code></td><td><code>auto</code></td><td><code>hash</code> (no download) or <code>fastembed</code> (needs the extra)</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p><strong>Upgrading from mnemoth.</strong> The project was renamed, and the old names still work:
+each <code>MNEMOTH_*</code> variable is read when its <code>MEMOOSE_*</code> counterpart is unset, and
+an existing <code>~/.mnemoth</code> directory keeps being used when <code>~/.memoose</code> does not
+exist. Nothing needs migrating; the new names are simply canonical from here.</p>
+</div>
+
+<h2 id="scopes">Scopes and where data lives</h2>
+<p>One SQLite file per scope, under <code>~/.memoose/&lt;dataset&gt;.sqlite</code>. There is no server
+and no daemon: the file is yours to open, copy, back up or delete. What you <em>recall</em> from it
+becomes context for your host's model, the same as any other text the agent reads.</p>
+<ul>
+  <li><strong>The project dataset</strong> is the default, and its name is derived from the directory
+  the host launched the server in. Facts about this codebase, its decisions and its owners belong
+  here.</li>
+  <li><strong>The <code>user</code> dataset</strong> holds facts about you that hold everywhere: your
+  preferences, your conventions, how you like to work.</li>
+</ul>
+<p><code>recall</code> searches the project dataset and then the user dataset and merges the results,
+with the project's own facts taking precedence &mdash; so a project convention overrides a personal
+default without you having to say so. Pass <code>include_user=false</code> to search only the project,
+or <code>datasets=[&hellip;]</code> to be explicit. <code>list_datasets</code> shows every scope on
+the machine and where its file is.</p>
+
+<h2>Embeddings</h2>
+<p>The vector channel of hybrid retrieval needs embeddings, and Memoose computes them locally rather
+than calling an API. Two options:</p>
+<dl>
+  <dt>hash</dt>
+  <dd>A keyless hashed fallback. No model download, no network, works everywhere. This is what you get
+  by default if <code>fastembed</code> is not installed.</dd>
+  <dt>fastembed</dt>
+  <dd>Real local embeddings, better semantic recall, one model download. Install the extra
+  (<code>uv sync --extra fastembed</code>) and it is picked automatically.</dd>
+</dl>
+<p><code>auto</code> uses <code>fastembed</code> when it is importable and <code>hash</code>
+otherwise. Set <code>MEMOOSE_EMBEDDER</code> explicitly to pin one. The lexical channel is BM25 either
+way, so retrieval works with no embedder worth the name.</p>
+
+<h2>Turning it all off</h2>
+<p>Setting the three switches to <code>0</code> leaves you with exactly the tools: nothing runs unless
+the agent calls it. Uninstalling is removing the MCP server entry from the host's config, the skills
+directory it copied in, and &mdash; if you want the memory gone too &mdash; the SQLite files under
+<code>~/.memoose</code>. <code>forget(whole_dataset=true)</code> does the last part from inside the
+host, and asks for confirmation first.</p>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

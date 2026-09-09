@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skills &middot; Memoose</title>
+<meta name="description" content="The six Memoose skills: what each one teaches the host model, and when the host loads it.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="skills.html" aria-current="page">Skills</a></li>
+      <li><a href="automatic.html">Automatic memory</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="trust.html">Evidence &amp; history</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<h1>Skills</h1>
+<p class="lede">Everything that needs judgment is written down as a skill, so the model your host is
+already running does that thinking &mdash; which is why Memoose ships no model of its own.</p>
+
+<p>A skill is loaded by the host when its description matches what is happening &mdash; you do not
+invoke them by hand. Each one pairs with the <a href="tools.html">tools</a> it drives: the tools stay
+deterministic and refuse bad input, the skill supplies the judgment the tools deliberately do not
+have.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Skill</th><th>Teaches the host model</th><th>Loads when</th></tr></thead>
+<tbody>
+<tr>
+  <td><code>memoose</code></td>
+  <td>When to recall, and how to extract entities, relations, evidence and summaries (cognee's extraction rules).</td>
+  <td>You say remember or recall, ask &ldquo;what did we decide&rdquo;, refer to people, systems, decisions or dates from earlier work, or the agent learns a durable fact.</td>
+</tr>
+<tr>
+  <td><code>memoose-onboard</code></td>
+  <td>What is actually live on this host, what is being stored, and how to turn any of it off.</td>
+  <td>Just after installing, or when automatic memory is not behaving and you want to know why.</td>
+</tr>
+<tr>
+  <td><code>memoose-contradictions</code></td>
+  <td>Judging hotspots, choosing <code>supersede</code> over <code>mark_contradiction</code>, declaring functional relations.</td>
+  <td><code>remember</code> returns hotspots, recall shows contested facts, or you say a stored fact is wrong.</td>
+</tr>
+<tr>
+  <td><code>memoose-sessions</code></td>
+  <td>Typed context sections during the work, and the curator and writer rules for distilling lessons.</td>
+  <td>A task starts, you state a goal, rule or preference, or a task ends.</td>
+</tr>
+<tr>
+  <td><code>memoose-memify</code></td>
+  <td>Cross-connecting co-occurring entities, consolidating duplicates, refreshing global-context summaries, feedback weights.</td>
+  <td>You ask to clean up memory, or after a large batch of writes.</td>
+</tr>
+<tr>
+  <td><code>memoose-ontology</code></td>
+  <td>Extending and importing ontologies, and declaring which relations hold a single current value.</td>
+  <td>You have an OWL/RDF/Turtle ontology to import, or want domain-specific entity types.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>The extraction rules, in short</h2>
+<p>The <code>memoose</code> skill is the one that runs most, and it is worth knowing what it asks the
+model to do, because it is what makes recall worth reading months later:</p>
+<ol>
+  <li><code>describe_ontology</code> once per session, so writes use existing types and the snake_case
+  relation convention.</li>
+  <li><code>recall</code> the names involved <em>before</em> writing, so existing entity names get
+  reused instead of spawning near-duplicates &mdash; and so conflicts are noticed before they are
+  stored.</li>
+  <li><code>remember</code> with entities carrying their most complete name, a type, and one or two
+  sentences; relations as <code>source --relation--&gt; target</code> with a one-sentence description
+  that repeats the endpoint names.</li>
+  <li>Every relation gets an <code>evidence</code> pointer: a file range like
+  <code>repo://src/auth.py#L40-L82</code>, a URL, an issue id, or <code>user said &lt;date&gt;</code>.
+  Set <code>valid_from</code> when the source says since when something is true.</li>
+</ol>
+<p>What to store: decisions and their reasons, ownership, how systems relate, conventions and
+constraints, preferences you state, dates things happened, and problems and their fixes. What not to
+store: transient task state, what a file currently contains, and anything the model is unsure of.
+Facts about you rather than the project go to the <code>user</code> dataset.</p>
+
+<h2>The memory-keeper subagent</h2>
+<p>Skills also cover the case where a host has no <a href="automatic.html">hooks</a>: instead of
+spending your main model's turns on bookkeeping, they tell the agent to hand the work to
+<code>memory-keeper</code> &mdash; a subagent that runs on a small model (Haiku by default), holds
+only the Memoose tools, and replies with one short line when it is done. It stores what a conversation
+taught, and it runs maintenance: distilling a session into lessons, cross-connecting entities,
+consolidating duplicates, refreshing summaries.</p>
+<p>The point is that bookkeeping runs on a small model and off the main conversation's turns. On a
+host that runs plugin hooks the delegation happens on its own; elsewhere the skills still route it
+there when there is something worth storing.</p>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

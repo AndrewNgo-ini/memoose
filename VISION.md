@@ -22,7 +22,7 @@ in practice the server still needs its own key.
 
 **The agent already has a model. Memory should not bring a second one.**
 
-mnemoth inverts the usual split. The library holds only what is deterministic — a typed graph store,
+memoose inverts the usual split. The library holds only what is deterministic — a typed graph store,
 an ontology, chunking, ranking, supersession, a provenance ledger — and exposes it as plain MCP
 tools. Everything that needs judgment (what is an entity, which facts contradict, what is worth
 remembering, what a session taught) is written down as skills, and the model the host is *already
@@ -68,7 +68,7 @@ background subagent. Explicit tool calls keep working; they are just no longer t
 ### Recommendation as a memory
 
 The same problem applies to *reading*. An agent only recalls when it thinks to, and it usually does
-not think to. So mnemoth does not wait to be queried: it reads each incoming prompt, searches memory
+not think to. So memoose does not wait to be queried: it reads each incoming prompt, searches memory
 locally, and when something genuinely matches it hands the agent a hint before the agent starts
 thinking — what memory already holds, and the `recall` query that would fetch the rest.
 
@@ -77,17 +77,17 @@ floor, a hard cap on how much it injects, and silence when nothing matches. No m
 milliseconds, so it can run on every prompt without anyone noticing. Memory raises its hand instead
 of waiting to be asked, and the agent keeps full control over whether to follow the hint.
 
-Because we cannot see how any given machine is configured, a `mnemoth-onboard` skill walks the user
+Because we cannot see how any given machine is configured, a `memoose-onboard` skill walks the user
 through what is actually live on their host, what is being stored, and how to turn any of it off.
 
-## What mnemoth is for
+## What memoose is for
 
 Memory for **long-lived project work**, where the hard part is not finding a fact once but keeping a
 body of facts trustworthy for months: who owns what now, which decision replaced which, what
 convention this team follows, what we learned last time and why.
 
 That framing came out of benchmarking, not before it. On LoCoMo, the standard conversational-memory
-benchmark, mnemoth scores at parity with mem0 using a third fewer tokens and a much smaller model —
+benchmark, memoose scores at parity with mem0 using a third fewer tokens and a much smaller model —
 but a controlled paired test showed our knowledge graph does **not** beat plain chunk retrieval
 there (McNemar p = 1.00), at 77% more tokens. That is not a defect; it is a statement about the
 benchmark. LoCoMo asks needle questions over conversations that fit in a context window, so chunk
@@ -147,7 +147,7 @@ the benchmark proves correct — it invents a `previously_owned_by` relation ins
 it to. Then a model-graded tier, for the half the model-free suite cannot reach: does the host model
 *act* on the lesson it was handed, and *notice* the contradiction it was shown.
 
-**Next.** Real-project soak: run mnemoth on its own development and report what it gets wrong. One
+**Next.** Real-project soak: run memoose on its own development and report what it gets wrong. One
 live run found two bugs, which is the argument for doing it continuously. One model-matched LoCoMo
 run to retire the answerer confound, and then stop touching LoCoMo.
 

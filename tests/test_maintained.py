@@ -1,6 +1,6 @@
 """The maintained-memory benchmark, run as tests.
 
-It needs no model and no network, so the claims mnemoth actually makes — a fact changed,
+It needs no model and no network, so the claims memoose actually makes — a fact changed,
 two sources disagree, where did this come from, we learned this before — are checked on
 every commit rather than in an occasional paid benchmark run. See
 `benchmarks/maintained/README.md`.

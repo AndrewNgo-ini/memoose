@@ -1,7 +1,7 @@
-"""`mnemoth install <host>`: wire the MCP server and the skill into a host.
+"""`memoose install <host>`: wire the MCP server and the skill into a host.
 
 Modelled on OpenWiki's integration installer. Each host gets exactly two things,
-both in its own conventions: an MCP server entry and a copy of skills/mnemoth.
+both in its own conventions: an MCP server entry and a copy of skills/memoose.
 User scope by default so one install works from every repository.
 """
 
@@ -13,7 +13,8 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-SERVER_NAME = "mnemoth"
+SERVER_NAME = "memoose"
+LEGACY_SERVER_NAME = "mnemoth"  # pre-rename installs, cleared on the next install
 SKILLS_ROOT = Path(__file__).resolve().parents[2] / "skills"
 
 
@@ -30,19 +31,19 @@ class HostTarget:
 
 
 HOSTS: dict[str, HostTarget] = {
-    "claude": HostTarget("claude", "Claude Code", ".claude/skills/mnemoth", ".claude.json", "json", ".claude/skills/mnemoth", ".mcp.json", "json"),
-    "codex": HostTarget("codex", "Codex", ".agents/skills/mnemoth", ".codex/config.toml", "codex-toml", ".agents/skills/mnemoth", ".codex/config.toml", "codex-toml"),
-    "opencode": HostTarget("opencode", "OpenCode", ".config/opencode/skills/mnemoth", ".config/opencode/opencode.jsonc", "opencode-json", ".opencode/skills/mnemoth", "opencode.jsonc", "opencode-json"),
-    "cursor": HostTarget("cursor", "Cursor", ".cursor/skills/mnemoth", ".cursor/mcp.json", "json", ".cursor/skills/mnemoth", ".cursor/mcp.json", "json"),
+    "claude": HostTarget("claude", "Claude Code", ".claude/skills/memoose", ".claude.json", "json", ".claude/skills/memoose", ".mcp.json", "json"),
+    "codex": HostTarget("codex", "Codex", ".agents/skills/memoose", ".codex/config.toml", "codex-toml", ".agents/skills/memoose", ".codex/config.toml", "codex-toml"),
+    "opencode": HostTarget("opencode", "OpenCode", ".config/opencode/skills/memoose", ".config/opencode/opencode.jsonc", "opencode-json", ".opencode/skills/memoose", "opencode.jsonc", "opencode-json"),
+    "cursor": HostTarget("cursor", "Cursor", ".cursor/skills/memoose", ".cursor/mcp.json", "json", ".cursor/skills/memoose", ".cursor/mcp.json", "json"),
 }
 
 
 def default_command() -> list[str]:
-    """`uvx mnemoth serve` once published; from a source checkout, point uvx at the checkout."""
+    """`uvx memoose serve` once published; from a source checkout, point uvx at the checkout."""
     root = Path(__file__).resolve().parents[2]
-    if (root / "pyproject.toml").exists() and (root / "src" / "mnemoth").exists():
-        return ["uvx", "--from", str(root), "mnemoth", "serve"]
-    return ["uvx", "mnemoth", "serve"]
+    if (root / "pyproject.toml").exists() and (root / "src" / "memoose").exists():
+        return ["uvx", "--from", str(root), "memoose", "serve"]
+    return ["uvx", "memoose", "serve"]
 
 
 def _paths(host: str, project: str | None) -> tuple[HostTarget, Path, Path, str]:
@@ -67,8 +68,20 @@ def install(host: str, project: str | None = None, command: list[str] | None = N
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, dst)
         installed.append(str(dst_dir))
+    _clear_legacy(kind, mcp_path, skill_dir.parent)
     _write_mcp(kind, mcp_path, command)
     return {"host": t.display, "scope": "project" if project else "user", "skills": installed, "mcp_config": str(mcp_path), "command": command}
+
+
+def _clear_legacy(kind: str, mcp_path: Path, skills_parent: Path) -> None:
+    """Drop a pre-rename install so the host does not end up running two memory servers.
+
+    Only the host's own config entry and its copy of the skills go; stored memory is never
+    touched, and `datasets.data_dir` keeps reading it where it already lives.
+    """
+    _remove_mcp(kind, mcp_path, LEGACY_SERVER_NAME)
+    for legacy in skills_parent.glob(f"{LEGACY_SERVER_NAME}*"):
+        shutil.rmtree(legacy, ignore_errors=True)
 
 
 def uninstall(host: str, project: str | None = None) -> dict:
@@ -77,6 +90,7 @@ def uninstall(host: str, project: str | None = None) -> dict:
     for skill_src in SKILLS_ROOT.iterdir():
         if (skill_src / "SKILL.md").exists():
             shutil.rmtree(skill_dir.parent / skill_src.name, ignore_errors=True)
+    _clear_legacy(kind, mcp_path, skill_dir.parent)
     removed_mcp = _remove_mcp(kind, mcp_path)
     return {"host": t.display, "skill_removed": removed_skill, "mcp_removed": removed_mcp}
 
@@ -111,20 +125,20 @@ def _write_mcp(kind: str, path: Path, command: list[str]) -> None:
         raise ValueError(kind)
 
 
-def _remove_mcp(kind: str, path: Path) -> bool:
+def _remove_mcp(kind: str, path: Path, name: str = SERVER_NAME) -> bool:
     if not path.exists():
         return False
     if kind in ("json", "opencode-json"):
         data = _read_json(path) or {}
         key = "mcpServers" if kind == "json" else "mcp"
         servers = data.get(key, {})
-        if SERVER_NAME not in servers:
+        if name not in servers:
             return False
-        del servers[SERVER_NAME]
+        del servers[name]
         path.write_text(json.dumps(data, indent=2) + "\n")
         return True
     text = path.read_text()
-    new = _strip_toml_block(text)
+    new = _strip_toml_block(text, name)
     if new == text:
         return False
     path.write_text(new)
@@ -140,11 +154,8 @@ def _has_mcp(kind: str, path: Path) -> bool:
     return f"[mcp_servers.{SERVER_NAME}]" in path.read_text()
 
 
-_TOML_BLOCK = re.compile(rf"^\[mcp_servers\.{SERVER_NAME}\]\s*$.*?(?=^\[|\Z)", re.M | re.S)
-
-
-def _strip_toml_block(text: str) -> str:
-    return _TOML_BLOCK.sub("", text)
+def _strip_toml_block(text: str, name: str = SERVER_NAME) -> str:
+    return re.sub(rf"^\[mcp_servers\.{re.escape(name)}\]\s*$.*?(?=^\[|\Z)", "", text, flags=re.M | re.S)
 
 
 def _read_json(path: Path) -> dict | None:

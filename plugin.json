@@ -1,12 +1,12 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "mnemoth",
+  "name": "memoose",
   "version": "0.2.0",
   "description": "Persistent memory for coding agents: typed knowledge graph with evidence, contradictions and supersession, maintained in the background on a small model. No API key; nothing leaves your machine.",
   "author": {
     "name": "Hieu Ngo"
   },
-  "repository": "https://github.com/hieungo/mnemoth",
+  "repository": "https://github.com/AndrewNgo-ini/mnemoth",
   "license": "Apache-2.0",
   "keywords": [
     "memory",

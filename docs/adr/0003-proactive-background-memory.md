@@ -51,7 +51,7 @@ key and no second vendor.
   matter more here than in the pull model, or the graph fills with noise.
 - Background capture writes to the same SQLite file as foreground calls, which is why embeddings are
   computed outside the write transaction and the store carries a 60 s busy timeout.
-- We cannot see how a user's host is configured, so a `mnemoth-onboard` skill reports what is
+- We cannot see how a user's host is configured, so a `memoose-onboard` skill reports what is
   actually live, what is being stored, and how to switch each part off, rather than the plugin
   guessing or silently editing host configuration.
 - Injected hints are hints, not answers: they carry the follow-up `recall` query and say plainly that

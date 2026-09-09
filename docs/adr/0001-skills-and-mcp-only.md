@@ -2,9 +2,9 @@
 status: accepted
 ---
 
-# mnemoth reaches the Host only through skills and MCP tools; the library never calls or orchestrates a model
+# memoose reaches the Host only through skills and MCP tools; the library never calls or orchestrates a model
 
-mnemoth ports cognee's memory-management logic, whose pipelines call an LLM several times per chunk (entity extraction, summarization, contradiction detection, distillation). No API key is allowed, and neither Claude Code nor Codex grants the MCP `sampling` capability (anthropics/claude-code#1785 is open). We do not replace those model calls with any mechanism of our own. The library holds only the deterministic parts of cognee's logic: graph store, ontology resolution, chunking, embeddings, lexical, vector, and graph retrieval, ranking, provenance, temporal supersession, datasets, sessions, forget. These are exposed as plain MCP tools. Everything cognee asked a model to do is described in skills, and the Host Model does that thinking itself while it calls the tools. Claude Code and Codex are harnessed only through the portable Agent Plugin surface: `skills/` and `mcp.json`.
+memoose ports cognee's memory-management logic, whose pipelines call an LLM several times per chunk (entity extraction, summarization, contradiction detection, distillation). No API key is allowed, and neither Claude Code nor Codex grants the MCP `sampling` capability (anthropics/claude-code#1785 is open). We do not replace those model calls with any mechanism of our own. The library holds only the deterministic parts of cognee's logic: graph store, ontology resolution, chunking, embeddings, lexical, vector, and graph retrieval, ranking, provenance, temporal supersession, datasets, sessions, forget. These are exposed as plain MCP tools. Everything cognee asked a model to do is described in skills, and the Host Model does that thinking itself while it calls the tools. Claude Code and Codex are harnessed only through the portable Agent Plugin surface: `skills/` and `mcp.json`.
 
 ## Considered Options
 

@@ -12,10 +12,10 @@ HOOKS = Path(__file__).resolve().parents[1] / "hooks"
 sys.path.insert(0, str(HOOKS))
 import _common  # noqa: E402
 
-from mnemoth.datasets import project_dataset_name  # noqa: E402
-from mnemoth.embeddings import HashEmbedder  # noqa: E402
-from mnemoth.engine import Engine  # noqa: E402
-from mnemoth.models import EntityIn, LessonIn, RelationIn  # noqa: E402
+from memoose.datasets import project_dataset_name  # noqa: E402
+from memoose.embeddings import HashEmbedder  # noqa: E402
+from memoose.engine import Engine  # noqa: E402
+from memoose.models import EntityIn, LessonIn, RelationIn  # noqa: E402
 
 
 def run_hook(script: str, event: dict, env: dict) -> subprocess.CompletedProcess:
@@ -30,14 +30,45 @@ def test_hook_dataset_naming_matches_library(tmp_path, monkeypatch):
     """_common duplicates the library's naming so hooks need no dependencies; keep them in step."""
     proj = tmp_path / "My Project"
     proj.mkdir()
-    monkeypatch.setenv("MNEMOTH_PROJECT_DIR", str(proj))
+    monkeypatch.setenv("MEMOOSE_PROJECT_DIR", str(proj))
     assert _common.dataset_name(str(proj)) == project_dataset_name()
     assert _common.dataset_name(None) == project_dataset_name()
 
 
+def test_legacy_mnemoth_env_and_data_dir_still_resolve(tmp_path, monkeypatch):
+    """Setups made before the rename keep working: old env names, and memory left in ~/.mnemoth."""
+    from memoose import datasets
+
+    monkeypatch.delenv("MEMOOSE_DATA_DIR", raising=False)
+    monkeypatch.delenv("MEMOOSE_PROJECT_DIR", raising=False)
+    monkeypatch.setenv("MNEMOTH_DATA_DIR", str(tmp_path / "old"))
+    monkeypatch.setenv("MNEMOTH_PROJECT_DIR", str(tmp_path))
+    assert datasets.data_dir() == _common.data_dir() == tmp_path / "old"
+    assert datasets.project_dataset_name() == _common.dataset_name(None)
+
+    monkeypatch.setenv("MEMOOSE_DATA_DIR", str(tmp_path / "new"))  # the new name wins when both are set
+    assert datasets.data_dir() == _common.data_dir() == tmp_path / "new"
+
+    monkeypatch.delenv("MEMOOSE_DATA_DIR")
+    monkeypatch.delenv("MNEMOTH_DATA_DIR")
+    home = tmp_path / "home"
+    (home / ".mnemoth").mkdir(parents=True)
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+    assert datasets.data_dir() == _common.data_dir() == home / ".mnemoth"  # pre-rename store, left in place
+    (home / ".memoose").mkdir()
+    assert datasets.data_dir() == _common.data_dir() == home / ".memoose"
+
+
+def test_legacy_kill_switches_still_apply(tmp_path):
+    """MNEMOTH_AUTO_CAPTURE=0 and friends must keep turning the hooks off."""
+    r = run_hook("capture.py", {"cwd": str(tmp_path), "hook_event_name": "Stop"},
+                 {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "MNEMOTH_AUTO_CAPTURE": "0"})
+    assert r.returncode == 0 and r.stdout.strip() == ""
+
+
 def test_session_start_is_silent_without_memory(tmp_path):
     r = run_hook("session_start.py", {"cwd": str(tmp_path), "hook_event_name": "SessionStart"},
-                 {"MNEMOTH_DATA_DIR": str(tmp_path / "data")})
+                 {"MEMOOSE_DATA_DIR": str(tmp_path / "data")})
     assert r.returncode == 0 and r.stdout.strip() == ""
 
 
@@ -62,7 +93,7 @@ def test_session_start_injects_standing_context(tmp_path):
     eng.close()
 
     r = run_hook("session_start.py", {"cwd": str(proj), "hook_event_name": "SessionStart"},
-                 {"MNEMOTH_DATA_DIR": str(data)})
+                 {"MEMOOSE_DATA_DIR": str(data)})
     assert r.returncode == 0
     out = json.loads(r.stdout)
     ctx = out["hookSpecificOutput"]["additionalContext"]
@@ -75,14 +106,14 @@ def test_session_start_injects_standing_context(tmp_path):
 
 
 def test_session_start_respects_kill_switch(tmp_path):
-    r = run_hook("session_start.py", {"cwd": str(tmp_path)}, {"MNEMOTH_AUTO_RECALL": "0"})
+    r = run_hook("session_start.py", {"cwd": str(tmp_path)}, {"MEMOOSE_AUTO_RECALL": "0"})
     assert r.returncode == 0 and r.stdout.strip() == ""
 
 
 def test_hooks_survive_garbage_input(tmp_path):
     for script in ("session_start.py", "capture.py"):
         p = subprocess.run([sys.executable, str(HOOKS / script)], input="not json at all",
-                           capture_output=True, text=True, env={**os.environ, "MNEMOTH_DATA_DIR": str(tmp_path)}, timeout=60)
+                           capture_output=True, text=True, env={**os.environ, "MEMOOSE_DATA_DIR": str(tmp_path)}, timeout=60)
         assert p.returncode == 0, f"{script} must never fail a session"
 
 
@@ -131,7 +162,7 @@ def test_read_exchange_tolerates_missing_and_corrupt(tmp_path):
 
 
 def test_offsets_round_trip(tmp_path, monkeypatch):
-    monkeypatch.setenv("MNEMOTH_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("MEMOOSE_DATA_DIR", str(tmp_path))
     assert _common.read_offset("sess/1") == 0
     _common.write_offset("sess/1", 42)
     assert _common.read_offset("sess/1") == 42
@@ -146,11 +177,11 @@ def test_capture_gate_skips_thin_turns_without_spending_a_model(tmp_path, monkey
     marker = tmp_path / "claude-was-called"
     (fake_bin / "claude").write_text(f"#!/bin/sh\ntouch {marker}\n")
     (fake_bin / "claude").chmod(0o755)
-    env = {"MNEMOTH_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"}
+    env = {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"}
     r = run_hook("capture.py", {"session_id": "s1", "cwd": str(tmp_path), "transcript_path": str(t)}, env)
     assert r.returncode == 0
     assert not marker.exists(), "the relevance gate must not spend a model call on a trivial turn"
-    monkeypatch.setenv("MNEMOTH_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MEMOOSE_DATA_DIR", str(tmp_path / "data"))
     assert _common.read_offset("s1") == 1  # still advanced, so the turn is not re-read
 
 
@@ -162,7 +193,7 @@ def test_capture_invokes_the_small_model_on_substantive_turns(tmp_path, monkeypa
     argv, stdin = tmp_path / "argv", tmp_path / "stdin"
     (fake_bin / "claude").write_text(f'#!/bin/sh\necho "$@" > {argv}\ncat > {stdin}\n')
     (fake_bin / "claude").chmod(0o755)
-    env = {"MNEMOTH_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}",
+    env = {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}",
            "CLAUDE_PLUGIN_ROOT": str(Path(__file__).resolve().parents[1])}
     r = run_hook("capture.py", {"session_id": "s2", "cwd": str(tmp_path), "transcript_path": str(t)}, env)
     assert r.returncode == 0
@@ -172,7 +203,7 @@ def test_capture_invokes_the_small_model_on_substantive_turns(tmp_path, monkeypa
     prompt = stdin.read_text()
     assert "JWT" in prompt and "NOTHING" in prompt
     assert "Do NOT store" in prompt  # the precision rules travel with the prompt
-    monkeypatch.setenv("MNEMOTH_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MEMOOSE_DATA_DIR", str(tmp_path / "data"))
     assert _common.read_offset("s2") == 1
 
 
@@ -184,13 +215,13 @@ def test_capture_kill_switch_and_lock(tmp_path, monkeypatch):
     marker = tmp_path / "called"
     (fake_bin / "claude").write_text(f"#!/bin/sh\ntouch {marker}\n")
     (fake_bin / "claude").chmod(0o755)
-    base = {"MNEMOTH_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"}
+    base = {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"}
     ev = {"session_id": "s3", "cwd": str(tmp_path), "transcript_path": str(t)}
 
-    assert run_hook("capture.py", ev, {**base, "MNEMOTH_AUTO_CAPTURE": "0"}).returncode == 0
+    assert run_hook("capture.py", ev, {**base, "MEMOOSE_AUTO_CAPTURE": "0"}).returncode == 0
     assert not marker.exists()
 
-    monkeypatch.setenv("MNEMOTH_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MEMOOSE_DATA_DIR", str(tmp_path / "data"))
     lock = _common.state_dir() / "s3.lock"
     lock.parent.mkdir(parents=True, exist_ok=True)
     lock.write_text("999999")
@@ -205,7 +236,7 @@ def test_capture_survives_missing_claude_cli(tmp_path):
     empty = tmp_path / "emptybin"
     empty.mkdir()
     r = run_hook("capture.py", {"session_id": "s4", "cwd": str(tmp_path), "transcript_path": str(t)},
-                 {"MNEMOTH_DATA_DIR": str(tmp_path / "data"), "PATH": str(empty)})
+                 {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "PATH": str(empty)})
     assert r.returncode == 0, "no claude CLI must degrade silently, not fail the session"
 
 
@@ -250,7 +281,7 @@ def test_recommend_injects_a_hint_when_memory_matches(tmp_path):
     r = run_hook("recommend.py",
                  {"cwd": str(proj), "hook_event_name": "UserPromptSubmit",
                   "prompt": "who owns the billing-service and what database does it use?"},
-                 {"MNEMOTH_DATA_DIR": str(data)})
+                 {"MEMOOSE_DATA_DIR": str(data)})
     assert r.returncode == 0
     out = json.loads(r.stdout)
     assert out["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
@@ -264,16 +295,16 @@ def test_recommend_is_silent_when_nothing_matches(tmp_path):
     data, proj = _seed(tmp_path)
     r = run_hook("recommend.py",
                  {"cwd": str(proj), "prompt": "what is the weather in Reykjavik tomorrow"},
-                 {"MNEMOTH_DATA_DIR": str(data)})
+                 {"MEMOOSE_DATA_DIR": str(data)})
     assert r.returncode == 0 and r.stdout.strip() == "", "an irrelevant prompt must not be polluted with hints"
 
 
 def test_recommend_ignores_trivial_prompts_and_respects_kill_switch(tmp_path):
     data, proj = _seed(tmp_path)
-    short = run_hook("recommend.py", {"cwd": str(proj), "prompt": "ok"}, {"MNEMOTH_DATA_DIR": str(data)})
+    short = run_hook("recommend.py", {"cwd": str(proj), "prompt": "ok"}, {"MEMOOSE_DATA_DIR": str(data)})
     assert short.stdout.strip() == ""
     off = run_hook("recommend.py", {"cwd": str(proj), "prompt": "who owns the billing-service database"},
-                   {"MNEMOTH_DATA_DIR": str(data), "MNEMOTH_HINTS": "0"})
+                   {"MEMOOSE_DATA_DIR": str(data), "MEMOOSE_HINTS": "0"})
     assert off.returncode == 0 and off.stdout.strip() == ""
 
 
@@ -285,7 +316,7 @@ def test_recommend_needs_no_model_and_is_fast(tmp_path):
     empty.mkdir()
     t0 = _t.perf_counter()
     r = run_hook("recommend.py", {"cwd": str(proj), "prompt": "which database does billing-service use"},
-                 {"MNEMOTH_DATA_DIR": str(data), "PATH": str(empty)})
+                 {"MEMOOSE_DATA_DIR": str(data), "PATH": str(empty)})
     assert r.returncode == 0 and "PostgreSQL" in r.stdout
     assert _t.perf_counter() - t0 < 5
 
@@ -307,7 +338,7 @@ def test_recommend_reaches_the_user_dataset(tmp_path):
     eng.close()
     r = run_hook("recommend.py",
                  {"cwd": str(proj), "prompt": "can I add the requests library as a dependency?"},
-                 {"MNEMOTH_DATA_DIR": str(data)})
+                 {"MEMOOSE_DATA_DIR": str(data)})
     assert r.returncode == 0 and r.stdout.strip(), "the user's standing rule must reach the hint"
     assert "dependency" in json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
 
@@ -329,12 +360,12 @@ def test_recommend_relevance_floor_is_corpus_aware(tmp_path):
     )
     eng.close()
     r = run_hook("recommend.py", {"cwd": str(proj), "prompt": "can I force-push this branch to main?"},
-                 {"MNEMOTH_DATA_DIR": str(data)})
+                 {"MEMOOSE_DATA_DIR": str(data)})
     assert r.returncode == 0 and r.stdout.strip(), "a one-fact store must still be able to raise its hand"
     assert "force-push" in json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
 
     quiet = run_hook("recommend.py", {"cwd": str(proj), "prompt": "what is the capital of France?"},
-                     {"MNEMOTH_DATA_DIR": str(data)})
+                     {"MEMOOSE_DATA_DIR": str(data)})
     assert quiet.stdout.strip() == "", "dropping the floor must not make a tiny store chatty"
 
 
@@ -350,7 +381,7 @@ def test_capture_prompt_pins_the_dataset(tmp_path):
     (fake_bin / "claude").write_text(f'#!/bin/sh\ncat > {stdin}\n')
     (fake_bin / "claude").chmod(0o755)
     r = run_hook("capture.py", {"session_id": "sd", "cwd": str(proj), "transcript_path": str(t)},
-                 {"MNEMOTH_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"})
+                 {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"})
     assert r.returncode == 0
     assert f'dataset: "{_common.dataset_name(str(proj))}"' in stdin.read_text()
 
@@ -380,7 +411,7 @@ def test_recommend_never_hints_a_superseded_fact(tmp_path):
     eng.close()
 
     r = run_hook("recommend.py", {"cwd": str(proj), "prompt": "where is the billing-service deployed right now?"},
-                 {"MNEMOTH_DATA_DIR": str(data)})
+                 {"MEMOOSE_DATA_DIR": str(data)})
     ctx = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
     assert "eu-central-1" in ctx, "the current fact must still be hinted"
     assert "eu-west-1" not in ctx, "a superseded fact must never be injected as if it were current"

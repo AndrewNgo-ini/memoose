@@ -1,5 +1,5 @@
 # Vendored verbatim from https://github.com/mem0ai/memory-benchmarks (benchmarks/locomo/prompts.py), Apache-2.0.
-# Used unchanged so that mnemoth is scored with the same answerer and judge prompts as mem0.
+# Used unchanged so that memoose is scored with the same answerer and judge prompts as mem0.
 
 """
 LOCOMO Benchmark Prompts

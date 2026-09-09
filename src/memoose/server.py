@@ -1,7 +1,7 @@
-"""MCP server exposing the Engine as plain tools, plus the `mnemoth` CLI.
+"""MCP server exposing the Engine as plain tools, plus the `memoose` CLI.
 
-`mnemoth` / `mnemoth serve`  run the stdio MCP server (what hosts launch)
-`mnemoth install <host>`     wire the server + skills into a host (integrations.py)
+`memoose` / `memoose serve`  run the stdio MCP server (what hosts launch)
+`memoose install <host>`     wire the server + skills into a host (integrations.py)
 """
 
 from __future__ import annotations
@@ -20,19 +20,19 @@ from .models import CrossConnectIn, EntityIn, LessonIn, RelationIn
 from .ontology import OntologyError
 from .retrieval import MODES
 
-INSTRUCTIONS = """mnemoth is persistent memory for this project: a typed knowledge graph (entities and
+INSTRUCTIONS = """memoose is persistent memory for this project: a typed knowledge graph (entities and
 relations with one-sentence facts and evidence pointers), source text, sessions, and lessons.
 It never calls a model: you do the extraction and the judgment; the tools validate, store, and
 retrieve. Flow: `session_start` when work begins; `recall` before relying on the past;
 `describe_ontology` once; `recall` related names before `remember`; `remember` facts as
 source --relation--> target with evidence; judge `contradiction_candidates` when warned;
-`session_timeline` then `publish_lessons` when work ends. Skills: mnemoth (extraction),
-mnemoth-contradictions, mnemoth-sessions, mnemoth-memify, mnemoth-ontology."""
+`session_timeline` then `publish_lessons` when work ends. Skills: memoose (extraction),
+memoose-contradictions, memoose-sessions, memoose-memify, memoose-ontology."""
 
 
 def build_server(engine: Engine | None = None) -> MCPServer:
     engine = engine or Engine()
-    server = MCPServer(name="mnemoth", instructions=INSTRUCTIONS, version=__version__)
+    server = MCPServer(name="memoose", instructions=INSTRUCTIONS, version=__version__)
 
     def guard(fn):
         def run(*a, **kw):
@@ -116,7 +116,7 @@ def build_server(engine: Engine | None = None) -> MCPServer:
             return {"error": "ValueError", "message": f"mode must be one of {', '.join(MODES)}"}
         return guard(engine.recall)(query, datasets=datasets, mode=mode, limit=limit, include_superseded=include_superseded, hops=hops, include_user=include_user)
 
-    @server.tool(description="Facts around given entities or relations, grouped by subject, with hotspots where one subject holds several values for one relation. Judge them with the mnemoth-contradictions skill.")
+    @server.tool(description="Facts around given entities or relations, grouped by subject, with hotspots where one subject holds several values for one relation. Judge them with the memoose-contradictions skill.")
     def contradiction_candidates(entity_names: list[str] | None = None, relation_ids: list[str] | None = None, dataset: str | None = None) -> dict:
         return guard(engine.dataset(dataset).contradiction_candidates)(entity_names, relation_ids)
 
@@ -176,14 +176,14 @@ HOSTS = ["claude", "codex", "opencode", "cursor"]
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="mnemoth", description="Memory harness for coding agents.")
+    parser = argparse.ArgumentParser(prog="memoose", description="Memory harness for coding agents.")
     sub = parser.add_subparsers(dest="cmd")
     sub.add_parser("serve", help="Run the stdio MCP server (default).")
-    p_install = sub.add_parser("install", help="Wire mnemoth into a host: claude, codex, opencode, cursor.")
+    p_install = sub.add_parser("install", help="Wire memoose into a host: claude, codex, opencode, cursor.")
     p_install.add_argument("host", choices=HOSTS)
     p_install.add_argument("--project", nargs="?", const=".", default=None, help="Install into this project instead of the user scope.")
-    p_install.add_argument("--command", default=None, help='MCP server command override, e.g. "uvx mnemoth serve".')
-    p_un = sub.add_parser("uninstall", help="Remove mnemoth from a host.")
+    p_install.add_argument("--command", default=None, help='MCP server command override, e.g. "uvx memoose serve".')
+    p_un = sub.add_parser("uninstall", help="Remove memoose from a host.")
     p_un.add_argument("host", choices=HOSTS)
     p_un.add_argument("--project", nargs="?", const=".", default=None)
     p_status = sub.add_parser("status", help="Show what is installed where.")

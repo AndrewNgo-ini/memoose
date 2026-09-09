@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install &middot; Memoose</title>
+<meta name="description" content="Install Memoose into Claude Code, Codex, OpenCode, or Cursor from a source checkout, or load it as a Claude Code plugin.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html" aria-current="page">Install</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="skills.html">Skills</a></li>
+      <li><a href="automatic.html">Automatic memory</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="trust.html">Evidence &amp; history</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<h1>Install</h1>
+<p class="lede">One command per host. It writes a single MCP server entry into the host's own config
+and copies the skills in. Nothing else is touched.</p>
+
+<div class="note">
+<p><strong>From source.</strong> Memoose is not published on PyPI yet, so install from a checkout of
+the repository. Everything below assumes you are inside that checkout.</p>
+</div>
+
+<pre><code>git clone https://github.com/AndrewNgo-ini/mnemoth.git
+cd mnemoth
+uv sync</code></pre>
+
+<h2>Install into a host</h2>
+<pre><code>uv run memoose install claude               # or: codex | opencode | cursor
+uv run memoose install claude --project .   # project scope instead of user scope
+uv run memoose status                       # what is installed where</code></pre>
+<p><code>uninstall</code> reverses both. Then <strong>restart the host</strong> &mdash; MCP servers and hooks are read at startup. Run
+<code>uv run memoose status</code> again if you want to confirm what landed.</p>
+
+<h3>What each host gets</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Host</th><th>MCP config written</th><th>Skills copied to</th></tr></thead>
+<tbody>
+<tr><td>Claude Code</td><td><code>~/.claude.json</code> (user) or <code>.mcp.json</code> (project)</td><td><code>.claude/skills/memoose*</code></td></tr>
+<tr><td>Codex</td><td><code>~/.codex/config.toml</code></td><td><code>.agents/skills/memoose*</code></td></tr>
+<tr><td>OpenCode</td><td><code>~/.config/opencode/opencode.jsonc</code> or <code>opencode.jsonc</code></td><td><code>.config/opencode/skills/memoose*</code> (user) or <code>.opencode/skills/memoose*</code></td></tr>
+<tr><td>Cursor</td><td><code>~/.cursor/mcp.json</code> or <code>.cursor/mcp.json</code></td><td><code>.cursor/skills/memoose*</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>User scope is the default and is usually what you want: memory follows you into every project,
+with a separate dataset per project directory. Use <code>--project .</code> when a repository should
+carry its own Memoose configuration for everyone who checks it out.</p>
+
+<h2>As a Claude Code plugin</h2>
+<p>Claude Code can load the checkout directly, which brings the MCP server, the skills, the
+<a href="automatic.html">hooks</a>, and the <code>memory-keeper</code> subagent in one step:</p>
+<pre><code>claude --plugin-dir /path/to/memoose</code></pre>
+
+<h2>Optional extras</h2>
+<dl>
+  <dt>fastembed</dt>
+  <dd>Real local embeddings for the vector channel of hybrid retrieval. Without it, Memoose uses a
+  keyless hashed fallback &mdash; still no model download, still no key. Enable with
+  <code>uv sync --extra fastembed</code>.</dd>
+  <dt>ontology</dt>
+  <dd><code>rdflib</code>, for full OWL/RDF/Turtle parsing in <code>import_ontology</code>. A
+  Turtle/RDF-XML fallback parser is built in, so this is only needed for exotic ontology files.</dd>
+</dl>
+
+<h2>Verify it works</h2>
+<p>In the host, ask the agent to call two tools:</p>
+<pre><code>list_datasets        # is the server reachable, and which dataset is this project?
+describe_ontology    # entity types, functional relations, store stats</code></pre>
+<p>If <code>list_datasets</code> answers, the core is live and every capability is available. If it
+does not, the MCP server is not connected: re-run the install for that host and restart it. For the
+automatic parts, run the <code>memoose-onboard</code> skill &mdash; it checks each one against the
+host you are actually on and reports what it found.</p>
+
+<h2>Develop</h2>
+<pre><code>uv sync --extra fastembed --group dev
+uv run pytest                                          # includes the maintained-memory suite
+uv run python benchmarks/maintained/run_maintained.py  # ~1 s, no key
+claude plugin validate .</code></pre>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

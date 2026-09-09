@@ -1,11 +1,11 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
-    "mnemoth": {
+    "memoose": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["--from", "${PLUGIN_ROOT}", "mnemoth", "serve"],
-      "env": { "MNEMOTH_DATA_DIR": "${PLUGIN_DATA}" }
+      "args": ["--from", "${PLUGIN_ROOT}", "memoose", "serve"],
+      "env": { "MEMOOSE_DATA_DIR": "${PLUGIN_DATA}" }
     }
   }
 }

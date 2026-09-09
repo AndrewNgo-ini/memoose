@@ -2,7 +2,7 @@
 resolve_temporal_contradictions.
 
 cognee gathers the facts around the nodes an ingestion touched, excludes structural
-relations, and asks a model which pairs are incompatible. mnemoth builds that same
+relations, and asks a model which pairs are incompatible. memoose builds that same
 candidate list and hands it to the Host Model through the skill; the judgment comes
 back through `mark_contradiction`. Functional (single-valued) relations are superseded
 automatically inside remember, exactly like cognee, and nothing is ever deleted.

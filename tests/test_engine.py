@@ -1,5 +1,5 @@
-from mnemoth.models import EntityIn, RelationIn
-from mnemoth.ontology import OntologyError
+from memoose.models import EntityIn, RelationIn
+from memoose.ontology import OntologyError
 
 TEXT = "We moved auth to JWT last week. Bao owns auth-service now, Linh moved to billing."
 
@@ -94,8 +94,8 @@ def test_forget_entity_cascades(ds):
 def test_persistence_across_engine_instances(engine):
     _remember_auth(engine.dataset("persist"))
     engine.close()
-    from mnemoth.embeddings import HashEmbedder
-    from mnemoth.engine import Engine
+    from memoose.embeddings import HashEmbedder
+    from memoose.engine import Engine
 
     again = Engine(embedder=HashEmbedder())
     try:

@@ -23,7 +23,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable
 
-from mnemoth.models import EntityIn, LessonIn, RelationIn
+from memoose.models import EntityIn, LessonIn, RelationIn
 
 CLAIMS = {
     "currency": "A fact changed. Does recall return the current one?",

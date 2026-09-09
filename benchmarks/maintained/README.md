@@ -15,7 +15,7 @@ keep for months:
 | Why do we believe this? Point at the evidence. | evidence has to survive ingestion, ranking, and merging to be worth anything | `provenance` |
 | We solved this before. Does the lesson come back? | it has to arrive in a *later* session, unprompted | `reuse` |
 
-mnemoth claims all five ([VISION.md](../../VISION.md)) and, until this suite existed, had
+memoose claims all five ([VISION.md](../../VISION.md)) and, until this suite existed, had
 evidence for none of them. Our LoCoMo work showed the knowledge graph does not beat plain
 chunk retrieval there (McNemar p = 1.00, at 77% more tokens) — which is a fact about
 LoCoMo, not a defect, because LoCoMo never asks any of the five questions above. This
@@ -63,10 +63,10 @@ semantics, not ranking.
 | fastembed bge-small | **18/18** | 66/66 | 3/3 | 0.96 s | 0 | $0 |
 
 **Read this honestly.** A suite written for our own system, which our own system passes, is
-*not* evidence that mnemoth is better than anything. It is evidence that the claims are now
+*not* evidence that memoose is better than anything. It is evidence that the claims are now
 checked instead of asserted, and that they stay checked. The number that would mean
 something is what *another* system scores — so the requirements are restated below in
-API-neutral terms, because the assertions in `cases.py` are written against mnemoth's tool
+API-neutral terms, because the assertions in `cases.py` are written against memoose's tool
 surface and nobody else has a `mark_contradiction`. We would rather publish a benchmark
 someone beats us on than keep claiming things nothing measures.
 
@@ -81,7 +81,7 @@ real, and is now fixed:
 > already known, silently made the 2024 value current again. Learning the past overwrote the
 > present.
 >
-> Fixed in `src/mnemoth/contradictions.py` (`states_later_value`): when both facts carry
+> Fixed in `src/memoose/contradictions.py` (`states_later_value`): when both facts carry
 > `valid_from`, that decides which is current, and the arriving fact is stored as superseded
 > history when it predates what is already known. Write order still decides when a date is
 > missing, and an undated arrival is presumed current, so the ordinary path is unchanged.
@@ -108,7 +108,7 @@ caught.
 
 ## Porting it to another memory system
 
-`cases.py` asserts against mnemoth's own tools and field names — `declare_functional_relations`,
+`cases.py` asserts against memoose's own tools and field names — `declare_functional_relations`,
 `supersede`, `contradiction_candidates`, and flags like `superseded_by` and `contested`. Those names
 are ours; the **requirements** are not. Below is each case as a behavioural requirement in terms any
 memory system has: *write a fact*, *ask a question*, *ask for history*. Port by restating the
@@ -141,7 +141,7 @@ is the honest score for that case. A system with no notion of superseded history
 
 The fixtures are deliberately tiny and stated in plain domain terms — services, owners, payment
 gateways, regions, dependencies — so they translate without carrying our ontology across. If you port
-these and mnemoth loses, tell us; that result is more useful to us than the 18/18 above.
+these and memoose loses, tell us; that result is more useful to us than the 18/18 above.
 
 ## Adding a case
 

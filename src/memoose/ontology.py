@@ -1,7 +1,7 @@
 """The Ontology: declared entity types, aliases, a parent hierarchy, and relation-name rules.
 
 cognee resolves extracted nodes against an OWL/RDF ontology with closest-match lookup.
-mnemoth ships basic default types (cognee's guidance: basic labels, specifics in
+memoose ships basic default types (cognee's guidance: basic labels, specifics in
 descriptions), lets a Dataset extend them, and imports OWL/RDF/Turtle class
 hierarchies: imported classes become types whose parent chain collapses onto a
 basic type for extraction, so the agent can use either the specific or the basic name.

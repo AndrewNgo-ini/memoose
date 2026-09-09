@@ -3,7 +3,7 @@
 Every published memory benchmark we know of (LoCoMo, LongMemEval, mem0's and Zep's suites)
 scores one question: can you find a fact that was stated once. That is retrieval. It says
 nothing about the part that makes long-lived memory hard — a fact changed, two sources
-disagree, why do we believe this, we learned this before. mnemoth claims all four
+disagree, why do we believe this, we learned this before. memoose claims all four
 (VISION.md), and LoCoMo showed our graph buys nothing there (McNemar p = 1.00), so those
 claims were carrying no evidence at all.
 
@@ -42,18 +42,18 @@ sys.path.insert(0, str(HERE))
 
 from cases import CASES, CLAIMS, Case, Check  # noqa: E402
 
-from mnemoth.embeddings import HashEmbedder, default_embedder  # noqa: E402
-from mnemoth.engine import Engine  # noqa: E402
+from memoose.embeddings import HashEmbedder, default_embedder  # noqa: E402
+from memoose.engine import Engine  # noqa: E402
 
 
 def run_case(c: Case, embedder_name: str) -> dict:
     """Each case gets its own store, so cases cannot contaminate one another."""
     t0 = time.time()
-    keys = ("MNEMOTH_DATA_DIR", "MNEMOTH_PROJECT_DIR")
+    keys = ("MEMOOSE_DATA_DIR", "MEMOOSE_PROJECT_DIR")
     saved = {k: os.environ.get(k) for k in keys}
     with tempfile.TemporaryDirectory() as tmp:
-        os.environ["MNEMOTH_DATA_DIR"] = str(Path(tmp) / "data")
-        os.environ["MNEMOTH_PROJECT_DIR"] = str(Path(tmp) / "proj")
+        os.environ["MEMOOSE_DATA_DIR"] = str(Path(tmp) / "data")
+        os.environ["MEMOOSE_PROJECT_DIR"] = str(Path(tmp) / "proj")
         embedder = HashEmbedder() if embedder_name == "hash" else default_embedder()
         engine = Engine(embedder=embedder)
         try:

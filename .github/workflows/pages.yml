@@ -1,0 +1,62 @@
+# Publishes docs/site/ to GitHub Pages. Only that directory plus the mascot is uploaded,
+# so nothing else in the repository is deployed.
+#
+# One-time setup by a repo admin: Settings > Pages > Build and deployment > Source =
+# "GitHub Actions". Until that is set, this workflow fails at the deploy step.
+name: docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/site/**'
+      - 'assets/memoose-mascot-v2.png'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; never cancel one that is mid-flight.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Stage site
+        run: |
+          set -euo pipefail
+          test -f assets/memoose-mascot-v2.png \
+            || { echo "::error::assets/memoose-mascot-v2.png is missing"; exit 1; }
+          mkdir -p _site
+          # -P keeps the checked-in mascot symlink a symlink instead of following it
+          # (a dangling link would fail the copy); it is replaced by the real file below,
+          # so the artifact contains no link pointing outside the published root.
+          cp -RP docs/site/. _site/
+          rm -f _site/memoose-mascot.png
+          cp assets/memoose-mascot-v2.png _site/memoose-mascot.png
+          test -f _site/index.html && test ! -L _site/memoose-mascot.png
+          ls -l _site
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

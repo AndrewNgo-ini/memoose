@@ -1,11 +1,11 @@
 ---
-name: mnemoth-memify
-description: Maintain and enrich mnemoth memory. Use when the user asks to clean up, consolidate, or improve memory, after a large batch of remembers, or periodically: cross-connect co-occurring entities, merge duplicate names, and refresh global-context summaries.
+name: memoose-memify
+description: Maintain and enrich memoose memory. Use when the user asks to clean up, consolidate, or improve memory, after a large batch of remembers, or periodically: cross-connect co-occurring entities, merge duplicate names, and refresh global-context summaries.
 ---
 
-# memify in mnemoth (adapted from cognee)
+# memify in memoose (adapted from cognee)
 
-memify is maintenance over an existing graph. mnemoth proposes; you judge; you write.
+memify is maintenance over an existing graph. memoose proposes; you judge; you write.
 
 ## Passes
 

@@ -1,4 +1,4 @@
-mnemoth
+memoose
 Copyright 2026 Hieu Ngo
 
 This product adapts memory-management logic, data-model shapes, and guidance text

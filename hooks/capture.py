@@ -23,6 +23,7 @@ from _common import (  # noqa: E402
     dataset_name,
     dataset_path,
     enabled,
+    env,
     read_event,
     read_exchange,
     read_offset,
@@ -30,13 +31,13 @@ from _common import (  # noqa: E402
     write_offset,
 )
 
-MODEL = os.environ.get("MNEMOTH_CAPTURE_MODEL", "haiku")
-MIN_CHARS = int(os.environ.get("MNEMOTH_CAPTURE_MIN_CHARS", "400"))
-TIMEOUT_S = int(os.environ.get("MNEMOTH_CAPTURE_TIMEOUT", "300"))
+MODEL = env("CAPTURE_MODEL") or "haiku"
+MIN_CHARS = int(env("CAPTURE_MIN_CHARS") or "400")
+TIMEOUT_S = int(env("CAPTURE_TIMEOUT") or "300")
 LOCK_STALE_S = 900
 
-PROMPT = """You are mnemoth's memory keeper. Read the exchange below and store only what is worth
-remembering weeks from now, using the mnemoth tools. Load the `mnemoth` skill's rules if available.
+PROMPT = """You are memoose's memory keeper. Read the exchange below and store only what is worth
+remembering weeks from now, using the memoose tools. Load the `memoose` skill's rules if available.
 
 Store: decisions and their reasons, who or what owns which part, how systems relate, conventions and
 constraints the user states, preferences the user expresses, dates things happened, problems found and
@@ -85,14 +86,14 @@ def _lock(session_id: str) -> Path | None:
 
 def _mcp_config(tmp: Path, cwd: str) -> Path:
     plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT") or str(Path(__file__).resolve().parents[1])
-    env = {"MNEMOTH_PROJECT_DIR": cwd}
-    for var in ("MNEMOTH_DATA_DIR", "MNEMOTH_EMBEDDER"):
-        if os.environ.get(var):
-            env[var] = os.environ[var]
+    child_env = {"MEMOOSE_PROJECT_DIR": cwd}
+    for var in ("DATA_DIR", "EMBEDDER"):  # a legacy MNEMOTH_* value is passed on under the new name
+        if value := env(var):
+            child_env[f"MEMOOSE_{var}"] = value
     cfg = tmp / "mcp.json"
     cfg.write_text(
-        '{"mcpServers":{"mnemoth":{"command":"uvx","args":["--from",%s,"mnemoth","serve"],"env":%s}}}'
-        % (_json(plugin_root), _json(env))
+        '{"mcpServers":{"memoose":{"command":"uvx","args":["--from",%s,"memoose","serve"],"env":%s}}}'
+        % (_json(plugin_root), _json(child_env))
     )
     return cfg
 
@@ -122,7 +123,7 @@ def main() -> int:
     if lock is None:
         return 0  # a capture is already running; its offset will cover this turn too
     try:
-        with tempfile.TemporaryDirectory(prefix="mnemoth-capture-") as td:
+        with tempfile.TemporaryDirectory(prefix="memoose-capture-") as td:
             tmp = Path(td)
             cfg = _mcp_config(tmp, cwd)
             prompt = PROMPT.format(exchange=exchange, today=time.strftime("%Y-%m-%d"), dataset=dataset_name(cwd))

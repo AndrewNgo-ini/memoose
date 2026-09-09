@@ -6,7 +6,7 @@ Two different questions, and it matters which one a number answers.
 memory benchmark scores — LoCoMo, LongMemEval, the mem0 and Zep suites. See [LoCoMo](#locomo) below.
 
 **Does a body of facts stay trustworthy as it changes?** A fact was revised; two sources disagree;
-where did this come from; we learned this before. That is what mnemoth claims and what makes memory
+where did this come from; we learned this before. That is what memoose claims and what makes memory
 hard to keep for months, and no published benchmark asks it. So we built one:
 **[`maintained/`](./maintained/README.md)**.
 
@@ -26,7 +26,7 @@ on *both* sides, did the `repo://` evidence pointer survive, does the second ses
 context contain the first session's rule. Three cases are negative controls that fail if the system
 over-reacts, so a system that flags everything cannot pass.
 
-mnemoth scores **18/18** on both embedders. That is not evidence mnemoth is better than anything —
+memoose scores **18/18** on both embedders. That is not evidence memoose is better than anything —
 it is our own suite — and [`maintained/README.md`](./maintained/README.md) says so plainly, and
 restates all 18 cases as API-neutral requirements so another system can be scored on them. The
 evidence it did produce is a bug: on its first run it scored 14/18 and caught functional supersession
@@ -36,7 +36,7 @@ of a fact being revised.
 
 ## How the LoCoMo numbers are produced
 
-mnemoth has no model of its own, so the LLM-judge path measures two things separately:
+memoose has no model of its own, so the LLM-judge path measures two things separately:
 
 1. **Retrieval quality without any model** (`locomo/retrieval_bench.py`): ingest LoCoMo turns as
    chunks, ask `recall` every question, and check whether the gold evidence turns come back.
@@ -44,7 +44,7 @@ mnemoth has no model of its own, so the LLM-judge path measures two things separ
 2. **End-to-end LLM-judge score** (`locomo/run_locomo.py`): the protocol from
    [mem0ai/memory-benchmarks](https://github.com/mem0ai/memory-benchmarks), with their answerer and
    judge prompts vendored verbatim (`locomo/mem0_prompts.py`), so the memory system is the only
-   variable. The host model is Claude Code (`claude -p`), exactly how mnemoth ships.
+   variable. The host model is Claude Code (`claude -p`), exactly how memoose ships.
 
 ## LoCoMo
 
@@ -63,11 +63,11 @@ CORRECT.
 | mem0 graph (2025) | ~68 | mem0 paper |
 | mem0 (2025) | 66.9 | mem0 paper |
 
-### mnemoth
+### memoose
 
 Two ingest paths are reported. `chunks` stores conversation windows deterministically (no model:
 it is the RAG-style floor of the system). `agent` is the real product path: a Claude Code run with
-the mnemoth plugin reads each session and calls `remember` itself, so the graph, dates, and
+the memoose plugin reads each session and calls `remember` itself, so the graph, dates, and
 evidence come from skill-driven extraction.
 
 Full tables live in `locomo/RESULTS.md`. Headline findings:

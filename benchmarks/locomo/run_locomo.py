@@ -1,15 +1,15 @@
-"""LoCoMo LLM-judge benchmark for mnemoth, following mem0's memory-benchmarks protocol.
+"""LoCoMo LLM-judge benchmark for memoose, following mem0's memory-benchmarks protocol.
 
 Protocol (same as mem0ai/memory-benchmarks):
   categories 1-4 scored, 5 excluded; gold answer for category 3 cut at ';'.
   answer: memories shown chronologically inside mem0's ANSWER_GENERATION_PROMPT, "ANSWER:" parsed.
   judge: mem0's binary CORRECT/WRONG JSON judge. Score = % CORRECT.
 
-Host model: Claude Code (`claude -p`), which is how mnemoth ships. Two ingest paths:
+Host model: Claude Code (`claude -p`), which is how memoose ships. Two ingest paths:
   --ingest chunks  deterministic: each window of turns is a chunk (no model), speakers as entities.
-  --ingest agent   the real product path: per session, a Claude Code run with the mnemoth plugin
+  --ingest agent   the real product path: per session, a Claude Code run with the memoose plugin
                    reads the transcript and calls `remember` itself (skill-driven extraction).
-Retrieval at question time is mnemoth's own `recall`; the answerer sees the returned chunks and facts.
+Retrieval at question time is memoose's own `recall`; the answerer sees the returned chunks and facts.
 
 Usage:
   uv run python benchmarks/locomo/run_locomo.py --conv 0 --ingest chunks --k 20 --answerer haiku --judge haiku
@@ -39,8 +39,8 @@ from retrieval_bench import ingest as ingest_chunks  # noqa: E402
 from retrieval_bench import sessions_of  # noqa: E402
 from fetch_dataset import ensure_dataset  # noqa: E402
 
-from mnemoth.embeddings import HashEmbedder, default_embedder  # noqa: E402
-from mnemoth.engine import Engine  # noqa: E402
+from memoose.embeddings import HashEmbedder, default_embedder  # noqa: E402
+from memoose.engine import Engine  # noqa: E402
 
 CATS = {1: "multi-hop", 2: "temporal", 3: "open-domain", 4: "single-hop"}
 _print_lock = threading.Lock()
@@ -108,7 +108,7 @@ def parse_locomo_date(s: str) -> datetime | None:
 
 
 # ----- ingest ------------------------------------------------------------------------------------
-AGENT_INGEST_PROMPT = """You are building long-term memory with the mnemoth tools (they are available as MCP tools; load the `mnemoth` skill rules: basic entity types, full names, snake_case relations, one-sentence fact descriptions with the endpoint names, Date entities as YYYY-MM-DD, evidence pointers, no outside knowledge).
+AGENT_INGEST_PROMPT = """You are building long-term memory with the memoose tools (they are available as MCP tools; load the `memoose` skill rules: basic entity types, full names, snake_case relations, one-sentence fact descriptions with the endpoint names, Date entities as YYYY-MM-DD, evidence pointers, no outside knowledge).
 
 Below is one session of a conversation between {a} and {b}, which took place on {when}.
 Store everything a person would want to remember later: who did what, when, with whom, where, what they like, plan, feel, own, and what happened to them. Use dataset "{dataset}" on every call.
@@ -128,12 +128,12 @@ Session {sidx} transcript:
 
 def ingest_agent(ds_name: str, conv: dict, data_dir: Path, model: str, cwd: Path, workers: int) -> dict:
     a, b = conv["speaker_a"], conv["speaker_b"]
-    # The plugin manifest pins MNEMOTH_DATA_DIR to the plugin data dir, so the harness supplies its own
+    # The plugin manifest pins MEMOOSE_DATA_DIR to the plugin data dir, so the harness supplies its own
     # server entry (strict) pointing at the benchmark data dir; skills still come from --plugin-dir.
     mcp_cfg = cwd / "mcp.json"
-    mcp_cfg.write_text(json.dumps({"mcpServers": {"mnemoth": {
-        "command": "uv", "args": ["run", "--project", str(ROOT), "mnemoth", "serve"],
-        "env": {"MNEMOTH_DATA_DIR": str(data_dir), "MNEMOTH_EMBEDDER": os.environ.get("MNEMOTH_EMBEDDER", "auto")}}}}))
+    mcp_cfg.write_text(json.dumps({"mcpServers": {"memoose": {
+        "command": "uv", "args": ["run", "--project", str(ROOT), "memoose", "serve"],
+        "env": {"MEMOOSE_DATA_DIR": str(data_dir), "MEMOOSE_EMBEDDER": os.environ.get("MEMOOSE_EMBEDDER", "auto")}}}}))
     env = {}
     extra = ["--plugin-dir", str(ROOT), "--mcp-config", str(mcp_cfg), "--strict-mcp-config", "--dangerously-skip-permissions"]
     jobs = []
@@ -273,7 +273,7 @@ def main() -> None:
     data_dir = Path(args.data_dir) if args.data_dir else out_dir / "data"
     # Run Claude Code outside the repo so no project config interferes with the plugin.
     import tempfile
-    cwd = Path(tempfile.gettempdir()) / "mnemoth-bench" / tag
+    cwd = Path(tempfile.gettempdir()) / "memoose-bench" / tag
     cwd.mkdir(parents=True, exist_ok=True)
     embedder = HashEmbedder() if args.embedder == "hash" else default_embedder()
     eng = Engine(embedder=embedder, data_dir=data_dir)

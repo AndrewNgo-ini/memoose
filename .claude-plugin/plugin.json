@@ -1,6 +1,6 @@
 {
-  "name": "mnemoth",
-  "displayName": "mnemoth",
+  "name": "memoose",
+  "displayName": "memoose",
   "version": "0.2.0",
   "description": "Persistent memory for coding agents: typed knowledge graph with evidence, contradictions and supersession, maintained in the background on a small model. No API key; nothing leaves your machine.",
   "author": {
@@ -14,16 +14,16 @@
     "skill"
   ],
   "mcpServers": {
-    "mnemoth": {
+    "memoose": {
       "command": "uvx",
       "args": [
         "--from",
         "${CLAUDE_PLUGIN_ROOT}",
-        "mnemoth",
+        "memoose",
         "serve"
       ],
       "env": {
-        "MNEMOTH_DATA_DIR": "${CLAUDE_PLUGIN_DATA}"
+        "MEMOOSE_DATA_DIR": "${CLAUDE_PLUGIN_DATA}"
       }
     }
   },

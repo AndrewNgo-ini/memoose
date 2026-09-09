@@ -15,12 +15,12 @@ def _out(res):
 
 @pytest.mark.asyncio
 async def test_tools_over_stdio(tmp_path):
-    env = {**os.environ, "MNEMOTH_DATA_DIR": str(tmp_path), "MNEMOTH_EMBEDDER": "hash", "MNEMOTH_PROJECT_DIR": str(tmp_path)}
-    params = StdioServerParameters(command=sys.executable, args=["-m", "mnemoth.server", "serve"], env=env)
+    env = {**os.environ, "MEMOOSE_DATA_DIR": str(tmp_path), "MEMOOSE_EMBEDDER": "hash", "MEMOOSE_PROJECT_DIR": str(tmp_path)}
+    params = StdioServerParameters(command=sys.executable, args=["-m", "memoose.server", "serve"], env=env)
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             init = await session.initialize()
-            assert init.server_info.name == "mnemoth" and "never calls a model" in (init.instructions or "")
+            assert init.server_info.name == "memoose" and "never calls a model" in (init.instructions or "")
             tools = {t.name for t in (await session.list_tools()).tools}
             expected = {
                 "describe_ontology", "add_entity_type", "import_ontology", "declare_functional_relations",

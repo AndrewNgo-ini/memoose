@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence &amp; history &middot; Memoose</title>
+<meta name="description" content="How Memoose keeps memory trustworthy: evidence pointers on every fact, contradictions surfaced rather than resolved, supersession instead of deletion, an append-only provenance ledger, and the benchmark that checks all four.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="skills.html">Skills</a></li>
+      <li><a href="automatic.html">Automatic memory</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="trust.html" aria-current="page">Evidence &amp; history</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<h1>Evidence &amp; history</h1>
+<p class="lede">Finding a fact once is the easy half. The hard part is keeping a body of facts
+trustworthy for months &mdash; which is what these four mechanisms are for.</p>
+
+<p>Memoose is built for long-lived project work, so the questions it has to answer are not needle
+lookups. They are: a fact changed, does recall return the current one? Two sources disagree, does the
+system say so? Why do we believe this? We solved this before, what did we learn? Each has a
+mechanism, and each mechanism is checked by a benchmark that needs no model.</p>
+
+<h2>Facts carry their evidence</h2>
+<p>Every relation can point at where it came from. The <code>evidence</code> field on a relation takes
+a file range like <code>repo://src/auth.py#L40-L82</code>, a URL, an issue id, or
+<code>user said 2026-09-06</code>, and the <a href="skills.html">extraction skill</a> requires one
+wherever the source supports it. <code>valid_from</code> and <code>valid_to</code> record when a fact
+became and stopped being true, when the source says.</p>
+<p>The point is re-verification rather than trust: a later run can follow the pointer and check whether
+the claim still holds, instead of believing a sentence it has no way to audit. The idea is borrowed
+from OpenWiki's grounded claims.</p>
+
+<h2>Nothing true is deleted</h2>
+<p>When a fact changes, the old one is <strong>superseded</strong>, not removed. It leaves default
+recall, so the agent sees the current answer; it stays in the store, so history stays queryable.</p>
+<p>For relations declared functional &mdash; ones that hold a single current value per subject, like
+<code>owned_by</code> or <code>deployed_in</code> &mdash; this happens on its own: assert a new value
+and <code>declare_functional_relations</code> makes the old one supersede automatically. Everywhere
+else, <code>supersede(old, new, reason)</code> records it explicitly, with the reason attached.</p>
+<pre><code>recall("who owns billing")                            # the current owner
+recall("who owns billing", include_superseded=true)   # and who used to</code></pre>
+<p><code>forget</code> exists, but it is for mistakes and for things that were never true. Anything
+that was true once should be superseded instead.</p>
+
+<h2>Disagreement is surfaced, not resolved</h2>
+<p>Memoose never decides what conflicts &mdash; the store has no judgment and does not pretend to. What
+it does is refuse to hide the problem. A <code>remember</code> that lands next to a fact it may
+contradict comes back with a <strong>hotspot</strong> warning; <code>contradiction_candidates</code>
+returns the facts around an entity grouped by subject, flagging where one subject holds several values
+for one relation; and <code>recall</code> marks facts <strong>contested</strong> so the agent reading
+them knows two sources disagree.</p>
+<p>The judgment is the <code>memoose-contradictions</code> skill's job, and it comes down to one
+distinction: if the newer fact simply replaced the older one in time, <code>supersede</code> it; if
+both are asserted and cannot both be true, <code>mark_contradiction</code> records the disagreement
+with a reason and a confidence, and the <code>contradicts</code> edge stays visible.</p>
+
+<h2>An append-only provenance ledger</h2>
+<p><code>history</code> is the audit trail: every create, merge, assert, supersede and forget, with its
+actor and its time. It is append-only, so it answers &ldquo;when did we start believing this, and who
+told us?&rdquo; even for facts that have since been replaced.</p>
+<pre><code>history(entity="billing-service")   # everything that ever happened to this entity
+history(relation_id="rel_...")      # the life of one fact</code></pre>
+<p>This is also the honest answer to automatic capture: facts get written that nobody explicitly asked
+for, and <code>history</code> is how you find out what was written, by which actor, and when.</p>
+
+<h2>Lessons: we solved this before</h2>
+<p>A session's turns and typed context sections are distilled into <strong>lessons</strong> &mdash;
+one to three sentences that stand alone without the session, each with its own evidence and linked to
+the entities it applies to. They come back through <code>recall</code> in <code>session</code> mode,
+and through the standing context a <a href="automatic.html">session start</a> puts in front of the
+agent, so the thing you learned last month arrives before you re-learn it.</p>
+
+<h2>The benchmark that checks all of this</h2>
+<p>Each of those four mechanisms is asserted on directly by a suite that ships with Memoose:
+<code>benchmarks/maintained/</code> &mdash; <strong>18 cases, 66
+assertions, no model, no API key, about a second</strong>, which means it runs in CI on every commit.
+It asserts on what the tools return rather than asking a model to grade prose, and three of the cases
+are negative controls that fail if a system over-reacts to a change that is not one.</p>
+<pre><code>uv run python benchmarks/maintained/run_maintained.py    # ~1 s, no key</code></pre>
+<p>Memoose scores 18/18, and passing your own benchmark proves little &mdash; what it did prove is a
+real supersession bug it caught at 14/18 on its first run, before anything was tuned. All 18 cases are
+also restated as API-neutral requirements, so they can be ported and used against memoose. We would
+rather publish a benchmark someone beats us on than keep claiming things nothing measures.</p>
+
+<h3>And what the standard benchmark says</h3>
+<p>On LoCoMo, the standard conversational-memory benchmark, run under mem0's protocol with their
+answerer and judge prompts vendored verbatim: <strong>91.9</strong> (95% CI 86.6&ndash;95.2) against
+mem0's published <strong>92.5</strong>, using <strong>4,728 prompt tokens against their 6,956</strong>
+and a much smaller answerer. That is parity, not a win, and two results are worth stating plainly: the
+knowledge graph does <em>not</em> beat plain chunk retrieval there (paired McNemar p&nbsp;=&nbsp;1.00)
+at 77% more tokens, and raising the retrieval budget lifts evidence recall without lifting the judged
+score.</p>
+<p>That is not a defect; it is a statement about the benchmark. LoCoMo asks needle questions over
+conversations that fit in a context window, so chunk retrieval finds the needles and the answering
+model does the joining. It never asks whether a changed fact is still current, or where a claim came
+from, which is what <code>benchmarks/maintained/</code> covers instead.</p>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

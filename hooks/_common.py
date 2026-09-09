@@ -1,7 +1,7 @@
-"""Shared helpers for mnemoth's hooks.
+"""Shared helpers for memoose's hooks.
 
 Hooks run on the host's plain `python3` with no dependencies, so this module is stdlib only
-and never imports mnemoth. `dataset_name` mirrors `mnemoth.datasets.project_dataset_name`
+and never imports memoose. `dataset_name` mirrors `memoose.datasets.project_dataset_name`
 exactly; `tests/test_hooks.py` asserts the two stay in agreement.
 """
 
@@ -25,12 +25,22 @@ def read_event() -> dict:
         return {}
 
 
+def env(name: str) -> str | None:
+    """MEMOOSE_* is canonical; the MNEMOTH_* name is still read for setups made before the rename."""
+    return os.environ.get(f"MEMOOSE_{name}") or os.environ.get(f"MNEMOTH_{name}")
+
+
 def data_dir() -> Path:
-    return Path(os.environ.get("MNEMOTH_DATA_DIR") or Path.home() / ".mnemoth").expanduser()
+    """Mirrors `memoose.datasets.data_dir`, including the pre-rename `~/.mnemoth` fallback."""
+    override = env("DATA_DIR")
+    if override:
+        return Path(override).expanduser()
+    new, old = Path.home() / ".memoose", Path.home() / ".mnemoth"
+    return old if old.exists() and not new.exists() else new
 
 
 def dataset_name(cwd: str | os.PathLike | None) -> str:
-    path = Path(cwd or os.environ.get("MNEMOTH_PROJECT_DIR") or os.getcwd()).resolve()
+    path = Path(cwd or env("PROJECT_DIR") or os.getcwd()).resolve()
     digest = hashlib.sha1(str(path).encode()).hexdigest()[:8]
     base = _SAFE.sub("-", path.name.casefold()).strip("-") or "project"
     return f"{base}-{digest}"
@@ -66,8 +76,9 @@ def state_dir() -> Path:
     return d
 
 
-def enabled(var: str = "MNEMOTH_AUTO_CAPTURE") -> bool:
-    return os.environ.get(var, "1").strip().lower() not in ("0", "false", "off", "no")
+def enabled(var: str = "AUTO_CAPTURE") -> bool:
+    """`var` is the suffix: MEMOOSE_<var>, or the legacy MNEMOTH_<var>. On unless explicitly off."""
+    return (env(var) or "1").strip().lower() not in ("0", "false", "off", "no")
 
 
 # ----- transcript ---------------------------------------------------------------------

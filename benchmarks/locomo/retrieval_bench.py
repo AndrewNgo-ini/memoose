@@ -1,4 +1,4 @@
-"""Model-free LoCoMo retrieval benchmark for mnemoth.
+"""Model-free LoCoMo retrieval benchmark for memoose.
 
 Ingests every conversation turn deterministically (no extraction: each turn is a chunk whose
 `source` is its dia_id, plus Date entities for session dates), then asks recall for each QA
@@ -23,11 +23,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from mnemoth.embeddings import HashEmbedder, default_embedder  # noqa: E402
-from mnemoth.engine import Engine  # noqa: E402
-from mnemoth.ids import chunk_id  # noqa: E402
-from mnemoth.models import EntityIn, RelationIn  # noqa: E402
-from mnemoth.store.sqlite_store import ChunkRow  # noqa: E402
+from memoose.embeddings import HashEmbedder, default_embedder  # noqa: E402
+from memoose.engine import Engine  # noqa: E402
+from memoose.ids import chunk_id  # noqa: E402
+from memoose.models import EntityIn, RelationIn  # noqa: E402
+from memoose.store.sqlite_store import ChunkRow  # noqa: E402
 from fetch_dataset import ensure_dataset  # noqa: E402
 
 CATEGORIES = {1: "multi-hop", 2: "temporal", 3: "open-domain", 4: "single-hop", 5: "adversarial"}

@@ -1,11 +1,11 @@
 ---
-name: mnemoth-contradictions
-description: Judge and resolve conflicting memories in mnemoth. Use when remember returns hotspots or a warning about contradiction_candidates, when recall shows facts flagged contested or several values for one relation, or when the user says a stored fact is wrong or outdated.
+name: memoose-contradictions
+description: Judge and resolve conflicting memories in memoose. Use when remember returns hotspots or a warning about contradiction_candidates, when recall shows facts flagged contested or several values for one relation, or when the user says a stored fact is wrong or outdated.
 ---
 
-# Contradictions in mnemoth (adapted from cognee)
+# Contradictions in memoose (adapted from cognee)
 
-mnemoth never decides what conflicts. It gives you the candidate facts; you judge; you record
+memoose never decides what conflicts. It gives you the candidate facts; you judge; you record
 the judgment with `mark_contradiction` or `supersede`. Nothing is deleted: superseded facts stay
 in history and leave default recall.
 

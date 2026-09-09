@@ -1,7 +1,7 @@
 # Running the benchmarks on a fresh machine (VPS)
 
 The harness drives **Claude Code** as the host model, so the machine needs the `claude` CLI
-authenticated, plus Python. Nothing else: mnemoth itself has no API key and no service.
+authenticated, plus Python. Nothing else: memoose itself has no API key and no service.
 
 ## 1. Dependencies
 
@@ -15,11 +15,11 @@ npm install -g @anthropic-ai/claude-code     # or: curl -fsSL https://claude.ai/
 git clone https://github.com/AndrewNgo-ini/mnemoth
 cd mnemoth
 uv sync --extra fastembed --group dev
-uv run pytest -q                              # 33 tests, ~1s
+uv run pytest -q                              # 77 tests, ~3s
 ```
 
 `fastembed` downloads a ~130 MB ONNX model (BAAI/bge-small-en-v1.5) on first use. Set
-`MNEMOTH_EMBEDDER=hash` to skip it entirely at some cost in recall (0.804 vs 0.876).
+`MEMOOSE_EMBEDDER=hash` to skip it entirely at some cost in recall (0.804 vs 0.876).
 
 ## 2. Authenticate Claude Code headlessly
 
@@ -66,7 +66,7 @@ uv run python benchmarks/locomo/run_locomo.py --conv 0 1 2 3 4 5 6 7 8 9 \
   version recorded the limit error as an answer and invalidated 1,492 of 1,540 rows.
 - **Run Claude Code with cwd outside the repo.** The harness writes its own `mcp.json` in a temp
   directory and passes `--mcp-config … --strict-mcp-config`, because the plugin manifest pins
-  `MNEMOTH_DATA_DIR` to the plugin data directory and a project-level config inside the repo
+  `MEMOOSE_DATA_DIR` to the plugin data directory and a project-level config inside the repo
   clashes with it.
 - **Workers.** 6–8 parallel questions is fine; parallel *agent ingest* sessions write one SQLite
   file, which is why embeddings are computed outside the write transaction and the store has a
