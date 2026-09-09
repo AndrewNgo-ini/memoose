@@ -7,6 +7,11 @@ description: Maintain and enrich memoose memory. Use when the user asks to clean
 
 memify is maintenance over an existing graph. memoose proposes; you judge; you write.
 
+`memoose maintain` runs every pass below at once and prints one worklist, which is the cheapest way
+to start: it gathers hotspots, duplicate names, unconnected pairs, stale summaries and undistilled
+sessions in a single command, and changes nothing on its own. Use the individual
+`memify_candidates` kinds when you want one pass at a time or have no shell.
+
 ## Passes
 
 1. **Cross-connect**: `memify_candidates(kind="cross_connect")` lists entity pairs that share

@@ -19,6 +19,7 @@
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
+      <li><a href="vision.html">Vision</a></li>
       <li><a href="install.html">Install</a></li>
       <li><a href="tools.html">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
@@ -89,19 +90,16 @@ the entities it applies to. They come back through <code>recall</code> in <code>
 and through the standing context a <a href="automatic.html">session start</a> puts in front of the
 agent, so the thing you learned last month arrives before you re-learn it.</p>
 
-<h2>The benchmark that checks all of this</h2>
-<p>Each of those four mechanisms is asserted on directly by a suite that ships with Memoose:
-<code>benchmarks/maintained/</code> &mdash; <strong>18 cases, 66
-assertions, no model, no API key, about a second</strong>, which means it runs in CI on every commit.
-It asserts on what the tools return rather than asking a model to grade prose, and three of the cases
-are negative controls that fail if a system over-reacts to a change that is not one.</p>
-<pre><code>uv run python benchmarks/maintained/run_maintained.py    # ~1 s, no key</code></pre>
-<p>Memoose scores 18/18, and passing your own benchmark proves little &mdash; what it did prove is a
-real supersession bug it caught at 14/18 on its first run, before anything was tuned. All 18 cases are
-also restated as API-neutral requirements, so they can be ported and used against memoose. We would
-rather publish a benchmark someone beats us on than keep claiming things nothing measures.</p>
+<h2>How these are checked</h2>
+<p>Each of those four mechanisms is asserted on directly by the test suite, which runs with
+<code>uv run pytest</code> on every commit: it checks what the tools actually return rather than
+asking a model to grade prose.</p>
+<p>What does <em>not</em> exist is a published benchmark that asks these questions of a memory system
+at all. Designing one other systems can run is
+<a href="https://github.com/AndrewNgo-ini/mnemoth#roadmap">on the roadmap</a>; scoring ourselves on an
+eval of our own making would prove nothing, so we publish no number for it.</p>
 
-<h3>And what the standard benchmark says</h3>
+<h3>What the standard benchmark says</h3>
 <p>On LoCoMo, the standard conversational-memory benchmark, run under mem0's protocol with their
 answerer and judge prompts vendored verbatim: <strong>91.9</strong> (95% CI 86.6&ndash;95.2) against
 mem0's published <strong>92.5</strong>, using <strong>4,728 prompt tokens against their 6,956</strong>
@@ -112,7 +110,7 @@ score.</p>
 <p>That is not a defect; it is a statement about the benchmark. LoCoMo asks needle questions over
 conversations that fit in a context window, so chunk retrieval finds the needles and the answering
 model does the joining. It never asks whether a changed fact is still current, or where a claim came
-from, which is what <code>benchmarks/maintained/</code> covers instead.</p>
+from, which is what this page is about.</p>
 
 <footer class="page-foot">
   <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>

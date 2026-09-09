@@ -2,7 +2,8 @@
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 27.7,
+    "latency_ms_p50": 7.1,
+    "ctx_tokens_est": 3135,
     "categories": {
       "multi-hop": {
         "n": 32,
@@ -32,13 +33,14 @@
     },
     "conversation": 0,
     "chunks": 111,
-    "ingest_s": 25.7,
+    "ingest_s": 5.9,
     "embedder": "fastembed"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 28.6,
+    "latency_ms_p50": 6.9,
+    "ctx_tokens_est": 2933,
     "categories": {
       "multi-hop": {
         "n": 11,
@@ -63,13 +65,14 @@
     },
     "conversation": 1,
     "chunks": 99,
-    "ingest_s": 16.5,
+    "ingest_s": 4.2,
     "embedder": "fastembed"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 29.0,
+    "latency_ms_p50": 8.1,
+    "ctx_tokens_est": 3016,
     "categories": {
       "multi-hop": {
         "n": 31,
@@ -99,13 +102,14 @@
     },
     "conversation": 2,
     "chunks": 179,
-    "ingest_s": 37.1,
+    "ingest_s": 9.9,
     "embedder": "fastembed"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 41.5,
+    "latency_ms_p50": 7.9,
+    "ctx_tokens_est": 2670,
     "categories": {
       "multi-hop": {
         "n": 37,
@@ -135,18 +139,19 @@
     },
     "conversation": 3,
     "chunks": 169,
-    "ingest_s": 34.1,
+    "ingest_s": 8.2,
     "embedder": "fastembed"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 27.7,
+    "latency_ms_p50": 7.5,
+    "ctx_tokens_est": 3077,
     "categories": {
       "multi-hop": {
         "n": 31,
-        "evidence_recall": 0.74,
-        "hit_any": 1.0
+        "evidence_recall": 0.729,
+        "hit_any": 0.968
       },
       "temporal": {
         "n": 26,
@@ -166,18 +171,19 @@
     },
     "overall": {
       "n": 178,
-      "evidence_recall": 0.915,
-      "hit_any": 0.978
+      "evidence_recall": 0.913,
+      "hit_any": 0.972
     },
     "conversation": 4,
     "chunks": 180,
-    "ingest_s": 32.1,
+    "ingest_s": 8.8,
     "embedder": "fastembed"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 31.8,
+    "latency_ms_p50": 7.9,
+    "ctx_tokens_est": 3014,
     "categories": {
       "multi-hop": {
         "n": 30,
@@ -207,13 +213,14 @@
     },
     "conversation": 5,
     "chunks": 179,
-    "ingest_s": 35.8,
+    "ingest_s": 7.9,
     "embedder": "fastembed"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 31.6,
+    "latency_ms_p50": 5.6,
+    "ctx_tokens_est": 2515,
     "categories": {
       "multi-hop": {
         "n": 20,
@@ -243,13 +250,14 @@
     },
     "conversation": 6,
     "chunks": 185,
-    "ingest_s": 29.4,
+    "ingest_s": 7.3,
     "embedder": "fastembed"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 27.6,
+    "latency_ms_p50": 4.2,
+    "ctx_tokens_est": 2625,
     "categories": {
       "multi-hop": {
         "n": 21,
@@ -279,13 +287,14 @@
     },
     "conversation": 7,
     "chunks": 179,
-    "ingest_s": 29.5,
+    "ingest_s": 4.1,
     "embedder": "fastembed"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 30.7,
+    "latency_ms_p50": 4.5,
+    "ctx_tokens_est": 2829,
     "categories": {
       "multi-hop": {
         "n": 37,
@@ -315,13 +324,14 @@
     },
     "conversation": 8,
     "chunks": 136,
-    "ingest_s": 24.3,
+    "ingest_s": 3.3,
     "embedder": "fastembed"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 28.1,
+    "latency_ms_p50": 4.1,
+    "ctx_tokens_est": 3310,
     "categories": {
       "multi-hop": {
         "n": 32,
@@ -351,7 +361,7 @@
     },
     "conversation": 9,
     "chunks": 154,
-    "ingest_s": 32.9,
+    "ingest_s": 4.0,
     "embedder": "fastembed"
   }
 ]

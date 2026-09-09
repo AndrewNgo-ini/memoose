@@ -46,6 +46,14 @@ def default_command() -> list[str]:
     return ["uvx", "memoose", "serve"]
 
 
+def cli_command() -> str:
+    """How to invoke the CLI on this machine: the installed binary if it is on PATH, else uvx."""
+    found = shutil.which("memoose")
+    if found:
+        return "memoose"
+    return " ".join(default_command()[:-1])  # the server command without `serve`
+
+
 def _paths(host: str, project: str | None) -> tuple[HostTarget, Path, Path, str]:
     t = HOSTS[host]
     if project is None:
@@ -70,7 +78,7 @@ def install(host: str, project: str | None = None, command: list[str] | None = N
         installed.append(str(dst_dir))
     _clear_legacy(kind, mcp_path, skill_dir.parent)
     _write_mcp(kind, mcp_path, command)
-    return {"host": t.display, "scope": "project" if project else "user", "skills": installed, "mcp_config": str(mcp_path), "command": command}
+    return {"host": t.display, "scope": "project" if project else "user", "skills": installed, "mcp_config": str(mcp_path), "command": command, "cli": cli_command()}
 
 
 def _clear_legacy(kind: str, mcp_path: Path, skills_parent: Path) -> None:
@@ -96,7 +104,7 @@ def uninstall(host: str, project: str | None = None) -> dict:
 
 
 def status(project: str | None = None) -> dict:
-    out = {}
+    out: dict = {"cli": cli_command()}
     for host in HOSTS:
         t, skill_dir, mcp_path, kind = _paths(host, project)
         out[host] = {"skill": skill_dir.exists(), "mcp": _has_mcp(kind, mcp_path), "mcp_config": str(mcp_path)}

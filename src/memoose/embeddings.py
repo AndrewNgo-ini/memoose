@@ -8,6 +8,7 @@ that needs nothing: weaker semantics, but recall still has FTS5 for exact terms.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import math
 import os
 import re
@@ -61,6 +62,43 @@ class FastembedEmbedder:
             norm = math.sqrt(sum(x * x for x in vec)) or 1.0
             out.append([x / norm for x in vec])
         return out
+
+
+class LazyEmbedder:
+    """Builds the real embedder on first `embed()`, not at construction.
+
+    A CLI invocation is a fresh process, and most commands (`history`, `forget`, a
+    lexical or rules recall) never reach the vector channel. Constructing
+    `FastembedEmbedder` eagerly would load an ONNX model into every one of them.
+    """
+
+    def __init__(self) -> None:
+        self._real: Embedder | None = None
+        self._probe = _probe_name()
+
+    @property
+    def name(self) -> str:
+        return self._real.name if self._real is not None else self._probe
+
+    @property
+    def dimensions(self) -> int:
+        return self._load().dimensions
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        return self._load().embed(texts)
+
+    def _load(self) -> Embedder:
+        if self._real is None:
+            self._real = default_embedder()
+        return self._real
+
+
+def _probe_name() -> str:
+    """Which embedder `default_embedder` will pick, without importing or loading it."""
+    choice = (os.environ.get("MEMOOSE_EMBEDDER") or os.environ.get("MNEMOTH_EMBEDDER") or "auto").casefold()
+    if choice in ("auto", "fastembed") and importlib.util.find_spec("fastembed") is not None:
+        return "fastembed"
+    return "hash"
 
 
 def default_embedder() -> Embedder:

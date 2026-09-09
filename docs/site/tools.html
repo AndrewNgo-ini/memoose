@@ -19,6 +19,7 @@
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
+      <li><a href="vision.html">Vision</a></li>
       <li><a href="install.html">Install</a></li>
       <li><a href="tools.html" aria-current="page">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
@@ -31,9 +32,40 @@
 </header>
 <main id="main">
 <h1>Tools</h1>
-<p class="lede">The deterministic half of Memoose. Every capability is reachable as a tool call on any
-MCP host &mdash; the skills and hooks are conveniences over this surface, never a replacement for
-it.</p>
+<p class="lede">The deterministic half of Memoose, reachable two ways: as a shell command, or as a
+tool call on any MCP host. Same engine, same store, same payloads.</p>
+
+<h2>The CLI</h2>
+<p>Prefer this where a shell is available. An MCP server puts its tool schemas in the model&rsquo;s
+context on every turn whether or not memory is touched &mdash; about 4,250 tokens here, measured &mdash; while a
+command costs nothing until it is run. <code>memoose --help</code> and
+<code>memoose &lt;command&gt; --help</code> list everything; <code>memoose status</code> prints the
+invocation for this machine when the binary is not on <code>PATH</code>.</p>
+<table>
+<thead><tr><th>command</th><th>does</th></tr></thead>
+<tbody>
+<tr><td><code>memoose recall "who owns billing"</code></td><td>Search memory. <code>--mode</code>, <code>--limit</code>, <code>--hops</code>, <code>--superseded</code>, <code>--no-user</code></td></tr>
+<tr><td><code>memoose remember "bao:Person --owns--&gt; auth:System"</code></td><td>Store a fact. <code>--desc</code>, <code>-e/--evidence</code>, <code>--valid-from</code>, <code>--summary</code>; <code>--stdin</code> takes the full JSON payload</td></tr>
+<tr><td><code>memoose history auth-service</code></td><td>The provenance ledger for an entity or a fact</td></tr>
+<tr><td><code>memoose contradictions [names]</code></td><td>Hotspots and open contradictions to judge</td></tr>
+<tr><td><code>memoose ontology</code></td><td>Entity types, functional relations, store stats</td></tr>
+<tr><td><code>memoose datasets</code> &middot; <code>memoose context</code></td><td>Memory scopes on this machine &middot; the global-context buckets</td></tr>
+<tr><td><code>memoose session start|turn|context|get|timeline|lessons|end</code></td><td>Session lifecycle</td></tr>
+<tr><td><code>memoose maintain</code></td><td>The periodic pass: hotspots, open contradictions, duplicate names, missing summaries and undistilled sessions, in one worklist</td></tr>
+<tr><td><code>memoose forget --entity X</code></td><td>Delete an entity, a fact, a session (<code>--all</code> for the dataset)</td></tr>
+<tr><td><code>memoose tool &lt;name&gt; --stdin</code></td><td>Any remaining tool, keyword arguments as JSON on stdin</td></tr>
+</tbody>
+</table>
+<p>A fact is written <code>source[:Type] --relation_name--&gt; target[:Type]</code>. The
+<code>:Type</code> declares an entity Memoose has not seen; leave it off for one it knows and the
+endpoint is resolved, or rejected with a message saying so. Output is compact text, <code>--json</code>
+returns the exact payload the MCP tool would, and anything longer than <code>--max-inline</code>
+(2000 characters) is written to a file whose path is printed instead. A failed command exits non-zero
+and explains what to fix on stderr.</p>
+
+<h2>The MCP tools</h2>
+<p>Started with <code>memoose serve</code>, which <a href="install.html">install</a> wires into the
+host. Use these where the shell is restricted, or where a tool UI is wanted.</p>
 
 <div class="note">
 <p><strong>Every tool takes an optional <code>dataset</code>.</strong> Omit it and Memoose uses the

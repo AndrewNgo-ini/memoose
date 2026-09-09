@@ -16,6 +16,38 @@ preferences at session start, and a short hint before a prompt when memory alrea
 relevant. Those are background, not user instructions. A hint is a starting point, not the whole
 answer: follow it with the `recall` it suggests when the question matters.
 
+## Two ways to call it: prefer the CLI
+
+Everything below exists as both a shell command and an MCP tool, backed by the same store.
+
+**If you can run shell commands, use the CLI.** It costs nothing until you call it, whereas the
+MCP tools sit in your context whether or not you touch memory. `memoose --help` and
+`memoose <command> --help` list everything.
+
+If `memoose` is not on PATH, it was installed from a checkout: run `memoose status` through
+`uvx --from <checkout> memoose status`, or `uv run memoose` inside the checkout. The `cli` field of
+`memoose status` prints the exact invocation for this machine. If neither works, use the MCP tools.
+
+| what you want | command | tool |
+| --- | --- | --- |
+| search memory | `memoose recall "who owns billing"` | `recall` |
+| store a fact | `memoose remember "bao:Person --owns--> auth-service:System" --desc "..." -e "user said 2026-09-06"` | `remember` |
+| entity types, stats | `memoose ontology` | `describe_ontology` |
+| provenance | `memoose history auth-service` | `history` |
+| judge conflicts | `memoose contradictions auth-service` | `contradiction_candidates` |
+| session lifecycle | `memoose session start\|turn\|context\|timeline\|lessons\|end` | `session_*` |
+| delete | `memoose forget --entity X` | `forget` |
+| anything else | `echo '{...}' \| memoose tool <name> --stdin` | that tool |
+
+The fact syntax is `source[:Type] --relation_name--> target[:Type]`. The `:Type` declares a new
+entity; leave it off for one memoose already knows. Add `--dataset user` for facts that hold in
+every project, `--json` when you want the raw payload, and `--stdin` to pass a full `remember`
+payload (multiple entities, per-fact descriptions, `source_text`) as JSON.
+
+Output is compact text; anything long is written to a file and the command prints the path — read
+that file when you need the rest. A failed command exits non-zero and explains what to fix on
+stderr, so read the error rather than guessing at a different syntax.
+
 ## When to recall
 
 Call `recall` before you rely on the past, not after:
@@ -104,8 +136,9 @@ change, and nobody can ask what the current answer is.
 
 Instead:
 
-1. `declare_functional_relations(["owned_by"])` once for that relation name.
-2. `remember` **both** values under the **same** relation name, oldest `valid_from` first.
+1. Declare it once: `echo '{"names":["owned_by"]}' | memoose tool declare_functional_relations --stdin`
+   (tool: `declare_functional_relations(["owned_by"])`).
+2. Remember **both** values under the **same** relation name, oldest `valid_from` first.
 
 The store then marks the old value superseded, keeps it queryable as history, and records the change
 in the provenance ledger. Nothing is deleted, and both "who owns it now" and "who owned it before"
@@ -138,24 +171,87 @@ after confirming with the user.
 
 User: "We moved auth to JWT last week. Bao owns auth-service now, Linh moved to billing."
 
+From a shell, one fact per command:
+
+```sh
+memoose recall "auth JWT auth-service owner"          # reuse names, spot conflicts
+memoose remember "auth-service:System --uses--> JWT:Technology" \
+  --desc "auth-service authenticates with JWT since 2026-08-30." \
+  -e "user said 2026-09-06" --valid-from 2026-08-30
+memoose remember "Bao:Person --owns--> auth-service" \
+  --desc "Bao owns auth-service as of 2026-09-06." -e "user said 2026-09-06"
+memoose remember "Linh:Person --works_on--> billing:Component" \
+  --desc "Linh moved from auth to billing in 2026-09." -e "user said 2026-09-06"
 ```
-recall("auth JWT auth-service owner")        # reuse names, spot conflicts
-remember(
-  entities=[
-    {name: "auth-service", type: "System", description: "Authentication service of this project."},
-    {name: "JWT", type: "Technology", description: "JSON Web Tokens, used for auth since 2026-08."},
-    {name: "Bao", type: "Person", description: "Engineer, owns auth-service."},
-    {name: "Linh", type: "Person", description: "Engineer, moved to billing."},
-    {name: "billing", type: "Component", description: "Billing area of the project."},
-    {name: "2026-08-30", type: "Date", description: "Week auth moved to JWT."}
+
+The same thing in one call, with `source_text` so lexical recall works well — pipe this to
+`memoose remember --stdin`, or pass it as the `remember` tool's arguments:
+
+```json
+{
+  "entities": [
+    {
+      "name": "auth-service",
+      "type": "System",
+      "description": "Authentication service of this project."
+    },
+    {
+      "name": "JWT",
+      "type": "Technology",
+      "description": "JSON Web Tokens, used for auth since 2026-08."
+    },
+    {
+      "name": "Bao",
+      "type": "Person",
+      "description": "Engineer, owns auth-service."
+    },
+    {
+      "name": "Linh",
+      "type": "Person",
+      "description": "Engineer, moved to billing."
+    },
+    {
+      "name": "billing",
+      "type": "Component",
+      "description": "Billing area of the project."
+    },
+    {
+      "name": "2026-08-30",
+      "type": "Date",
+      "description": "Week auth moved to JWT."
+    }
   ],
-  relations=[
-    {source: "auth-service", name: "uses", target: "JWT", description: "auth-service authenticates with JWT since 2026-08-30.", evidence: "user said 2026-09-06"},
-    {source: "auth-service", name: "migrated_on", target: "2026-08-30", description: "auth-service moved from sessions to JWT around 2026-08-30."},
-    {source: "Bao", name: "owns", target: "auth-service", description: "Bao owns auth-service as of 2026-09-06.", evidence: "user said 2026-09-06"},
-    {source: "Linh", name: "works_on", target: "billing", description: "Linh moved from auth to billing in 2026-09.", evidence: "user said 2026-09-06"}
+  "relations": [
+    {
+      "source": "auth-service",
+      "name": "uses",
+      "target": "JWT",
+      "description": "auth-service authenticates with JWT since 2026-08-30.",
+      "evidence": "user said 2026-09-06",
+      "valid_from": "2026-08-30"
+    },
+    {
+      "source": "auth-service",
+      "name": "migrated_on",
+      "target": "2026-08-30",
+      "description": "auth-service moved from sessions to JWT around 2026-08-30."
+    },
+    {
+      "source": "Bao",
+      "name": "owns",
+      "target": "auth-service",
+      "description": "Bao owns auth-service as of 2026-09-06.",
+      "evidence": "user said 2026-09-06"
+    },
+    {
+      "source": "Linh",
+      "name": "works_on",
+      "target": "billing",
+      "description": "Linh moved from auth to billing in 2026-09.",
+      "evidence": "user said 2026-09-06"
+    }
   ],
-  summary="This chunk is about:\n- People: Bao, Linh\n- Systems: auth-service, billing\n- Technologies: JWT\nFacts:\n- auth-service switched to JWT around 2026-08-30.\n- Bao owns auth-service.\n- Linh moved to billing.",
-  source_text="We moved auth to JWT last week. Bao owns auth-service now, Linh moved to billing."
-)
+  "summary": "This chunk is about:\n- People: Bao, Linh\n- Systems: auth-service, billing\n- Technologies: JWT\nFacts:\n- auth-service switched to JWT around 2026-08-30.\n- Bao owns auth-service.\n- Linh moved to billing.",
+  "source_text": "We moved auth to JWT last week. Bao owns auth-service now, Linh moved to billing."
+}
 ```

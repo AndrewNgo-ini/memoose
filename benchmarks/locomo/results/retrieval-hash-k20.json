@@ -2,7 +2,8 @@
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 1.5,
+    "latency_ms_p50": 0.7,
+    "ctx_tokens_est": 3281,
     "categories": {
       "multi-hop": {
         "n": 32,
@@ -32,13 +33,14 @@
     },
     "conversation": 0,
     "chunks": 111,
-    "ingest_s": 0.3,
+    "ingest_s": 0.1,
     "embedder": "hash"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 1.4,
+    "latency_ms_p50": 0.7,
+    "ctx_tokens_est": 2969,
     "categories": {
       "multi-hop": {
         "n": 11,
@@ -69,7 +71,8 @@
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 2.3,
+    "latency_ms_p50": 1.0,
+    "ctx_tokens_est": 3176,
     "categories": {
       "multi-hop": {
         "n": 31,
@@ -99,13 +102,14 @@
     },
     "conversation": 2,
     "chunks": 179,
-    "ingest_s": 0.4,
+    "ingest_s": 0.2,
     "embedder": "hash"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 2.2,
+    "latency_ms_p50": 0.9,
+    "ctx_tokens_est": 2854,
     "categories": {
       "multi-hop": {
         "n": 37,
@@ -114,8 +118,8 @@
       },
       "temporal": {
         "n": 40,
-        "evidence_recall": 0.85,
-        "hit_any": 0.85
+        "evidence_recall": 0.825,
+        "hit_any": 0.825
       },
       "open-domain": {
         "n": 11,
@@ -130,18 +134,19 @@
     },
     "overall": {
       "n": 199,
-      "evidence_recall": 0.79,
-      "hit_any": 0.859
+      "evidence_recall": 0.785,
+      "hit_any": 0.854
     },
     "conversation": 3,
     "chunks": 169,
-    "ingest_s": 0.5,
+    "ingest_s": 0.2,
     "embedder": "hash"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 2.3,
+    "latency_ms_p50": 0.9,
+    "ctx_tokens_est": 3169,
     "categories": {
       "multi-hop": {
         "n": 31,
@@ -171,13 +176,14 @@
     },
     "conversation": 4,
     "chunks": 180,
-    "ingest_s": 0.5,
+    "ingest_s": 0.2,
     "embedder": "hash"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 2.3,
+    "latency_ms_p50": 1.0,
+    "ctx_tokens_est": 3229,
     "categories": {
       "multi-hop": {
         "n": 30,
@@ -207,13 +213,14 @@
     },
     "conversation": 5,
     "chunks": 179,
-    "ingest_s": 0.3,
+    "ingest_s": 0.2,
     "embedder": "hash"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 2.3,
+    "latency_ms_p50": 1.0,
+    "ctx_tokens_est": 2724,
     "categories": {
       "multi-hop": {
         "n": 20,
@@ -243,13 +250,14 @@
     },
     "conversation": 6,
     "chunks": 185,
-    "ingest_s": 0.4,
+    "ingest_s": 0.2,
     "embedder": "hash"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 2.3,
+    "latency_ms_p50": 0.9,
+    "ctx_tokens_est": 2789,
     "categories": {
       "multi-hop": {
         "n": 21,
@@ -268,24 +276,25 @@
       },
       "single-hop": {
         "n": 118,
-        "evidence_recall": 0.921,
+        "evidence_recall": 0.929,
         "hit_any": 0.941
       }
     },
     "overall": {
       "n": 191,
-      "evidence_recall": 0.843,
+      "evidence_recall": 0.848,
       "hit_any": 0.911
     },
     "conversation": 7,
     "chunks": 179,
-    "ingest_s": 0.5,
+    "ingest_s": 0.2,
     "embedder": "hash"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 1.9,
+    "latency_ms_p50": 0.9,
+    "ctx_tokens_est": 2922,
     "categories": {
       "multi-hop": {
         "n": 37,
@@ -315,13 +324,14 @@
     },
     "conversation": 8,
     "chunks": 136,
-    "ingest_s": 0.3,
+    "ingest_s": 0.2,
     "embedder": "hash"
   },
   {
     "k": 20,
     "mode": "auto",
-    "latency_ms_p50": 2.1,
+    "latency_ms_p50": 0.9,
+    "ctx_tokens_est": 3382,
     "categories": {
       "multi-hop": {
         "n": 32,
@@ -351,7 +361,7 @@
     },
     "conversation": 9,
     "chunks": 154,
-    "ingest_s": 0.4,
+    "ingest_s": 0.2,
     "embedder": "hash"
   }
 ]

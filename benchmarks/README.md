@@ -1,38 +1,17 @@
 # Benchmarks
 
-Two different questions, and it matters which one a number answers.
-
-**Can you find a fact that was stated once?** That is retrieval, and it is what every published
-memory benchmark scores — LoCoMo, LongMemEval, the mem0 and Zep suites. See [LoCoMo](#locomo) below.
-
-**Does a body of facts stay trustworthy as it changes?** A fact was revised; two sources disagree;
-where did this come from; we learned this before. That is what memoose claims and what makes memory
-hard to keep for months, and no published benchmark asks it. So we built one:
-**[`maintained/`](./maintained/README.md)**.
+We report LoCoMo, the standard conversational-memory benchmark, because it is the one number that
+puts memoose on the same axis as mem0, Zep and the published baselines.
 
 | suite | asks | model | wall time | cost |
 | --- | --- | --- | --- | --- |
-| [`maintained/`](./maintained/README.md) | does memory stay true as facts change | none | ~1 s | $0 |
-| `locomo/retrieval_bench.py` | does the gold evidence come back (recall@k) | none | ~5 min | $0 |
 | `locomo/run_locomo.py` | end-to-end judged answer accuracy | answerer + judge | ~1.5 h | ~$9 |
+| `locomo/retrieval_bench.py` | does the gold evidence come back (recall@k) | none | ~5 min | $0 |
 
-Only the first two can run in CI, and `maintained/` is wired into pytest for exactly that reason.
-
-## Maintained memory
-
-18 cases, 66 assertions, no model, about a second. It asserts on the payloads the MCP tools return —
-is this fact flagged `superseded`, does `superseded_by` point at its replacement, is `contested` true
-on *both* sides, did the `repo://` evidence pointer survive, does the second session's standing
-context contain the first session's rule. Three cases are negative controls that fail if the system
-over-reacts, so a system that flags everything cannot pass.
-
-memoose scores **18/18** on both embedders. That is not evidence memoose is better than anything —
-it is our own suite — and [`maintained/README.md`](./maintained/README.md) says so plainly, and
-restates all 18 cases as API-neutral requirements so another system can be scored on them. The
-evidence it did produce is a bug: on its first run it scored 14/18 and caught functional supersession
-being decided by write order alone, so backfilling a 2024 fact after the 2025 value was known
-silently made 2024 current again. LoCoMo could never have shown that, because LoCoMo has no notion
-of a fact being revised.
+LoCoMo asks *can you find a fact that was stated once*. It does not ask whether a body of facts stays
+trustworthy as it changes — a fact was revised, two sources disagree, where did this come from — which
+is what memoose is built for. Designing an eval for that which other systems can run is an open
+problem and a roadmap item, not a result we have.
 
 ## How the LoCoMo numbers are produced
 
@@ -86,13 +65,11 @@ fetch, and the operational traps). Short version:
 
 ```sh
 uv sync --extra fastembed --group dev
-uv run python benchmarks/maintained/run_maintained.py                            # ~1 s, no model, no key
 uv run python benchmarks/locomo/retrieval_bench.py --k 20                       # model-free, all 10 conversations
 uv run python benchmarks/locomo/run_locomo.py --conv 0 --ingest chunks --k 20    # LLM judge, one conversation
 uv run python benchmarks/locomo/run_locomo.py --conv 0 --ingest agent --k 20     # real skill-driven ingest
 ```
 
-Only the LoCoMo LLM-judge run needs credentials or patience; `maintained/` and `retrieval_bench.py`
-need neither. LoCoMo runs resume: rerunning with the same `--tag` skips finished questions, and a
+Only the LoCoMo LLM-judge run needs credentials or patience; `retrieval_bench.py` needs neither. LoCoMo runs resume: rerunning with the same `--tag` skips finished questions, and a
 usage limit pauses the run rather than corrupting it. The LoCoMo dataset is downloaded on first use,
 not committed.

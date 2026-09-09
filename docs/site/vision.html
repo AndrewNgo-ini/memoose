@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vision &middot; Memoose</title>
+<meta name="description" content="Why Memoose exists: the agent already has a model, so memory should not bring a second one; memory is upkeep rather than storage; and search and recommendation are the two ways anything gets found.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="vision.html" aria-current="page">Vision</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="skills.html">Skills</a></li>
+      <li><a href="automatic.html">Automatic memory</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="trust.html">Evidence &amp; history</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<h1>Vision</h1>
+<p class="lede">The agent already has a model. Memory should not bring a second one &mdash; and it
+should not wait to be asked.</p>
+
+<h2>The bet</h2>
+<p>Memoose splits into an <strong>engine</strong> and a <strong>harness</strong>. The engine holds
+only what is deterministic: a typed graph store, an ontology, chunking, ranking, supersession, a
+provenance ledger, all reachable as <a href="tools.html">MCP tools</a>. Everything that needs
+judgment &mdash; what counts as an entity, which facts contradict, what is worth remembering, what a
+session taught &mdash; is written down in the harness as <a href="skills.html">skills</a>, rules and
+<a href="automatic.html">hooks</a>, and the model the host is <em>already running</em> does that
+thinking while it calls the tools.</p>
+<p>There is no code path in the library that calls a model
+(<a href="https://github.com/AndrewNgo-ini/mnemoth/blob/main/docs/adr/0001-skills-and-mcp-only.md">ADR&nbsp;0001</a>),
+so there is no API key, no second inference bill, and nothing leaves the machine
+(<a href="https://github.com/AndrewNgo-ini/mnemoth/blob/main/docs/adr/0002-single-sqlite-store.md">ADR&nbsp;0002</a>).
+The cost of the bet is stated plainly: quality depends on the host&rsquo;s model following a skill,
+and on the host having something to delegate to. The upside is that when that model gets better,
+extraction and judgment get better without shipping anything.</p>
+
+<h2>Memory is upkeep, not storage</h2>
+<p>A house stays livable two ways: you put things where they belong as you use them, and you clean
+periodically. Memory works the same, and a system that does only the first accumulates a store nobody
+trusts.</p>
+<table>
+<thead><tr><th>half</th><th>what it does</th><th>status</th></tr></thead>
+<tbody>
+<tr><td><strong>As you work</strong></td><td>Facts are written as they surface, through tool calls the
+model makes and hooks that capture a turn without being asked</td><td>ships today</td></tr>
+<tr><td><strong>Periodically</strong></td><td><code>memoose maintain</code> sweeps the store into one
+worklist: contradictions to judge, duplicates to merge, finished sessions to distil, bucket summaries
+to rewrite</td><td>ships today</td></tr>
+</tbody>
+</table>
+<p>The pass gathers the work and decides none of it &mdash; the engine proposes, a model disposes,
+which is the same split as everywhere else here. On hosts with hooks it is offered once a day when a
+session opens, since a session opening is the only regular event Memoose can observe without a daemon
+(<code>MEMOOSE_AUTO_MAINTAIN=0</code> turns the offer off).</p>
+<p>You do not do the cleaning yourself either. The work goes to a <strong>memory-keeper subagent on a
+small model</strong>, so upkeep costs neither your attention nor the main conversation&rsquo;s turns.
+Relying only on the agent choosing to call <code>remember</code> is how memory plugins fail: the agent
+is busy with the user&rsquo;s real task, so bookkeeping is the first thing dropped.</p>
+
+<h2>Search and recommendation</h2>
+<p>These are the two ways anything gets found. Search answers a question you thought to ask.
+Recommendation puts something in front of you that you did not. A memory system that only does search
+is only half of one: it works when the agent already suspects there is something to recall, and stays
+silent every other time &mdash; and an agent usually does not think to ask.</p>
+<p>So Memoose does both. <code>recall</code> answers the asked question across eight retrieval modes.
+For the unasked one, each incoming prompt is read, memory is searched locally, and when something
+genuinely matches the agent is handed a hint before it starts thinking. That hint is BM25 over the
+local index with a relevance floor and a hard cap on how much it injects, silent when nothing matches:
+no model, a few milliseconds, cheap enough to run on every prompt. The agent keeps full control over
+whether to follow it. See <a href="automatic.html">Automatic memory</a>.</p>
+
+<h2>What Memoose is for</h2>
+<p>Long-lived project work, where the hard part is not finding a fact once but keeping a body of facts
+trustworthy for months: who owns what now, which decision replaced which, what convention this team
+follows, what we learned last time and why.</p>
+<p>That framing came out of benchmarking rather than preceding it. On LoCoMo, Memoose scores at parity
+with mem0 using a third fewer tokens and a much smaller model &mdash; but a controlled paired test
+showed the knowledge graph does <em>not</em> beat plain chunk retrieval there. That is a statement
+about the benchmark, not a defect: LoCoMo asks needle questions and never asks whether a changed fact
+is still current, or where a claim came from. So those questions got their own model-free suite. See
+<a href="trust.html">Evidence &amp; history</a>.</p>
+
+<h2>Principles</h2>
+<ol>
+<li><strong>The library never calls a model.</strong> If a feature needs judgment, it becomes a skill
+and a validated tool, not an inference call.</li>
+<li><strong>The harness is portable.</strong> Skills and MCP tools are the whole core; hooks add
+automation on hosts that have them and no capability the tools lack.</li>
+<li><strong>Facts carry their evidence.</strong> Every relation can point at where it came from, so a
+later run can re-verify rather than trust.</li>
+<li><strong>Nothing true is deleted.</strong> Facts are superseded, not removed; history stays
+queryable.</li>
+<li><strong>Errors teach.</strong> A rejected write returns a message written for the model &mdash;
+which type to use, which relation name.</li>
+</ol>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

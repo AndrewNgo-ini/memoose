@@ -19,6 +19,7 @@
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
+      <li><a href="vision.html">Vision</a></li>
       <li><a href="install.html" aria-current="page">Install</a></li>
       <li><a href="tools.html">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
@@ -93,8 +94,7 @@ host you are actually on and reports what it found.</p>
 
 <h2>Develop</h2>
 <pre><code>uv sync --extra fastembed --group dev
-uv run pytest                                          # includes the maintained-memory suite
-uv run python benchmarks/maintained/run_maintained.py  # ~1 s, no key
+uv run pytest
 claude plugin validate .</code></pre>
 
 <footer class="page-foot">

@@ -1,16 +1,14 @@
-"""MCP server exposing the Engine as plain tools, plus the `memoose` CLI.
+"""MCP server exposing the Engine as plain tools.
 
-`memoose` / `memoose serve`  run the stdio MCP server (what hosts launch)
-`memoose install <host>`     wire the server + skills into a host (integrations.py)
+Started by `memoose serve`, which a host launches. The same Engine is reachable from the
+shell through `memoose.cli`; this module is imported only when the server is actually run,
+so a CLI invocation does not pay the ~250 ms `mcp` import.
 """
 
 from __future__ import annotations
 
-import argparse
-import json
 import sqlite3
 import sys
-from pathlib import Path
 
 from mcp.server.mcpserver import MCPServer
 
@@ -172,37 +170,11 @@ def build_server(engine: Engine | None = None) -> MCPServer:
     return server
 
 
-HOSTS = ["claude", "codex", "opencode", "cursor"]
-
-
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="memoose", description="Memory harness for coding agents.")
-    sub = parser.add_subparsers(dest="cmd")
-    sub.add_parser("serve", help="Run the stdio MCP server (default).")
-    p_install = sub.add_parser("install", help="Wire memoose into a host: claude, codex, opencode, cursor.")
-    p_install.add_argument("host", choices=HOSTS)
-    p_install.add_argument("--project", nargs="?", const=".", default=None, help="Install into this project instead of the user scope.")
-    p_install.add_argument("--command", default=None, help='MCP server command override, e.g. "uvx memoose serve".')
-    p_un = sub.add_parser("uninstall", help="Remove memoose from a host.")
-    p_un.add_argument("host", choices=HOSTS)
-    p_un.add_argument("--project", nargs="?", const=".", default=None)
-    p_status = sub.add_parser("status", help="Show what is installed where.")
-    p_status.add_argument("--project", nargs="?", const=".", default=None)
-    args = parser.parse_args(argv)
+    """Kept so `python -m memoose.server` and older host configs still work."""
+    from .cli import main as cli_main
 
-    if args.cmd in (None, "serve"):
-        build_server().run("stdio")
-        return 0
-    from . import integrations
-
-    if args.cmd == "install":
-        result = integrations.install(args.host, project=args.project, command=args.command.split() if args.command else None)
-    elif args.cmd == "uninstall":
-        result = integrations.uninstall(args.host, project=args.project)
-    else:
-        result = integrations.status(project=args.project)
-    print(json.dumps(result, indent=2))
-    return 0
+    return cli_main(argv)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ from . import memify as mem
 from . import sessions as sess
 from .chunking import chunk_text
 from .datasets import dataset_path, normalize_dataset_name, project_dataset_name
-from .embeddings import Embedder, default_embedder
+from .embeddings import Embedder, LazyEmbedder
 from .ids import chunk_id, entity_id, relation_id
 from .models import CrossConnectIn, EntityIn, LessonIn, RelationIn
 from .ontology import DEFAULT_ENTITY_TYPES, EntityType, Ontology, OntologyError, parse_ontology, plan_import
@@ -305,6 +305,40 @@ class Dataset:
             return {"dataset": self.name, "kind": kind, "candidates": mem.stale_bucket_inputs(self.store, limit), "guidance": "Write each bucket summary in the given shape from the listed facts only, then call set_bucket_summary."}
         raise ValueError("kind must be cross_connect, consolidate, or stale_summaries.")
 
+    def maintenance(self, limit: int = 10) -> dict:
+        """Everything in this dataset that currently needs a judgment call, in one sweep.
+
+        Storing facts as they arrive is half of keeping memory; the other half is going back over
+        it — judging conflicts, merging duplicates, distilling finished sessions, rewriting stale
+        summaries. This gathers that worklist deterministically and decides nothing: the model
+        working through it makes every call. `stale_summaries` rebuilds the bucket index as it
+        goes, so this is not a read-only command.
+        """
+        ids = [e.id for e in self.store.all_entities()]
+        work = {
+            "hotspots": (contra.candidate_facts(self.store, ids)["hotspots"][:limit] if ids else []),
+            "open_contradictions": self.store.open_contradictions(limit),
+            "consolidate": mem.consolidate_candidates(self.store, limit),
+            "cross_connect": mem.cross_connect_candidates(self.store, limit),
+            "stale_summaries": (mem.rebuild_buckets(self.store), mem.stale_bucket_inputs(self.store, limit))[1],
+            "undistilled_sessions": [
+                s for s in self.store.sessions(50) if s.get("ended_at") and not s.get("distilled_at")
+            ][:limit],
+        }
+        return {
+            "dataset": self.name,
+            "pending": sum(len(v) for v in work.values()),
+            **work,
+            "guidance": (
+                "Judge each item; do not accept them wholesale. hotspots and open_contradictions: "
+                "memoose-contradictions (supersede when the newer fact replaces the older, "
+                "mark_contradiction when both claim to be current). consolidate and cross_connect: "
+                "memoose-memify, and only when the names denote the same thing or the relation is "
+                "real. undistilled_sessions: session_timeline then publish_lessons. "
+                "stale_summaries: write each from the listed facts only, then set_bucket_summary."
+            ),
+        }
+
     def cross_connect(self, relations: list[CrossConnectIn]) -> dict:
         rels = [RelationIn(source=r.source, name=r.name, target=r.target, description=r.description, evidence=r.evidence) for r in relations]
         return self.remember([], rels, source="memify:cross_connect")
@@ -371,7 +405,7 @@ class Engine:
     """Opens Datasets lazily and caches them for the life of the server process."""
 
     def __init__(self, embedder: Embedder | None = None, data_dir: Path | None = None) -> None:
-        self.embedder = embedder or default_embedder()
+        self.embedder = embedder or LazyEmbedder()
         if data_dir is not None:
             os.environ["MEMOOSE_DATA_DIR"] = str(data_dir)
         self._open: dict[str, Dataset] = {}

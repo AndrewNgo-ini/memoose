@@ -19,6 +19,7 @@
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
+      <li><a href="vision.html">Vision</a></li>
       <li><a href="install.html">Install</a></li>
       <li><a href="tools.html">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
@@ -42,6 +43,8 @@ where the host gives its MCP server and hooks their environment.</p>
 <tr><td><code>MEMOOSE_HINTS</code></td><td>on</td><td><code>0</code> stops injecting relevant-memory hints before each prompt</td></tr>
 <tr><td><code>MEMOOSE_AUTO_RECALL</code></td><td>on</td><td><code>0</code> stops injecting standing context at session start</td></tr>
 <tr><td><code>MEMOOSE_AUTO_CAPTURE</code></td><td>on</td><td><code>0</code> stops background capture entirely</td></tr>
+<tr><td><code>MEMOOSE_AUTO_MAINTAIN</code></td><td>on</td><td><code>0</code> stops the daily offer to run <code>memoose maintain</code></td></tr>
+<tr><td><code>MEMOOSE_MAINTAIN_EVERY_HOURS</code></td><td>24</td><td>How often that offer may appear</td></tr>
 <tr><td><code>MEMOOSE_HINT_COUNT</code></td><td><code>4</code></td><td>How many hints may be injected at most</td></tr>
 <tr><td><code>MEMOOSE_HINT_MIN_SCORE</code></td><td><code>0.5</code></td><td>Relevance floor below which Memoose stays silent</td></tr>
 <tr><td><code>MEMOOSE_CAPTURE_MODEL</code></td><td><code>haiku</code></td><td>Which small model does the background extraction</td></tr>

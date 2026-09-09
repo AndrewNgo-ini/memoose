@@ -6,12 +6,15 @@ conversation. It reads only the transcript slice it has not seen yet, applies a 
 relevance gate before spending anything, and then hands the extraction to a **small model**
 through the host's own CLI — the host's auth, the host's subscription, no API key.
 
-The expensive model driving the conversation is never used for bookkeeping.
+The expensive model driving the conversation is never used for bookkeeping. The keeper writes
+through the `memoose` command line rather than the MCP server: no server handshake per capture,
+and no tool schemas in the keeper's context, which is most of what a capture prompt costs.
 """
 
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -37,7 +40,8 @@ TIMEOUT_S = int(env("CAPTURE_TIMEOUT") or "300")
 LOCK_STALE_S = 900
 
 PROMPT = """You are memoose's memory keeper. Read the exchange below and store only what is worth
-remembering weeks from now, using the memoose tools. Load the `memoose` skill's rules if available.
+remembering weeks from now, using the `memoose` command line. Load the `memoose` skill's rules if
+available. Run every command with Bash; there are no MCP tools in this session.
 
 Store: decisions and their reasons, who or what owns which part, how systems relate, conventions and
 constraints the user states, preferences the user expresses, dates things happened, problems found and
@@ -46,19 +50,29 @@ how they were solved, and durable facts about this project or environment.
 Do NOT store: transient task state, what a file currently contains (that is in the code), the fact that
 you ran a command, restatements of the user's request, or anything you are unsure of.
 
+The command is `{memoose}`. Use it like this:
+
+  {memoose} ontology                                    # entity types to use — run this once, first
+  {memoose} recall "<names you are about to write>"     # reuse existing names; run before storing
+  {memoose} remember "alice:Person --owns--> billing:System" \\
+      --desc "One dry sentence using both names." -e "user said {today}" --valid-from 2026-01-31
+
 Rules:
-- Call `describe_ontology` once, then `remember` with entities (name, type, description) and relations
-  (source --snake_case_name--> target) with a one-sentence description using the endpoint names.
-- Put where each fact came from in `evidence`, e.g. "user said {today}" or a file path.
-- Reuse existing names: call `recall` first when a name may already be known.
-- Set `valid_from` (YYYY-MM-DD) whenever the exchange says when a fact became true.
-- When a fact CHANGED (a new owner, a new version, a new region, a new gateway): call
-  `declare_functional_relations` for that relation name, then store BOTH values with the SAME
-  relation name, oldest `valid_from` first, and never invent a name for the old value such as
-  `previously_owned_by` or `former_owner`. The store then marks the old value superseded and keeps
-  it queryable as history, so "who owns it now" and "who owned it before" both have answers.
-  Dropping the old value loses the history; renaming the relation hides the change.
-- Pass dataset: "{dataset}" on every call except facts about the user themselves, which go to dataset "user".
+- A fact is `source[:Type] --snake_case_name--> target[:Type]`. The `:Type` declares an entity that
+  is new; leave it off for a name that already exists. Every fact needs `--desc`, one self-contained
+  sentence using the endpoint names.
+- Put where each fact came from in `-e/--evidence`, e.g. "user said {today}" or a file path.
+- Set `--valid-from` (YYYY-MM-DD) whenever the exchange says when a fact became true.
+- When a fact CHANGED (a new owner, a new version, a new region, a new gateway), first run
+  `echo '{{"names":["<relation>"]}}' | {memoose} tool declare_functional_relations --stdin`, then
+  store BOTH values with the SAME relation name, oldest `--valid-from` first. Never invent a name for
+  the old value such as `previously_owned_by` or `former_owner`. The store then marks the old value
+  superseded and keeps it queryable as history, so "who owns it now" and "who owned it before" both
+  have answers. Dropping the old value loses the history; renaming the relation hides the change.
+- Add `--dataset {dataset}` on every command except facts about the user themselves, which take
+  `--dataset user`.
+- A command that fails prints what to fix on stderr — read it and correct the command rather than
+  trying a different syntax.
 - If nothing here is worth remembering, store nothing and reply exactly: NOTHING.
 
 Reply with one short line naming what you stored, or NOTHING.
@@ -84,24 +98,29 @@ def _lock(session_id: str) -> Path | None:
         return None
 
 
-def _mcp_config(tmp: Path, cwd: str) -> Path:
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT") or str(Path(__file__).resolve().parents[1])
-    child_env = {"MEMOOSE_PROJECT_DIR": cwd}
+def _plugin_root() -> str:
+    return os.environ.get("CLAUDE_PLUGIN_ROOT") or str(Path(__file__).resolve().parents[1])
+
+
+def _memoose_cmd() -> str:
+    """How the keeper invokes the CLI: the installed binary if there is one, else uvx."""
+    return shutil.which("memoose") or f'uvx --from "{_plugin_root()}" memoose'
+
+
+def _child_env(cwd: str) -> dict:
+    """The store the keeper must write to, passed down so its shell commands agree with ours."""
+    child = {**os.environ, "MEMOOSE_PROJECT_DIR": cwd}
     for var in ("DATA_DIR", "EMBEDDER"):  # a legacy MNEMOTH_* value is passed on under the new name
         if value := env(var):
-            child_env[f"MEMOOSE_{var}"] = value
+            child[f"MEMOOSE_{var}"] = value
+    return child
+
+
+def _no_mcp_config(tmp: Path) -> Path:
+    """An empty server list: with --strict-mcp-config the keeper loads no MCP server at all."""
     cfg = tmp / "mcp.json"
-    cfg.write_text(
-        '{"mcpServers":{"memoose":{"command":"uvx","args":["--from",%s,"memoose","serve"],"env":%s}}}'
-        % (_json(plugin_root), _json(child_env))
-    )
+    cfg.write_text('{"mcpServers":{}}')
     return cfg
-
-
-def _json(v) -> str:
-    import json
-
-    return json.dumps(v)
 
 
 def main() -> int:
@@ -125,18 +144,23 @@ def main() -> int:
     try:
         with tempfile.TemporaryDirectory(prefix="memoose-capture-") as td:
             tmp = Path(td)
-            cfg = _mcp_config(tmp, cwd)
-            prompt = PROMPT.format(exchange=exchange, today=time.strftime("%Y-%m-%d"), dataset=dataset_name(cwd))
+            cfg = _no_mcp_config(tmp)
+            prompt = PROMPT.format(
+                exchange=exchange, today=time.strftime("%Y-%m-%d"),
+                dataset=dataset_name(cwd), memoose=_memoose_cmd(),
+            )
             cmd = [
                 "claude", "-p", "--model", MODEL, "--max-turns", "24",
                 "--mcp-config", str(cfg), "--strict-mcp-config",
+                "--allowedTools", "Bash",
                 "--dangerously-skip-permissions",
             ]
             plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
             if plugin_root:
                 cmd += ["--plugin-dir", plugin_root]
             try:
-                subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=td, timeout=TIMEOUT_S)
+                subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=td,
+                               env=_child_env(cwd), timeout=TIMEOUT_S)
             except (OSError, subprocess.SubprocessError):
                 return 0  # claude missing or failed: silent, memory is best-effort
         write_offset(session_id, new_offset)

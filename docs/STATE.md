@@ -1,7 +1,45 @@
 # State of play
 
-Last updated 2026-09-07, after building the maintained-memory benchmark and verifying the proactive
-path live.
+Last updated 2026-09-09, after shipping the CLI, the upkeep pass, and the numpy scoring path.
+
+## The CLI, the upkeep pass, and what they cost (2026-09-09)
+
+**`memoose` is now a CLI as well as an MCP server**, over the same `Engine`. `recall`, `remember`
+(with a `source[:Type] --relation--> target[:Type]` DSL), `history`, `contradictions`, `ontology`,
+`datasets`, `context`, `session *`, `forget`, `maintain`, plus `tool <name> --stdin` as the escape
+hatch to any remaining engine method. Compact text by default, `--json` for the exact MCP payload,
+and output over `--max-inline` (2000 chars) spills to a file whose path is printed.
+
+Why: measured against the server's own tool list, the MCP tool schemas are **16,988 chars ≈ 4,250
+tokens resident on every turn** once the server is connected; a command costs nothing until it runs
+(90 ms startup). `mcp` is imported only inside `serve`, so a CLI call starts in 87 ms instead of 307.
+Both surfaces stay: the skills teach the CLI first, the server remains for restricted shells.
+
+**Background capture writes through the CLI.** `hooks/capture.py` now runs the keeper with
+`--allowedTools Bash` and an *empty* `--mcp-config`, so a capture no longer starts an MCP server or
+pays for its schemas. Not yet verified live end to end — the prompt changed shape, so capture quality
+should be re-checked the way it was in the 2026-09-07 run.
+
+**The upkeep pass exists.** `memoose maintain` (`Dataset.maintenance()`) sweeps the store into one
+worklist — hotspots, open contradictions, consolidate and cross-connect candidates, stale bucket
+summaries, sessions that ended without lessons — and decides none of it. On hosts with hooks,
+`session_start.py` offers it at most once a day per project via a stamp file
+(`MEMOOSE_AUTO_MAINTAIN=0`, `MEMOOSE_MAINTAIN_EVERY_HOURS`). There is no daemon and no cron: a
+session opening is the only regular event a hook can observe.
+
+**Scoring is numpy.** `vector_search` was a pure-Python loop over every embedding row: 51 ms at 5k
+rows, 506 ms at 50k. It is now one matrix multiply, with ties broken on `ref_id` so the same store
+answers the same way on any machine. numpy is a base dependency. Retrieval reproduces to ±0.003 per
+category and identically overall; median p50 query latency halved (2.1 ms → 0.9 ms, hash embedder).
+Storage was investigated and **SQLite stays**: DuckDB's HNSW is still experimental with a static FTS
+index and single-writer concurrency, Kuzu was archived in Oct 2025, and sqlite-vec is pre-1.0,
+brute-force only, and slower than numpy. Revisit only past ~200k vectors per project.
+
+**The embedder is lazy.** `Engine` no longer builds it at construction, so a fresh CLI process doing
+lexical work never loads the ONNX model. Measured: fastembed loads in 0.39 s and embeds a query in
+7 ms, so a vector recall from cold is ~480 ms and a lexical one ~90 ms.
+
+95 tests pass; `claude plugin validate .` passes.
 
 ## What is done
 
@@ -74,23 +112,16 @@ without a model at all. The retrieval algorithm itself is conventional (BM25 + l
 by reciprocal rank, plus one-hop graph expansion); the differentiator is the architecture, not the
 ranking.
 
-## The maintained-memory benchmark (roadmap item 3, done)
+## The in-house maintained-memory suite (removed 2026-09-09)
 
-`benchmarks/maintained/` — 18 cases, 66 assertions, **no model, no API key, ~1 s**, wired into
-pytest. It asks the five questions memoose claims and LoCoMo cannot: a fact changed (does recall
-return the current one), can the old one still be shown and why it changed, do two disagreeing
-sources get reported or silently resolved, does evidence survive, does an earlier session's lesson
-come back. Full write-up in `benchmarks/maintained/README.md`.
+A model-free suite lived at `benchmarks/maintained/` and asked the questions LoCoMo cannot: a fact
+changed, does recall return the current one; can the old one still be shown; do two disagreeing
+sources get reported or silently resolved; does evidence survive; does an earlier session's lesson
+come back. It was removed because a benchmark only its author runs is not evidence, and publishing a
+score from it invited exactly that reading. Proposing an eval other systems can run is now a roadmap
+item instead. The cases remain in git history if the design is picked up again.
 
-Result: **18/18 cases, 66/66 checks**, identical on the `hash` and `fastembed` embedders, ~1 s.
-Three cases are negative controls (must *not* supersede a multi-valued relation, must *not* flag
-compatible facts, must *not* invent evidence) so a system that says yes to everything scores 0 on
-them.
-
-**Passing our own suite is not evidence of superiority and the README says so.** Its value is (a) the
-claims are now checked on every commit rather than asserted, and (b) what it caught on the first
-run, at 14/18 before anything was tuned. Three of those failures were bugs in the cases. One was
-real:
+The bug it caught before removal is the reason to rebuild something like it, and the fix stands:
 
 > Functional supersession was decided by **write order alone**. Backfilling a fact that was true in
 > 2024, after the 2025 value was already known, silently made the 2024 value current again — learning
@@ -99,7 +130,7 @@ real:
 > history. Write order still decides when a date is missing, and an undated arrival is presumed
 > current, so the ordinary path is unchanged.
 
-Pre-fix rows are kept at `benchmarks/maintained/results/baseline-prefix-hash.json`.
+Removing the suite means that class of regression is **no longer checked on every commit**.
 
 ## What the live run established
 

@@ -200,11 +200,21 @@ def test_capture_invokes_the_small_model_on_substantive_turns(tmp_path, monkeypa
     args = argv.read_text()
     assert "--model haiku" in args, "capture must run on the small model, not the conversation model"
     assert "--strict-mcp-config" in args and "--mcp-config" in args
+    assert "--allowedTools Bash" in args, "the keeper writes through the CLI, so it needs Bash"
     prompt = stdin.read_text()
     assert "JWT" in prompt and "NOTHING" in prompt
     assert "Do NOT store" in prompt  # the precision rules travel with the prompt
+    assert "recall" in prompt and "remember" in prompt  # the CLI commands, not tool names
     monkeypatch.setenv("MEMOOSE_DATA_DIR", str(tmp_path / "data"))
     assert _common.read_offset("s2") == 1
+
+
+def test_capture_configures_no_mcp_server(tmp_path):
+    """The keeper writes through the CLI, so it must not launch (or pay for) an MCP server."""
+    import capture
+
+    cfg = json.loads(capture._no_mcp_config(tmp_path).read_text())
+    assert cfg == {"mcpServers": {}}
 
 
 def test_capture_kill_switch_and_lock(tmp_path, monkeypatch):
@@ -383,7 +393,7 @@ def test_capture_prompt_pins_the_dataset(tmp_path):
     r = run_hook("capture.py", {"session_id": "sd", "cwd": str(proj), "transcript_path": str(t)},
                  {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"})
     assert r.returncode == 0
-    assert f'dataset: "{_common.dataset_name(str(proj))}"' in stdin.read_text()
+    assert f"--dataset {_common.dataset_name(str(proj))}" in stdin.read_text()
 
 
 def test_recommend_never_hints_a_superseded_fact(tmp_path):
@@ -415,3 +425,37 @@ def test_recommend_never_hints_a_superseded_fact(tmp_path):
     ctx = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
     assert "eu-central-1" in ctx, "the current fact must still be hinted"
     assert "eu-west-1" not in ctx, "a superseded fact must never be injected as if it were current"
+
+
+# ----- the periodic maintenance nudge ----------------------------------------------------
+def _seed_project(tmp_path):
+    """A project with enough memory that session_start has something to say."""
+    proj = tmp_path / "proj"
+    proj.mkdir(exist_ok=True)
+    eng = Engine(embedder=HashEmbedder(), data_dir=tmp_path / "data")
+    ds = eng.dataset(_common.dataset_name(str(proj)))
+    ds.session_start("s1")
+    ds.session_set_context("s1", "rules", "Never force-push to main.", 1.0)
+    eng.close()
+    return proj
+
+
+def test_session_start_offers_maintenance_once_per_window(tmp_path):
+    proj = _seed_project(tmp_path)
+    env = {"MEMOOSE_DATA_DIR": str(tmp_path / "data")}
+    ev = {"cwd": str(proj), "hook_event_name": "SessionStart"}
+
+    first = run_hook("session_start.py", ev, env)
+    assert "memoose maintain" in first.stdout, "the periodic pass has to be offered to be run"
+
+    second = run_hook("session_start.py", ev, env)
+    assert "Never force-push" in second.stdout, "standing context still ships"
+    assert "memoose maintain" not in second.stdout, "one nudge per window, not one per session"
+
+
+def test_maintenance_nudge_has_a_kill_switch(tmp_path):
+    proj = _seed_project(tmp_path)
+    r = run_hook("session_start.py", {"cwd": str(proj), "hook_event_name": "SessionStart"},
+                 {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "MEMOOSE_AUTO_MAINTAIN": "0"})
+    assert r.returncode == 0
+    assert "Never force-push" in r.stdout and "memoose maintain" not in r.stdout

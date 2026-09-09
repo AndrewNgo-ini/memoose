@@ -52,9 +52,14 @@ that was once true.
 
 - End of a task or session: `session_timeline`, apply its curator and writer rules, then
   `publish_lessons` with what generalises beyond this session.
-- Periodically: `memify_candidates` for `cross_connect`, `consolidate`, and `stale_summaries`, then
-  `cross_connect`, `merge_entities`, and `set_bucket_summary` on the ones that are genuinely right.
-  Merge only when two names denote the same real thing.
+- Periodically: run `memoose maintain`. One command returns the whole worklist — hotspots, open
+  contradictions, duplicate names, entity pairs worth connecting, buckets missing a summary, and
+  sessions that ended without lessons — with the guidance for each. Work through it and act only
+  where the judgment is clear: `supersede` or `mark_contradiction` on conflicts, `merge_entities`
+  only when two names denote the same real thing, `cross_connect` only when the shared context
+  states a real relationship, `set_bucket_summary` from the listed facts alone.
+  (Without a shell: `memify_candidates` for `cross_connect`, `consolidate` and `stale_summaries`
+  covers the same ground one kind at a time.)
 
 Reply with one line naming what you stored or maintained, or `NOTHING` if there was nothing worth
 keeping.

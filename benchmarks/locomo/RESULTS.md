@@ -5,10 +5,16 @@ Host model via Claude Code `claude -p`. Retrieval = memoose `recall` (auto-route
 
 ## Model-free retrieval (evidence recall@k, all 10 conversations, 1,540 questions)
 
-| embedder | k | overall | multi-hop | temporal | open-domain | single-hop |
-| --- | --- | --- | --- | --- | --- | --- |
-| fastembed bge-small | 20 | 0.876 | 0.689 | 0.919 | 0.579 | 0.956 |
-| hash (no model) | 20 | 0.804 | 0.561 | 0.857 | 0.441 | 0.905 |
+| embedder | k | overall | multi-hop | temporal | open-domain | single-hop | p50 query |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| fastembed bge-small | 20 | 0.876 | 0.688 | 0.919 | 0.579 | 0.956 | 7.1 ms |
+| hash (no model) | 20 | 0.804 | 0.561 | 0.854 | 0.441 | 0.906 | 0.9 ms |
+
+Re-run after the scoring path moved from a Python loop to a numpy matrix multiply. Both rows
+reproduce to ±0.003 per category and are identical overall; the differences are tie ordering, now
+broken on `ref_id` so the same store answers the same way on any machine. Median p50 query latency
+halved, 2.1 ms → 0.9 ms on the hash embedder. The fastembed row's 7.1 ms is almost entirely the
+query embedding (7 ms measured), not retrieval.
 
 ## LLM judge
 

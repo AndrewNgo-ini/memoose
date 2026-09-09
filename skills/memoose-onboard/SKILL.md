@@ -57,6 +57,7 @@ their environment.
 | `MEMOOSE_HINTS=0` | stop injecting relevant-memory hints before each prompt |
 | `MEMOOSE_AUTO_RECALL=0` | stop injecting standing context at session start |
 | `MEMOOSE_AUTO_CAPTURE=0` | stop background capture entirely |
+| `MEMOOSE_AUTO_MAINTAIN=0` | stop the daily offer to run the upkeep pass (`MEMOOSE_MAINTAIN_EVERY_HOURS` re-paces it) |
 | `MEMOOSE_CAPTURE_MODEL=haiku` | which small model does the background extraction |
 | `MEMOOSE_CAPTURE_MIN_CHARS=400` | how substantial a turn must be before capture spends anything |
 | `MEMOOSE_DATA_DIR` | where the SQLite files live |

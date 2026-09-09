@@ -9,6 +9,7 @@ authors = [{ name = "Hieu Ngo" }]
 keywords = ["memory", "mcp", "agent-plugins", "knowledge-graph", "claude-code", "codex"]
 dependencies = [
   "mcp>=1.10",
+  "numpy>=1.26",
   "pydantic>=2.7",
 ]
 
@@ -17,7 +18,7 @@ fastembed = ["fastembed>=0.5"]
 ontology = ["rdflib>=7"]
 
 [project.scripts]
-memoose = "memoose.server:main"
+memoose = "memoose.cli:main"
 
 [build-system]
 requires = ["hatchling"]
