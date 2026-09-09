@@ -212,9 +212,14 @@ questions about what was said. A model answers from whatever the memory system r
 second model grades the answer. Run under mem0's protocol with their answerer and judge prompts
 verbatim, so the memory system is the only thing that differs.
 
-### Self-reported score — Claude Haiku 4.5
+### Our run — a sanity check on a lightweight model
 
-**90.4% correct** on all 1,540 questions, at **4,699 mean prompt tokens**.
+Not a competitive entry. It exists so there is a real, reproducible number attached to Memoose
+running the way it is designed to run: **Claude Haiku 4.5** as both answerer and judge, on the full
+benchmark.
+
+**90.4% correct** across all 1,540 questions, at **4,699 mean prompt tokens** ($88.55, September
+2026).
 
 | category | questions | score |
 | --- | --- | --- |
@@ -223,14 +228,30 @@ verbatim, so the memory system is the only thing that differs.
 | multi-hop | 282 | 88.7 |
 | open-domain | 96 | 70.8 |
 
-The full benchmark, run September 2026 — every conversation, every scored question, no sampling.
-Answerer and judge are both Haiku 4.5. Other published scores use larger answering models, and
-swapping the answerer moves a score more than swapping the memory system does, so read this as *what
-Memoose does on a small model* rather than as a like-for-like ranking. Running well on a cheap model
-is the target, not a compromise.
+Open-domain is the weak category: those golds are single turns holding a name or a place that never
+reach the retrieved context.
 
-Open-domain is the weak category and the full run makes that unambiguous: those golds are single
-turns holding a name or a place that never reach the retrieved context.
+### For reference — what others report
+
+Every figure below is **self-reported by its vendor**, on a different model stack, judge and
+retrieval configuration. They are not comparable with each other or with ours; they are here so the
+number above has context.
+
+| system | reported | notes |
+| --- | --- | --- |
+| ZeroMemory | 96.1 | unverified |
+| Zep | 94.7 | third-party testing found 75.1 on the same benchmark |
+| ByteRover | 92.2 / 96.1 | two conflicting figures published |
+| mem0 | 92.5 | single-hop 94.6, multi-hop 95.4, temporal 92.5, open-domain 82.3; 6,956 prompt tokens |
+| **Memoose (Haiku 4.5)** | **90.4** | the run above — full 1,540 questions, per-category, CI, cost and raw rows all published |
+| Dakera | 88.2 | no LLM reranking |
+| full context, no memory | ~73 | the whole conversation in the prompt |
+
+Against the one entry with a published per-category breakdown, mem0, we are behind everywhere —
+most of all on multi-hop (−6.7) and open-domain (−11.5) — and ahead only on cost, at a third fewer
+prompt tokens with a much smaller answerer. Swapping the answerer moves a score more than swapping
+the memory system does, and most vendors above do not disclose theirs, so treat the ordering as
+noise rather than a ranking.
 
 Two findings from those runs that cut against us, published anyway: the knowledge graph does **not**
 beat plain chunk retrieval on LoCoMo (paired McNemar p = 1.00) and costs 77% more tokens, and raising

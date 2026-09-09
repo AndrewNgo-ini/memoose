@@ -27,7 +27,23 @@ query embedding (7 ms measured), not retrieval.
 | sample16-chunks-k30-haiku (partial, conv 0–6) | 0–6 (16 each) | chunks (no model) | 30 | claude-haiku-4-5 | claude-haiku-4-5 | 97 | 89.7 | — | — | — | — | ~6,200 | $6.5 |
 
 Published (all 10 conversations): mem0 2026 92.5 (top-200, gpt-4o class), Zep 75.1, full-context ~73, mem0 2025 66.9.
-mem0 per-category (avg top_10–200): single-hop 91.2, multi-hop 91.3, temporal 92.0, open-domain 72.7, mean 6,956 prompt tokens.
+mem0 per-category, from their research page: single-hop 94.6, multi-hop 95.4, temporal 92.5,
+open-domain 82.3, mean 6,956 prompt tokens. (Their paper's top_10–200 averages are lower — 91.2 /
+91.3 / 92.0 / 72.7 — so quote the research-page figures, which are the ones they headline.)
+
+Full run against mem0's published per-category, the only entry that breaks its score down:
+
+| category | Memoose (Haiku 4.5, 1,540 q) | mem0 | gap |
+| --- | --- | --- | --- |
+| overall | 90.4 | 92.5 | −2.1 |
+| single-hop | 93.5 | 94.6 | −1.1 |
+| multi-hop | 88.7 | 95.4 | −6.7 |
+| temporal | 89.7 | 92.5 | −2.8 |
+| open-domain | 70.8 | 82.3 | −11.5 |
+| mean prompt tokens | 4,699 | 6,956 | −32% |
+
+Behind on every category, ahead only on cost. Neither run discloses the same answerer — mem0
+publishes no answerer or judge identity at all — so read this as context, not a ranking.
 
 **Read**: the full 1,540-question run scores **90.4** with a 3-point interval, and supersedes the earlier
 160-question sample, which read 91.9 — optimistic by 1.5 points because the draw over-weighted the easier
@@ -35,8 +51,9 @@ early conversations. Per conversation the full run spans 86.5 to 96.3. Open-doma
 questions, is now measured well enough to state plainly as the weak category rather than as sampling noise.
 
 **Superseded read** (160-question sample): the stratified sample put memoose level with mem0 overall (91.9 vs 92.5, inside the
-interval) while showing 32% fewer prompt tokens, ahead on temporal and single-hop, behind only on
-open-domain. Open-domain failures are needle retrieval misses (a gold such as "Jo", "Indiana", or
+interval) while showing 32% fewer prompt tokens. **That read was wrong on the detail**: it claimed
+an edge on temporal and single-hop by comparing a 160-question sample against mem0's lower paper
+averages. The full run and mem0's headline figures put us behind on every category. Open-domain failures are needle retrieval misses (a gold such as "Jo", "Indiana", or
 "Nintendo Switch" lives in one turn that never surfaces): every question saturates the 20-chunk cap, so the
 budget, not the ranking, is the binding constraint. `chunks` ingest is the model-free floor of the system;
 the graph channel that should answer needle questions is empty in it (1 fact per question) and is what the

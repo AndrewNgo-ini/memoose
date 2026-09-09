@@ -90,8 +90,9 @@ vendored verbatim, Claude Code as the host model. Numbers and tables live in
    supersedes the sampled figure below, which was optimistic by 1.5 points.
 1. **Superseded — the sample.** 91.9 on a 160-question stratified sample (95% CI 86.6–95.2) against
    mem0's published 92.5 on the full 1,540, using 32% fewer prompt tokens (4,728 vs 6,956) and a much
-   smaller answerer (Claude Haiku 4.5 vs a GPT-4o-class stack). Ahead on temporal (96.9 vs 92.0) and
-   single-hop (93.3 vs 91.2), behind on open-domain (66.7 vs 72.7).
+   smaller answerer (Claude Haiku 4.5). Its per-category read — ahead on temporal and single-hop —
+   did not survive the full run: it compared a sample against mem0's paper averages rather than
+   their headline figures. Full run is behind mem0 in every category, ahead only on token cost.
 2. **The graph does not help on this benchmark.** Two-arm paired test, same 45 questions, same
    retrieval budget, same answerer and judge, only ingest differing: chunks 93.3, graph 95.6, but
    40 both-right / 2 only-chunks / 3 only-graph, **McNemar p = 1.00**, at 77% more prompt tokens.
