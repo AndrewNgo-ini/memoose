@@ -24,7 +24,7 @@ async def test_tools_over_stdio(tmp_path):
             tools = {t.name for t in (await session.list_tools()).tools}
             expected = {
                 "describe_ontology", "add_entity_type", "import_ontology", "declare_functional_relations",
-                "remember", "mark_contradiction", "supersede", "merge_entities", "cross_connect", "set_bucket_summary", "forget",
+                "remember", "mark_contradiction", "supersede", "merge_entities", "cross_connect", "set_bucket_summary", "forget", "dismiss_candidate",
                 "recall", "contradiction_candidates", "history", "memify_candidates", "global_context", "list_datasets",
                 "session_start", "session_add_turn", "session_set_context", "session_get", "session_timeline", "publish_lessons", "session_end",
             }

@@ -57,7 +57,9 @@ that was once true.
   sessions that ended without lessons — with the guidance for each. Work through it and act only
   where the judgment is clear: `supersede` or `mark_contradiction` on conflicts, `merge_entities`
   only when two names denote the same real thing, `cross_connect` only when the shared context
-  states a real relationship, `set_bucket_summary` from the listed facts alone.
+  states a real relationship, `set_bucket_summary` from the listed facts alone. For anything you
+  judge and decline, `memoose dismiss <key> --reason "..."` so it is not proposed again; the
+  worklist shows earlier dismissals and their reasons.
   (Without a shell: `memify_candidates` for `cross_connect`, `consolidate` and `stale_summaries`
   covers the same ground one kind at a time.)
 

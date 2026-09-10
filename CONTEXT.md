@@ -64,6 +64,18 @@ _Avoid_: Insight, takeaway, note, memory
 A group of entities of one type with a written summary; together the Buckets form the global context of a Dataset.
 _Avoid_: Cluster, community, index entry, topic
 
+**Procedure**:
+A step an agent takes, stored as an entity: a tool action, a check, or a state of the work. Its outgoing relations (leads_to, requires, triggers, converges_to) say what comes next and, in their descriptions, under which condition and with which pitfall. A Fact answers what is; a Procedure answers what to do next.
+_Avoid_: Workflow, playbook, recipe, skill (a skill is the host's instruction file, not memory)
+
+**Guidance**:
+The transitions two hops out from the Procedure matching the agent's most recent action, put in front of the agent before it acts. Keyed on what the agent just did, where a Hint is keyed on what the user just said.
+_Avoid_: Suggestion, plan, next steps
+
+**Dismissal**:
+A recorded judgment that a maintenance candidate (a Hotspot, a possible duplicate, a possible connection, an undistilled Session) was reviewed and declined, with the reason. It removes the candidate from later passes and changes nothing in the graph. Lives in Provenance.
+_Avoid_: Rejection, ignore, mute, suppress
+
 **Provenance**:
 The append-only ledger of every change to memory: who did what to which entity or Fact, and when.
 _Avoid_: Audit log, history table, changelog

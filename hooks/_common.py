@@ -219,3 +219,100 @@ def superseded_ids(conn: sqlite3.Connection) -> set[str]:
         return {r[0] for r in conn.execute("SELECT id FROM relations WHERE superseded=1")}
     except sqlite3.Error:
         return set()
+
+
+# ----- procedural guidance (after Procedural Graphs, Lu et al. 2026) -----------------------------
+def last_tool_uses(transcript_path: str | None, n: int = 3) -> list[str]:
+    """The agent's most recent actions, newest first, as short text: tool name plus its arguments.
+
+    This is the trajectory position a procedure is localised on. Reading a tool call's *inputs*
+    matters here because a coding agent's tool names (Bash, Read, Edit) are too coarse to match
+    a step such as "run the test suite"; the command text is what identifies the step.
+    """
+    if not transcript_path:
+        return []
+    p = Path(transcript_path)
+    if not p.exists():
+        return []
+    out: list[str] = []
+    for raw in reversed(p.read_text(errors="replace").splitlines()):
+        if not raw.strip():
+            continue
+        try:
+            d = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        if d.get("type") != "assistant":
+            continue
+        content = (d.get("message") or {}).get("content")
+        if not isinstance(content, list):
+            continue
+        for b in reversed(content):
+            if isinstance(b, dict) and b.get("type") == "tool_use":
+                args = b.get("input") or {}
+                arg_text = " ".join(str(v) for v in args.values() if isinstance(v, (str, int, float)))[:200] if isinstance(args, dict) else ""
+                out.append(f"{b.get('name', '')} {arg_text}".strip())
+                if len(out) >= n:
+                    return out
+    return out
+
+
+def locate_procedure(conn: sqlite3.Connection, action_text: str) -> dict | None:
+    """Match an action to the Procedure entity it most resembles, or None.
+
+    The paper matches a tool name to a node exactly; our actions are free-form commands, so the
+    match is lexical: the action's tokens against Procedure names and descriptions, best bm25 hit,
+    and only when the hit really is a Procedure. A wrong match would steer the agent, so the bar
+    is a real one: at least two of the action's tokens must appear in the matched row.
+    """
+    toks = [t for t in _WORD.findall(action_text) if len(t) > 2 and t.casefold() not in _STOP]
+    if not toks:
+        return None
+    match = '"Procedure" AND (' + " OR ".join(f'"{t}"' for t in dict.fromkeys(toks[:16])) + ")"
+    try:
+        rows = conn.execute(
+            "SELECT f.ref_id, f.text, e.name, e.description FROM fts f JOIN entities e ON e.id = f.ref_id"
+            " WHERE fts MATCH ? AND f.kind='entity' AND e.type='Procedure' ORDER BY bm25(fts) LIMIT 3",
+            (match,),
+        ).fetchall()
+    except sqlite3.Error:
+        return None
+    lowered = {t.casefold() for t in toks}
+    for r in rows:
+        hay = f"{r['name']} {r['description']}".casefold()
+        if sum(1 for t in lowered if t in hay) >= 2:
+            return {"id": r["ref_id"], "name": r["name"], "description": r["description"] or ""}
+    return None
+
+
+def procedure_subgraph(conn: sqlite3.Connection, entity_id: str, hops: int = 2, per_hop: int = 6) -> list[dict]:
+    """Outgoing transitions from a Procedure, grouped by hop: what comes next, then what comes after.
+
+    Directed and outgoing only. A procedure's *predecessors* are what the agent has already done;
+    its successors are the guidance. Superseded transitions are history, not advice, and stay out.
+    """
+    stale = superseded_ids(conn)
+    frontier, seen, out = [entity_id], {entity_id}, []
+    for hop in range(1, hops + 1):
+        nxt: list[str] = []
+        for eid in frontier:
+            try:
+                rows = conn.execute(
+                    "SELECT r.id, r.name, r.description, r.target_id, s.name AS src, t.name AS dst"
+                    " FROM relations r JOIN entities s ON s.id=r.source_id JOIN entities t ON t.id=r.target_id"
+                    " WHERE r.source_id=? AND r.name != 'contradicts' ORDER BY r.updated_at DESC LIMIT ?",
+                    (eid, per_hop),
+                ).fetchall()
+            except sqlite3.Error:
+                return out
+            for r in rows:
+                if r["id"] in stale:
+                    continue
+                out.append({"hop": hop, "source": r["src"], "relation": r["name"], "target": r["dst"], "description": r["description"] or ""})
+                if r["target_id"] not in seen:
+                    seen.add(r["target_id"])
+                    nxt.append(r["target_id"])
+        frontier = nxt
+        if not frontier:
+            break
+    return out

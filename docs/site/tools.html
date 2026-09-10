@@ -37,7 +37,7 @@ tool call on any MCP host. Same engine, same store, same payloads.</p>
 
 <h2>The CLI</h2>
 <p>Prefer this where a shell is available. An MCP server puts its tool schemas in the model&rsquo;s
-context on every turn whether or not memory is touched &mdash; about 4,250 tokens here, measured &mdash; while a
+context on every turn whether or not memory is touched (about 4,250 tokens here, measured), while a
 command costs nothing until it is run. <code>memoose --help</code> and
 <code>memoose &lt;command&gt; --help</code> list everything; <code>memoose status</code> prints the
 invocation for this machine when the binary is not on <code>PATH</code>.</p>
@@ -52,6 +52,8 @@ invocation for this machine when the binary is not on <code>PATH</code>.</p>
 <tr><td><code>memoose datasets</code> &middot; <code>memoose context</code></td><td>Memory scopes on this machine &middot; the global-context buckets</td></tr>
 <tr><td><code>memoose session start|turn|context|get|timeline|lessons|end</code></td><td>Session lifecycle</td></tr>
 <tr><td><code>memoose maintain</code></td><td>The periodic pass: hotspots, open contradictions, duplicate names, missing summaries and undistilled sessions, in one worklist</td></tr>
+<tr><td><code>memoose dismiss &lt;key&gt; --reason "..."</code></td><td>Decline a candidate from <code>maintain</code> or <code>contradictions</code> so it is not proposed again; the reason is shown next time</td></tr>
+<tr><td><code>memoose view</code></td><td>The knowledge graph in your browser as one self-contained HTML file: colour is the entity type, a diamond is a Procedure, click a node for its facts. <code>--superseded</code> draws history dashed</td></tr>
 <tr><td><code>memoose forget --entity X</code></td><td>Delete an entity, a fact, a session (<code>--all</code> for the dataset)</td></tr>
 <tr><td><code>memoose tool &lt;name&gt; --stdin</code></td><td>Any remaining tool, keyword arguments as JSON on stdin</td></tr>
 </tbody>
@@ -87,8 +89,8 @@ model which type to use instead.</p>
   <dd>Import an OWL/RDF/Turtle ontology as text. Classes become entity types with parents collapsing
   onto basic types; labels become aliases.</dd>
   <dt>declare_functional_relations(names, dataset?)</dt>
-  <dd>Declare relation names that hold a single current value per subject &mdash; <code>owned_by</code>,
-  <code>deployed_in</code>, <code>current_owner</code>. New assertions then supersede older ones
+  <dd>Declare relation names that hold a single current value per subject, such as <code>owned_by</code>,
+  <code>deployed_in</code> or <code>current_owner</code>. New assertions then supersede older ones
   automatically, and nothing is deleted.</dd>
 </dl>
 
@@ -120,16 +122,16 @@ model which type to use instead.</p>
   <code>memify_candidates("stale_summaries")</code>.</dd>
   <dt>forget(entity?, relation_id?, session_id?, dataset?, whole_dataset?)</dt>
   <dd>Remove an entity and its relations by exact name, a relation by id, a session, or a whole
-  dataset. Prefer <code>supersede</code> for anything that was true once &mdash; and confirm with the
-  user first.</dd>
+  dataset. Prefer <code>supersede</code> for anything that was true once, and confirm with the user
+  first.</dd>
 </dl>
 
 <h2>Read</h2>
 <dl>
   <dt>recall(query, mode?, limit?, datasets?, include_superseded?, hops?, include_user?)</dt>
-  <dd>Searches the project dataset and then the user dataset, and returns ranked raw material &mdash;
-  entities, facts with their evidence, validity and superseded/contested flags, and chunks &mdash; for
-  the model to synthesise. Without <code>mode</code>, a regex router picks one.</dd>
+  <dd>Searches the project dataset and then the user dataset, and returns ranked raw material for the
+  model to synthesise: entities, facts with their evidence, validity and superseded/contested flags,
+  and chunks. Without <code>mode</code>, a regex router picks one.</dd>
   <dt>contradiction_candidates(entity_names?, relation_ids?, dataset?)</dt>
   <dd>Facts around given entities or relations, grouped by subject, with <em>hotspots</em> where one
   subject holds several values for one relation. Judge them with the
@@ -164,7 +166,7 @@ model which type to use instead.</p>
 </table>
 </div>
 <p>Pass <code>include_superseded=true</code> to see facts that used to be true alongside the current
-ones &mdash; see <a href="trust.html">Evidence &amp; history</a>.</p>
+ones. See <a href="trust.html">Evidence &amp; history</a>.</p>
 
 <h2>Sessions</h2>
 <p>A session is the unit Memoose distils lessons from: turns go into a fast cache, typed context
@@ -172,14 +174,14 @@ sections accumulate during the work, and at the end the timeline is packed into 
 to judge.</p>
 <dl>
   <dt>session_start(session_id?, dataset?)</dt>
-  <dd>Start or resume a session. Returns the standing context &mdash; goals, rules, preferences,
-  lessons &mdash; to load before work.</dd>
+  <dd>Start or resume a session. Returns the standing context to load before work: goals, rules,
+  preferences and lessons.</dd>
   <dt>session_add_turn(session_id, role, text, dataset?)</dt>
   <dd>Append a turn (<code>user</code>, <code>assistant</code>, <code>tool</code>,
   <code>system</code>) to the session's fast cache.</dd>
   <dt>session_set_context(session_id, section, content, confidence?, retire_entry_id?, dataset?)</dt>
-  <dd>Write a typed context section &mdash; a goal, a rule, a preference &mdash; during the work, and
-  retire an entry that no longer holds.</dd>
+  <dd>Write a typed context section (a goal, a rule, a preference) during the work, and retire an
+  entry that no longer holds.</dd>
   <dt>session_get(session_id, sections?, include_turns?, dataset?)</dt>
   <dd>Read a session: turns and context entries, optionally filtered by section.</dd>
   <dt>session_timeline(session_id, batch_chars?, dataset?)</dt>
@@ -193,8 +195,8 @@ to judge.</p>
 </dl>
 
 <div class="note">
-<p><strong>Errors teach.</strong> A rejected write returns a message written for the model &mdash;
-which type to use, which relation name &mdash; because tool errors are the only lever Memoose has on
+<p><strong>Errors teach.</strong> A rejected write returns a message written for the model, saying
+which type to use and which relation name, because tool errors are the only lever Memoose has on
 extraction quality.</p>
 </div>
 

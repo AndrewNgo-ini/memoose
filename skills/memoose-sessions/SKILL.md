@@ -47,4 +47,15 @@ discoveries, corrections. Not every message.
 4. `publish_lessons(session_id, lessons)` with `applies_to` names and `entity_types` for any
    name not yet remembered. Then `session_end(session_id)`.
 
+### Lessons about *how*, from contrast
+
+When a session held a failure followed by a success, or the user corrected a step, the lesson is
+procedural and belongs in the graph as steps, not as a sentence. Compare the trace that failed with
+the one that worked, and write the difference as `Procedure` entities and transitions
+(`leads_to`, `requires`, `triggers`) whose descriptions carry the condition and the pitfall: `When
+<condition>: <do this>. Avoid: <what failed>.` If a transition memory already holds is what led to
+the failure, `supersede` it with the corrected one rather than adding a second; the failed route
+stays queryable as history. This is how a procedure improves from experience without anyone
+editing it by hand.
+
 Ask before distilling anything personal the user did not ask you to keep.

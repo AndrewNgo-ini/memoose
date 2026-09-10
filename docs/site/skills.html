@@ -33,10 +33,10 @@
 <main id="main">
 <h1>Skills</h1>
 <p class="lede">Everything that needs judgment is written down as a skill, so the model your host is
-already running does that thinking &mdash; which is why Memoose ships no model of its own.</p>
+already running does that thinking, which is why Memoose ships no model of its own.</p>
 
-<p>A skill is loaded by the host when its description matches what is happening &mdash; you do not
-invoke them by hand. Each one pairs with the <a href="tools.html">tools</a> it drives: the tools stay
+<p>A skill is loaded by the host when its description matches what is happening; you do not invoke
+them by hand. Each one pairs with the <a href="tools.html">tools</a> it drives: the tools stay
 deterministic and refuse bad input, the skill supplies the judgment the tools deliberately do not
 have.</p>
 
@@ -85,7 +85,7 @@ model to do, because it is what makes recall worth reading months later:</p>
   <li><code>describe_ontology</code> once per session, so writes use existing types and the snake_case
   relation convention.</li>
   <li><code>recall</code> the names involved <em>before</em> writing, so existing entity names get
-  reused instead of spawning near-duplicates &mdash; and so conflicts are noticed before they are
+  reused instead of spawning near-duplicates, and so conflicts are noticed before they are
   stored.</li>
   <li><code>remember</code> with entities carrying their most complete name, a type, and one or two
   sentences; relations as <code>source --relation--&gt; target</code> with a one-sentence description
@@ -102,8 +102,8 @@ Facts about you rather than the project go to the <code>user</code> dataset.</p>
 <h2>The memory-keeper subagent</h2>
 <p>Skills also cover the case where a host has no <a href="automatic.html">hooks</a>: instead of
 spending your main model's turns on bookkeeping, they tell the agent to hand the work to
-<code>memory-keeper</code> &mdash; a subagent that runs on a small model (Haiku by default), holds
-only the Memoose tools, and replies with one short line when it is done. It stores what a conversation
+<code>memory-keeper</code>, a subagent that runs on a small model (Haiku by default), holds only
+the Memoose tools, and replies with one short line when it is done. It stores what a conversation
 taught, and it runs maintenance: distilling a session into lessons, cross-connecting entities,
 consolidating duplicates, refreshing summaries.</p>
 <p>The point is that bookkeeping runs on a small model and off the main conversation's turns. On a

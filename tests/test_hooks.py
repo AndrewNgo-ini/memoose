@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pytest
 
-HOOKS = Path(__file__).resolve().parents[1] / "hooks"
+ROOT = Path(__file__).resolve().parents[1]
+HOOKS = ROOT / "hooks"
 sys.path.insert(0, str(HOOKS))
 import _common  # noqa: E402
 
@@ -254,7 +255,10 @@ def test_capture_survives_missing_claude_cli(tmp_path):
 def test_plugin_declares_hooks_and_agent():
     root = Path(__file__).resolve().parents[1]
     manifest = json.loads((root / ".claude-plugin" / "plugin.json").read_text())
-    assert manifest["hooks"] == "./hooks/hooks.json"
+    # hooks/hooks.json is loaded by convention; declaring it in the manifest too made it a
+    # duplicate and Claude Code refused to load the plugin (found installing it on itself).
+    assert "hooks" not in manifest
+    assert (ROOT / "hooks" / "hooks.json").exists()
     assert "./agents/memory-keeper.md" in manifest["agents"]
     hooks = json.loads((root / "hooks" / "hooks.json").read_text())
     assert set(hooks["hooks"]) == {"SessionStart", "UserPromptSubmit", "Stop", "PreCompact"}

@@ -302,6 +302,21 @@ class SqliteStore:
             (time.time(), actor, action, kind, ref_id, json.dumps(payload, default=str)),
         )
 
+    def dismissed(self, limit: int = 200) -> dict[str, str]:
+        """Maintenance candidates a model judged and declined, with the reason given.
+
+        Kept in the provenance ledger rather than a table of their own: a dismissal is a
+        judgment about memory, and the ledger is where every other judgment already lives.
+        """
+        rows = self.conn.execute(
+            "SELECT ref_id, payload FROM provenance WHERE kind='candidate' AND action='dismiss' ORDER BY at DESC LIMIT ?",
+            (limit,),
+        )
+        out: dict[str, str] = {}
+        for r in rows:
+            out.setdefault(r["ref_id"], (json.loads(r["payload"]) or {}).get("reason", ""))
+        return out
+
     def history(self, kind: str, ref_id: str, limit: int = 50) -> list[dict]:
         rows = self.conn.execute("SELECT at, actor, action, kind, ref_id, payload FROM provenance WHERE kind=? AND ref_id=? ORDER BY at DESC LIMIT ?", (kind, ref_id, limit))
         return [{**dict(r), "payload": json.loads(r["payload"])} for r in rows]
@@ -329,17 +344,21 @@ class SqliteStore:
         rows = self.conn.execute("SELECT * FROM chunks WHERE summary IS NOT NULL ORDER BY created_at DESC LIMIT ?", (limit,))
         return [ChunkRow(r["id"], r["text"], r["summary"], r["source"]) for r in rows]
 
-    def cooccurring_pairs(self, limit: int = 20) -> list[tuple[str, str, int]]:
-        """Entity pairs sharing chunks but with no direct relation: cognee's cross-connect candidates."""
+    def cooccurring_pairs(self, limit: int = 20, min_shared: int = 1) -> list[tuple[str, str, int]]:
+        """Entity pairs sharing chunks but with no direct relation: cognee's cross-connect candidates.
+
+        `min_shared` is the floor on how many chunks a pair must share. In a store seeded from one
+        chunk every entity co-occurs with every other, so the periodic pass asks for 2.
+        """
         rows = self.conn.execute(
             """
             SELECT a.entity_id AS x, b.entity_id AS y, count(*) AS shared
             FROM entity_chunks a JOIN entity_chunks b ON a.chunk_id=b.chunk_id AND a.entity_id < b.entity_id
             WHERE NOT EXISTS (SELECT 1 FROM relations r WHERE (r.source_id=a.entity_id AND r.target_id=b.entity_id)
                                                           OR (r.source_id=b.entity_id AND r.target_id=a.entity_id))
-            GROUP BY x, y ORDER BY shared DESC, x LIMIT ?
+            GROUP BY x, y HAVING shared >= ? ORDER BY shared DESC, x LIMIT ?
             """,
-            (limit,),
+            (min_shared, limit),
         )
         return [(r["x"], r["y"], r["shared"]) for r in rows]
 

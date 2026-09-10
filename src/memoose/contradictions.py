@@ -41,9 +41,13 @@ def candidate_facts(store: SqliteStore, entity_ids: list[str], max_per_entity: i
             "updated_at": r.updated_at,
         }
         facts.append(item)
-        by_subject[f"{ents[r.source_id].name} --{r.name}"].append(item)
+        by_subject[(r.source_id, r.name, f"{ents[r.source_id].name} --{r.name}")].append(item)
     # Same subject + same relation with different objects is the hot spot; surface it first.
-    hotspots = [{"subject_relation": k, "facts": v} for k, v in by_subject.items() if len(v) > 1]
+    # `key` is stable across runs so a judgment ("these coexist, fine") can be recorded once.
+    hotspots = [
+        {"key": f"hotspot:{sid}:{rel}", "subject_relation": label, "facts": v}
+        for (sid, rel, label), v in by_subject.items() if len(v) > 1
+    ]
     open_ = store.contradictions_for([r.id for r in rels])
     return {"facts": facts, "hotspots": hotspots, "already_flagged": open_, "guidance": GUIDANCE}
 

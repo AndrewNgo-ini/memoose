@@ -12,3 +12,6 @@ results/*/cwd/
 
 # third-party benchmark dataset, fetched by benchmarks/locomo/fetch_dataset.py
 benchmarks/locomo/locomo10.json
+
+# the Procedural Graphs paper, cited by ADR 0004 as arXiv:2609.09153
+docs/*.pdf

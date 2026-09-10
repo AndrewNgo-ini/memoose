@@ -35,16 +35,16 @@
   <img src="memoose-mascot.png" alt="The Memoose mascot: a round 2D cartoon moose with tan antlers, sitting and holding up a blank card, on an ivory background." width="320" height="320">
   <div>
     <h1>Memoose</h1>
-    <p class="lede">A memory harness for coding agents. Pick up where you left off &mdash; in
-    whichever agent you open tomorrow.</p>
+    <p class="lede">A memory harness for coding agents. Pick up where you left off, in whichever
+    agent you open tomorrow.</p>
   </div>
 </div>
 
 <pre><code>uv run memoose install claude      # or: codex | opencode | cursor</code></pre>
 
 <p>You explained the architecture, the conventions, and the reason behind last week's decision.
-Memoose is how your agent still knows them today &mdash; <strong>a harness rather than a
-database</strong>: a deterministic store reached through <a href="tools.html">MCP tools</a>, plus
+Memoose is how your agent still knows them today. It is a <strong>harness</strong>: a
+deterministic store reached through <a href="tools.html">MCP tools</a> or the command line, plus
 <a href="skills.html">skills</a> that teach the model you are already running how to use it.</p>
 
 <ul class="cards">
@@ -60,10 +60,10 @@ database</strong>: a deterministic store reached through <a href="tools.html">MC
 <p>Memoose splits memory in two, and the split is the whole design.</p>
 <p>Everything <strong>deterministic</strong> lives in the library: a typed graph store, an ontology,
 chunking, ranking, supersession, a provenance ledger. It is a plain MCP server over one SQLite file,
-and it has no opinions &mdash; it validates, stores, ranks and refuses bad input.</p>
+and it has no opinions. It validates, stores, ranks and refuses bad input.</p>
 <p>Everything that needs <strong>judgment</strong> is written down as a skill: what counts as an
 entity, which facts conflict, what is worth remembering, what a session taught. That thinking is done
-by the host's model &mdash; the one you are already running &mdash; while it calls the tools. So
+by the host's model, the one you are already running, while it calls the tools. So
 Memoose ships no model of its own and needs no API key
 (<a href="https://github.com/AndrewNgo-ini/mnemoth/blob/main/docs/adr/0001-skills-and-mcp-only.md">ADR&nbsp;0001</a>).</p>
 <p>Your memory is a typed knowledge graph in one SQLite file on your machine. Recalled facts become
@@ -81,8 +81,8 @@ context for your host's model, the same as anything else it reads.</p>
 </div>
 <p>The core is portable: skills plus an MCP server, on any host that speaks MCP. The capture and
 recall that happen <em>without you asking</em> sit on top of that core and depend on what your host
-supports &mdash; they add no capability the tools do not already have, so where they are unavailable
-you keep everything through the tools, the skills and the delegated subagent.</p>
+supports. They add no capability the tools do not already have, so where they are unavailable you
+keep everything through the tools, the skills and the delegated subagent.</p>
 
 <h2>What it is built for</h2>
 <p>Long-lived project work: the decisions, conventions and ownership facts that have to stay true for
@@ -108,8 +108,8 @@ suite of 18 cases that asserts it on what the tools return.</p>
   becomes context in the conversation like any other text the agent reads.</li>
   <li><strong>Install is from source.</strong> Memoose is not on PyPI yet.</li>
   <li><strong>It is not built for chat logs, teams, or a service.</strong> No multi-user access
-  control, no hosted service, no UI, no audio or images &mdash; and it does not replace the host's own
-  context management.</li>
+  control, no hosted service, no UI, no audio or images. It does not replace the host's own context
+  management.</li>
 </ul>
 
 <footer class="page-foot">

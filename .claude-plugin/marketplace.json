@@ -1,0 +1,24 @@
+{
+  "name": "memoose",
+  "owner": {
+    "name": "Hieu Ngo"
+  },
+  "metadata": {
+    "description": "Memory for coding agents: a knowledge graph in one local SQLite file, no API key."
+  },
+  "plugins": [
+    {
+      "name": "memoose",
+      "source": "./",
+      "description": "Persistent memory for coding agents: typed knowledge graph with evidence, contradictions and supersession, maintained in the background on a small model. No API key; nothing leaves your machine.",
+      "version": "0.3.0",
+      "category": "productivity",
+      "keywords": [
+        "memory",
+        "knowledge-graph",
+        "mcp",
+        "skill"
+      ]
+    }
+  ]
+}

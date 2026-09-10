@@ -103,8 +103,23 @@ def uninstall(host: str, project: str | None = None) -> dict:
     return {"host": t.display, "skill_removed": removed_skill, "mcp_removed": removed_mcp}
 
 
+def plugin_install() -> dict | None:
+    """The Claude Code plugin install of memoose, if there is one; it supplies skills, MCP and hooks."""
+    rec = Path.home() / ".claude" / "plugins" / "installed_plugins.json"
+    try:
+        data = json.loads(rec.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    plugins = data.get("plugins", data) if isinstance(data, dict) else {}
+    for key, entries in plugins.items():
+        if key.startswith("memoose@") and entries:
+            e = entries[0] if isinstance(entries, list) else entries
+            return {"id": key, "version": e.get("version"), "path": e.get("installPath"), "scope": e.get("scope")}
+    return None
+
+
 def status(project: str | None = None) -> dict:
-    out: dict = {"cli": cli_command()}
+    out: dict = {"cli": cli_command(), "claude_plugin": plugin_install()}
     for host in HOSTS:
         t, skill_dir, mcp_path, kind = _paths(host, project)
         out[host] = {"skill": skill_dir.exists(), "mcp": _has_mcp(kind, mcp_path), "mcp_config": str(mcp_path)}

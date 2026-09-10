@@ -33,8 +33,8 @@
 <main id="main">
 <h1>Automatic memory</h1>
 <p class="lede">Memory that waits to be asked is memory that never gets written. On hosts with hooks,
-Memoose runs itself &mdash; and every automatic part is a convenience over the
-<a href="tools.html">tools</a>, never a replacement for one.</p>
+Memoose runs itself, and every automatic part is a convenience over the
+<a href="tools.html">tools</a> rather than a replacement for one.</p>
 
 <div class="table-wrap">
 <table>
@@ -52,11 +52,19 @@ Memoose runs itself &mdash; and every automatic part is a convenience over the
 <code>UserPromptSubmit</code> hook reads each incoming prompt, searches the local index, and when
 something genuinely matches it hands the agent a hint <em>before</em> the agent starts thinking: what
 memory already holds, and the <code>recall</code> query that would fetch the rest.</p>
-<p>It is deliberately dumb and therefore free &mdash; BM25 over the local index, a relevance floor
+<p>The hint is cheap by design: BM25 over the local index, a relevance floor
 (<code>MEMOOSE_HINT_MIN_SCORE</code>, default <code>0.5</code>), a hard cap on how much it injects
 (<code>MEMOOSE_HINT_COUNT</code>, default <code>4</code>), and silence when nothing matches. No model,
 a few milliseconds, so it can run on every prompt without anyone noticing. The agent keeps full
 control over whether to follow the hint.</p>
+<p>Before that lexical hint, the hook asks a different question: not what the user said, but what
+the agent just <em>did</em>. Its most recent tool call is matched to a <code>Procedure</code> entity
+whose name and description read like the command, and that step&rsquo;s outgoing transitions are
+injected two hops out, grouped as <em>Next</em> and <em>Then</em>, each with the condition and the
+pitfall its description carries. Outgoing only: what precedes the step is what the agent has already
+done. This follows Procedural Graphs (Lu et&nbsp;al., 2026), whose ablation showed the local
+subgraph beating the whole graph and whole-graph injection lowering task success, so the block is
+small, and it is silent unless at least two of the command&rsquo;s words match a stored step.</p>
 
 <h2>Standing context at session start</h2>
 <p>The <code>SessionStart</code> hook loads what should hold for the whole session before you type
@@ -66,7 +74,7 @@ It is the same material <code>session_start</code> returns, delivered without an
 <h2>Background capture</h2>
 <p>The <code>Stop</code> and <code>PreCompact</code> hooks run capture asynchronously: a turn that
 taught something durable gets extracted and stored by a small model, so what the turn established is
-not lost to compaction. Two guards keep it cheap &mdash; it runs
+not lost to compaction. Two guards keep it cheap. It runs
 <em>after</em> your turn, never during it, and it skips turns shorter than
 <code>MEMOOSE_CAPTURE_MIN_CHARS</code> (default <code>400</code>) rather than spending anything on
 small talk.</p>
@@ -84,14 +92,14 @@ small talk.</p>
 </table>
 </div>
 <p>They are wired through the plugin manifest, so on a host that runs plugin hooks they are active as
-soon as the plugin is installed &mdash; which today means Claude Code. Memoose never writes hooks into
+soon as the plugin is installed, which today means Claude Code. Memoose never writes hooks into
 your global configuration on its own.</p>
 
 <h2>On a host that does not run them</h2>
 <p>You lose the automation and keep every capability. The <a href="skills.html">skills</a> route the
 same work to the <code>memory-keeper</code> subagent, which needs no hooks: it runs on a small model,
 holds only the Memoose tools, and reports back in one line. Explicit tool calls keep working
-everywhere &mdash; they are just no longer the only path.</p>
+everywhere; they are just no longer the only path.</p>
 
 <h2>Onboarding: what is actually live here</h2>
 <p>Memoose cannot see how your machine is configured, so the <code>memoose-onboard</code> skill walks
@@ -101,7 +109,7 @@ working, and it will check each capability against this host:</p>
 <table>
 <thead><tr><th>Capability</th><th>How it is checked</th><th>If missing</th></tr></thead>
 <tbody>
-<tr><td>Memory tools</td><td><code>list_datasets</code> returns</td><td>The MCP server is not connected &mdash; re-run <a href="install.html">install</a> and restart the host</td></tr>
+<tr><td>Memory tools</td><td><code>list_datasets</code> returns</td><td>The MCP server is not connected. Re-run <a href="install.html">install</a> and restart the host</td></tr>
 <tr><td>Hints on each prompt</td><td>You see a &ldquo;Memoose already holds memory&hellip;&rdquo; line before answers</td><td>Hooks are not running on this host</td></tr>
 <tr><td>Standing context at session start</td><td>The agent has your rules and preferences without asking</td><td>Hooks are not running on this host</td></tr>
 <tr><td>Background capture</td><td>New facts appear without anyone calling <code>remember</code></td><td>Hooks are not running, or capture is switched off</td></tr>

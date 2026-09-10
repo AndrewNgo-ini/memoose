@@ -74,6 +74,24 @@ def _fact_line(f: dict) -> str:
     return " ".join(bits)
 
 
+def _label(key: str, row) -> str:
+    """A context row knows its own section (rules, preferences, goals); prefer that."""
+    return row.get("section", key) if isinstance(row, dict) else key
+
+
+def _row_text(row) -> str:
+    """The readable field of a recall row, rather than the whole dict."""
+    if isinstance(row, str):
+        return row
+    if not isinstance(row, dict):
+        return str(row)
+    for field in ("content", "fact", "text", "summary", "title"):
+        if value := row.get(field):
+            title = row.get("title")
+            return f"{title}: {value}" if title and field != "title" else str(value)
+    return json.dumps(row, ensure_ascii=False)[:300]
+
+
 def render(cmd: str, payload: dict) -> str:
     """Compact text for the shapes the hot path returns; JSON for everything else."""
     if "error" in payload:
@@ -91,7 +109,7 @@ def render(cmd: str, payload: dict) -> str:
             out.append(f"· {text[:300]}{'…' if len(text) > 300 else ''}")
         for key in ("rules", "lessons", "context", "turns", "summaries"):
             for row in payload.get(key, []) or []:
-                out.append(f"· [{key}] {row if isinstance(row, str) else json.dumps(row, ensure_ascii=False)[:300]}")
+                out.append(f"· [{_label(key, row)}] {_row_text(row)}")
         if len(out) == 1:
             out.append("nothing matched")
     elif cmd == "remember":
@@ -129,19 +147,25 @@ def render(cmd: str, payload: dict) -> str:
             return f"[{payload.get('dataset')}] nothing pending"
         out.append(f"[{payload.get('dataset')}] {payload['pending']} items need judging")
         for h in payload.get("hotspots", []):
-            out.append(f"· hotspot: {h['subject_relation']} holds {len(h['facts'])} values")
+            out.append(f"· hotspot: {h['subject_relation']} holds {len(h['facts'])} values   [{h['key']}]")
             out += [f"    {f['text']}" for f in h["facts"]]
         for c in payload.get("open_contradictions", []):
             out.append(f"· contradiction: {c.get('reason')}")
         for c in payload.get("consolidate", []):
-            out.append(f"· consolidate: {c.get('keep', {}).get('name', c)} / {c.get('drop', {}).get('name', '')} — {c.get('why', '')}")
+            out.append(f"· consolidate: {c.get('keep', {}).get('name', c)} / {c.get('drop', {}).get('name', '')} ({c.get('why', '')})   [{c.get('key', '')}]")
         for c in payload.get("cross_connect", []):
-            out.append(f"· cross-connect: {c.get('a', {}).get('name', '?')} + {c.get('b', {}).get('name', '?')}")
+            out.append(f"· cross-connect: {c.get('a', {}).get('name', '?')} + {c.get('b', {}).get('name', '?')}, {c.get('shared_chunks', '?')} shared chunks   [{c.get('key', '')}]")
         for b in payload.get("stale_summaries", []):
             out.append(f"· summary needed: {b.get('label', '?')} bucket ({len(b.get('entities', []))} entities) {b.get('bucket_id', '')}")
         for sess in payload.get("undistilled_sessions", []):
-            out.append(f"· session {sess['id']} ended without lessons")
+            out.append(f"· session {sess['id']} ended without lessons   [{sess.get('key', '')}]")
+        if payload.get("dismissed"):
+            out.append(f"({len(payload['dismissed'])} earlier candidate(s) dismissed with reasons; `memoose dismiss <key> --reason ...` records a new one)")
         out.append(f"\n{payload.get('guidance', '')}")
+    elif cmd == "view":
+        out.append(f"[{payload.get('dataset')}] {payload.get('nodes')} entities, {payload.get('edges')} facts, {len(payload.get('types', []))} types")
+        out.append(f"wrote {payload.get('path')}" + ("" if payload.get("opened", True) else " (not opened; open it in a browser)")
+                   + ("" if payload.get("self_contained", True) else "; the drawing library could not be cached, so this page needs network to draw"))
     elif cmd == "session-start":
         out.append(f"[{payload.get('dataset')}] session {payload.get('session_id')} ({'new' if payload.get('new') else 'resumed'})")
         out += [f"· [{c['section']}] {c['content']}" for c in payload.get("standing_context", [])]
@@ -153,7 +177,8 @@ def render(cmd: str, payload: dict) -> str:
 
 def emit(cmd: str, payload: dict, args: argparse.Namespace) -> int:
     text = json.dumps(payload, indent=2, ensure_ascii=False) if args.json else render(cmd, payload)
-    if args.max_inline and len(text) > args.max_inline:
+    # `--json` is asked for by something that will parse it, so it is never cut or spilled.
+    if args.max_inline and not args.json and len(text) > args.max_inline:
         path = _spill(cmd, text, "json" if args.json else "txt")
         head = text[: args.max_inline].rsplit("\n", 1)[0]
         print(f"{head}\n… {len(text)} chars total; full output: {path}")
@@ -259,6 +284,19 @@ def cmd_session(engine: Engine, args: argparse.Namespace) -> tuple[str, dict]:
     return "session", ds.session_end(args.session_id)
 
 
+def cmd_view(engine: Engine, args: argparse.Namespace) -> dict:
+    from .graph_html import write_graph  # only this command pays for the template
+
+    ds = engine.dataset(args.dataset)
+    out = Path(args.out).expanduser() if args.out else data_dir() / "out" / f"view-{ds.name}.html"
+    result = write_graph(ds.store, ds.name, out, include_superseded=args.superseded)
+    if not args.no_open:
+        import webbrowser
+
+        result["opened"] = webbrowser.open(out.as_uri())
+    return result
+
+
 def cmd_tool(engine: Engine, args: argparse.Namespace) -> dict:
     """Escape hatch: reach any Dataset or Engine method the hot path does not wrap."""
     kwargs = _stdin_json() if args.stdin else {}
@@ -279,11 +317,22 @@ def cmd_tool(engine: Engine, args: argparse.Namespace) -> dict:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="memoose", description="Memory for coding agents. Facts in one local SQLite file.")
     p.add_argument("--json", action="store_true", help="Print the raw payload instead of compact text.")
-    p.add_argument("--max-inline", type=int, default=2000, help="Spill output longer than this to a file and print the path (0 disables).")
+    p.add_argument("--max-inline", type=int, default=2000, help="Spill text output longer than this to a file and print the path (0 disables; --json is never spilled).")
     p.add_argument("-d", "--dataset", default=None, help="Dataset to act on (default: this project).")
     sub = p.add_subparsers(dest="cmd")
 
-    r = sub.add_parser("recall", help="Search memory: facts, entities, chunks.")
+    def command(name: str, **kw) -> argparse.ArgumentParser:
+        """A subcommand that also takes --dataset after it.
+
+        argparse only accepts a global flag before the subcommand, but `memoose remember "..."
+        --dataset user` is the order anyone actually writes. Accept both, into a separate dest so
+        the trailing one does not overwrite a leading one with None.
+        """
+        sp = sub.add_parser(name, **kw)
+        sp.add_argument("-d", "--dataset", dest="dataset_after", default=None, help=argparse.SUPPRESS)
+        return sp
+
+    r = command("recall", help="Search memory: facts, entities, chunks.")
     r.add_argument("query", nargs="+")
     r.add_argument("-m", "--mode", default=None, help=f"One of: {', '.join(MODES)} (default: routed from the query).")
     r.add_argument("-n", "--limit", type=int, default=10)
@@ -291,7 +340,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--superseded", action="store_true", help="Include facts a newer one replaced.")
     r.add_argument("--no-user", action="store_true", help="Project dataset only; skip user-global memory.")
 
-    m = sub.add_parser("remember", help="Store facts: 'alice:Person --owns--> billing-service:System'.")
+    m = command("remember", help="Store facts: 'alice:Person --owns--> billing-service:System'.")
     m.add_argument("fact", nargs="*", help="source[:Type] --relation_name--> target[:Type]")
     m.add_argument("--desc", default=None, help="One-sentence description, applied to each fact given.")
     m.add_argument("-e", "--evidence", default=None, help="repo://path#L1-L2, a URL, an issue id, or 'user said <date>'.")
@@ -302,28 +351,37 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--session", default=None)
     m.add_argument("--stdin", action="store_true", help="Read the full remember payload as JSON on stdin instead.")
 
-    h = sub.add_parser("history", help="Provenance: every change to an entity or a fact.")
+    h = command("history", help="Provenance: every change to an entity or a fact.")
     h.add_argument("entity", nargs="?", default=None)
     h.add_argument("--relation-id", default=None)
     h.add_argument("-n", "--limit", type=int, default=50)
 
-    c = sub.add_parser("contradictions", help="Hotspots and open contradictions to judge.")
+    c = command("contradictions", help="Hotspots and open contradictions to judge.")
     c.add_argument("entity", nargs="*", help="Entity names to inspect (default: open contradictions only).")
 
-    mt = sub.add_parser("maintain", help="The periodic pass: everything that needs judging, in one worklist.")
+    mt = command("maintain", help="The periodic pass: everything that needs judging, in one worklist.")
     mt.add_argument("-n", "--limit", type=int, default=10, help="Items per category.")
 
-    sub.add_parser("ontology", help="Entity types, functional relations, store stats.")
-    sub.add_parser("datasets", help="Memory scopes on this machine.")
-    sub.add_parser("context", help="Global context: one bucket per entity type.")
+    command("ontology", help="Entity types, functional relations, store stats.")
+    command("datasets", help="Memory scopes on this machine.")
+    command("context", help="Global context: one bucket per entity type.")
 
-    f = sub.add_parser("forget", help="Delete an entity, a fact, a session, or a whole dataset.")
+    vw = command("view", help="Open the knowledge graph in your browser: one self-contained HTML file, nothing uploaded.")
+    vw.add_argument("--out", default=None, help="Where to write the file (default: ~/.memoose/out/view-<dataset>.html).")
+    vw.add_argument("--superseded", action="store_true", help="Include superseded facts, drawn dashed.")
+    vw.add_argument("--no-open", action="store_true", help="Write the file without opening a browser.")
+
+    dm = command("dismiss", help="Decline a maintain candidate by key, with the reason, so it is not proposed again.")
+    dm.add_argument("key", help="A candidate key printed by maintain, e.g. consolidate:<id>:<id>")
+    dm.add_argument("--reason", required=True, help="Why it was declined; shown next time so the judgment is not redone.")
+
+    f = command("forget", help="Delete an entity, a fact, a session, or a whole dataset.")
     f.add_argument("--entity", default=None)
     f.add_argument("--relation-id", default=None)
     f.add_argument("--session", default=None)
     f.add_argument("--all", action="store_true", help="Delete the whole dataset.")
 
-    s = sub.add_parser("session", help="Session lifecycle: start, turn, context, get, timeline, lessons, end.")
+    s = command("session", help="Session lifecycle: start, turn, context, get, timeline, lessons, end.")
     s.add_argument("action", choices=["start", "turn", "context", "get", "timeline", "lessons", "end"])
     s.add_argument("session_id", nargs="?", default=None)
     s.add_argument("--role", default="user", choices=["user", "assistant", "tool", "system"])
@@ -334,7 +392,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--sections", nargs="*", default=None)
     s.add_argument("--no-turns", action="store_true")
 
-    t = sub.add_parser("tool", help="Call any engine method by name with JSON arguments on stdin.")
+    t = command("tool", help="Call any engine method by name with JSON arguments on stdin.")
     t.add_argument("name")
     t.add_argument("--stdin", action="store_true", help="Read keyword arguments as a JSON object on stdin.")
 
@@ -353,6 +411,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if getattr(args, "dataset_after", None):
+        args.dataset = args.dataset_after
 
     if args.cmd in (None, "serve"):
         from .server import build_server  # imports the mcp package; keep it off every other path
@@ -391,6 +451,10 @@ def main(argv: list[str] | None = None) -> int:
             payload = {"default": engine.default_dataset_name(), "user": "user", "datasets": engine.list_datasets(), "embedder": engine.embedder.name}
         elif args.cmd == "context":
             payload = engine.dataset(args.dataset).global_context()
+        elif args.cmd == "view":
+            payload = cmd_view(engine, args)
+        elif args.cmd == "dismiss":
+            payload = engine.dataset(args.dataset).dismiss(args.key, args.reason)
         elif args.cmd == "forget":
             payload = cmd_forget(engine, args)
         elif args.cmd == "session":

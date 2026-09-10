@@ -2,6 +2,38 @@
 
 Last updated 2026-09-09, after shipping the CLI, the upkeep pass, and the numpy scoring path.
 
+## Installed on itself as a plugin; two manifest bugs found (2026-09-10)
+
+Dogfooding the plugin route surfaced two defects that `claude plugin validate` does not catch. The
+manifest declared `"hooks": "./hooks/hooks.json"`, but Claude Code loads that file by convention, so
+the declaration was a *duplicate* and the whole plugin failed to load; the key is removed. And the
+manifest pointed the MCP server's `MEMOOSE_DATA_DIR` at `${CLAUDE_PLUGIN_DATA}` while the CLI and the
+hooks use `~/.memoose`, so the server would have read an empty store while everything else read the
+real one; the override is removed and every surface shares one store. `.claude-plugin/marketplace.json`
+now lets a checkout be added as its own marketplace (`claude plugin marketplace add <checkout>`,
+`claude plugin install memoose@memoose`). The install is a copy, refreshed by `claude plugin update`
+only when the version changes, so the version is bumped to 0.3.0 and must be bumped again to ship
+changes to an installed plugin. The user-scope `memoose install claude` copy was removed as a
+duplicate. `memoose view` writes the graph as one self-contained HTML file with the drawing library
+inlined and cached; its first version drew nothing because vis-network hides the canvas until
+stabilisation and nothing forced a fit.
+
+## Procedural memory, after the Procedural Graphs paper (2026-09-10)
+
+Read arXiv:2609.09153 (Lu et al., Google) end to end and adopted the parts that fit a store with no
+model of its own (ADR 0004). A `Procedure` entity type (seeded additively, so existing stores gain
+it), transitions as ordinary relations with `When <condition>: <guidance>. Avoid: <pitfall>.` in
+the description, and the hint hook now localises the agent's **last tool call** on a Procedure and
+injects its outgoing two-hop neighbourhood grouped by hop, before the prompt-keyed BM25 hint. The
+paper's ablation (local subgraph beats full graph; full-graph injection hurt ALFWorld) is the reason
+it is a local subgraph and not the store. Rejection memory landed as `dismiss` events in provenance:
+`maintain` and `contradiction_candidates` filter dismissed candidates and show the reasons. The
+periodic pass also now needs two shared chunks for a cross-connect candidate, which removes the
+"every entity co-occurs with every other" noise on a young store. Not adopted: the held-out
+validation gate (no task distribution to score against) and a per-step guidance model call.
+
+`--json` output is never spilled to a file; a consumer of JSON needs all of it. 89 tests.
+
 ## The CLI, the upkeep pass, and what they cost (2026-09-09)
 
 **`memoose` is now a CLI as well as an MCP server**, over the same `Engine`. `recall`, `remember`

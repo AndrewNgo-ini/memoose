@@ -36,6 +36,14 @@ sessions in a single command, and changes nothing on its own. Use the individual
 
    `global_context()` shows all buckets; `recall(..., mode="summaries")` returns them.
 
+## Declining a candidate
+
+Judging a candidate and doing nothing means it comes back next time. When two names are *not* the
+same thing, a pair does *not* have a real relationship, or a hotspot's values genuinely coexist,
+record it: `memoose dismiss <key> --reason "..."` (tool: `dismiss_candidate(key, reason)`), with the
+key printed next to the item. The candidate is filtered from later passes and the reason is shown
+under `dismissed`, so the same judgment is not made twice. Nothing about the graph changes.
+
 ## Weights
 
 Recall rank is multiplied by frequency (how often an entity is re-mentioned) and feedback

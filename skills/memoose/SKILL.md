@@ -125,6 +125,39 @@ Ask before storing anything personal or sensitive that the user did not explicit
    - <self-contained sentence>
    ```
 
+## Procedures: what to do next, and when
+
+Facts answer *what is*. A **Procedure** answers *what to do next*: a step the agent takes (a tool
+action, a check, a state of the work), linked to the steps that follow it. Memory of procedures is
+what stops an agent from repeating a step that failed, skipping a check, or losing the order.
+
+Store a procedure as a small chain of `Procedure` entities joined by these relations:
+
+| relation | meaning |
+| --- | --- |
+| `leads_to` | after this step, do that one |
+| `requires` | that step must happen before this one |
+| `triggers` | this step's outcome starts that one (a failed test triggers a fix) |
+| `converges_to` | several steps end at that one (a check, an output) |
+
+Put the **condition** and the **pitfall** in the relation description, one sentence each, in this
+shape: `When <condition>: <what to do>. Avoid: <what went wrong here before>.`
+
+```sh
+memoose remember "run the test suite:Procedure --leads_to--> commit:Procedure" \
+  --desc "When all 76 tests pass: commit with uv run pytest in the message. Avoid: committing on a partial run; the suite is 3 s, run all of it." \
+  -e "user said 2026-09-10"
+```
+
+On hosts with hooks, this is what the hint before a prompt draws on: memoose matches the agent's
+most recent tool call to a Procedure and injects that step's outgoing transitions, two hops out.
+The match is lexical on the Procedure's name and description, so name the step the way the command
+reads (`run the test suite`, `uv sync`, `open a pull request`), not abstractly.
+
+When a transition turns out to be wrong, **supersede** it with the corrected one instead of
+forgetting it: the pitfall stays in history, and `recall --superseded` can still show what was
+tried. A procedure is only a few edges; three to seven steps covers most workflows.
+
 ## Facts that change: one current value per subject
 
 Some relations hold exactly **one** current value per subject: `owned_by`, `reports_to`,

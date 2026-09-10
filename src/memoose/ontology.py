@@ -47,6 +47,8 @@ DEFAULT_ENTITY_TYPES: tuple[EntityType, ...] = tuple(
         ("Role", "A function a Person or Organization performs."),
         ("Topic", "A subject area that facts cluster around."),
         ("Lesson", "A distilled, reusable learning from past work."),
+        ("Procedure", "A step an agent takes: a tool action, a check, or a state of the work. Its outgoing "
+                      "relations (leads_to, requires, triggers) say what comes next and under which condition."),
     )
 )
 
@@ -126,6 +128,7 @@ _BASIC_HINTS = {
     "component": "Component", "module": "Component", "technology": "Technology", "tool": "Technology", "software": "Technology",
     "concept": "Concept", "decision": "Decision", "requirement": "Requirement", "issue": "Issue", "bug": "Issue",
     "event": "Event", "date": "Date", "time": "Date", "place": "Place", "location": "Place", "role": "Role", "topic": "Topic",
+    "procedure": "Procedure", "step": "Procedure", "action": "Procedure", "workflow": "Procedure", "state": "Procedure",
 }
 
 

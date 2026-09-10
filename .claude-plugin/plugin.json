@@ -1,7 +1,7 @@
 {
   "name": "memoose",
   "displayName": "memoose",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Persistent memory for coding agents: typed knowledge graph with evidence, contradictions and supersession, maintained in the background on a small model. No API key; nothing leaves your machine.",
   "author": {
     "name": "Hieu Ngo"
@@ -21,13 +21,9 @@
         "${CLAUDE_PLUGIN_ROOT}",
         "memoose",
         "serve"
-      ],
-      "env": {
-        "MEMOOSE_DATA_DIR": "${CLAUDE_PLUGIN_DATA}"
-      }
+      ]
     }
   },
-  "hooks": "./hooks/hooks.json",
   "agents": [
     "./agents/memory-keeper.md"
   ]

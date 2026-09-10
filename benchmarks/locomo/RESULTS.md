@@ -13,7 +13,7 @@ Host model via Claude Code `claude -p`. Retrieval = memoose `recall` (auto-route
 Re-run after the scoring path moved from a Python loop to a numpy matrix multiply. Both rows
 reproduce to ±0.003 per category and are identical overall; the differences are tie ordering, now
 broken on `ref_id` so the same store answers the same way on any machine. Median p50 query latency
-halved, 2.1 ms → 0.9 ms on the hash embedder. The fastembed row's 7.1 ms is almost entirely the
+halved, from 2.1 ms to 0.9 ms on the hash embedder. The fastembed row's 7.1 ms is almost entirely the
 query embedding (7 ms measured), not retrieval.
 
 ## LLM judge
@@ -28,8 +28,8 @@ query embedding (7 ms measured), not retrieval.
 
 Published (all 10 conversations): mem0 2026 92.5 (top-200, gpt-4o class), Zep 75.1, full-context ~73, mem0 2025 66.9.
 mem0 per-category, from their research page: single-hop 94.6, multi-hop 95.4, temporal 92.5,
-open-domain 82.3, mean 6,956 prompt tokens. (Their paper's top_10–200 averages are lower — 91.2 /
-91.3 / 92.0 / 72.7 — so quote the research-page figures, which are the ones they headline.)
+open-domain 82.3, mean 6,956 prompt tokens. (Their paper's top_10–200 averages are lower, at 91.2 /
+91.3 / 92.0 / 72.7, so quote the research-page figures, which are the ones they headline.)
 
 Full run against mem0's published per-category, the only entry that breaks its score down:
 
@@ -42,11 +42,11 @@ Full run against mem0's published per-category, the only entry that breaks its s
 | open-domain | 70.8 | 82.3 | −11.5 |
 | mean prompt tokens | 4,699 | 6,956 | −32% |
 
-Behind on every category, ahead only on cost. Neither run discloses the same answerer — mem0
-publishes no answerer or judge identity at all — so read this as context, not a ranking.
+Behind on every category, ahead only on cost. The two runs do not share an answerer, and mem0
+publishes no answerer or judge identity at all, so read this as context rather than a ranking.
 
 **Read**: the full 1,540-question run scores **90.4** with a 3-point interval, and supersedes the earlier
-160-question sample, which read 91.9 — optimistic by 1.5 points because the draw over-weighted the easier
+160-question sample, which read 91.9. That was optimistic by 1.5 points, because the draw over-weighted the easier
 early conversations. Per conversation the full run spans 86.5 to 96.3. Open-domain, at 70.8 over 96
 questions, is now measured well enough to state plainly as the weak category rather than as sampling noise.
 
@@ -84,7 +84,7 @@ Discordant pairs: 2 only-k20, 1 only-k30, **McNemar exact p = 1.00**. Retrieval 
 the bottleneck, and the extra ~30% of context is wasted. **k=20 stays the default.**
 
 This is the central lesson of the sweep: evidence recall is a proxy, and past ~0.88 it decouples from the
-judged score. The reason is visible in the failures — of 13 wrong answers in the 160-question sample, only
+judged score. The reason is visible in the failures: of 13 wrong answers in the 160-question sample, only
 3 said the memories lacked the information; the other 10 answered confidently and wrong. Above ~90 the
 benchmark is dominated by answerer reasoning and by disputable LoCoMo gold answers, not by memory. Tuning
 retrieval further optimises the wrong quantity.
@@ -114,8 +114,8 @@ open-domain inference and a multi-hop detail. Three against two on 45 questions 
 
 Read this as a scoping result, not a defect. LoCoMo asks needle questions over conversations of 16k–26k
 tokens; chunk retrieval already finds the needles, and the answerer does the multi-hop joining itself from
-raw text. What the graph is actually for — contradiction detection, temporal supersession, provenance,
-cross-session consolidation, typed ontology queries — LoCoMo does not test at all. On this benchmark the
+raw text. LoCoMo does not test what the graph is actually for: contradiction detection, temporal
+supersession, provenance, cross-session consolidation, typed ontology queries. On this benchmark the
 cheaper `chunks` path is the better engineering choice, and that is the configuration reported above.
 One conversation is also the limit of this experiment: it has the power to rule out a large effect, not a
 small one.

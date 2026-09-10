@@ -19,8 +19,8 @@ from .store.sqlite_store import SqliteStore
 _TOKEN = re.compile(r"[a-z0-9]+")
 
 
-def cross_connect_candidates(store: SqliteStore, limit: int = 20) -> list[dict]:
-    pairs = store.cooccurring_pairs(limit)
+def cross_connect_candidates(store: SqliteStore, limit: int = 20, min_shared: int = 1) -> list[dict]:
+    pairs = store.cooccurring_pairs(limit, min_shared=min_shared)
     ents = store.get_entities({x for x, _, _ in pairs} | {y for _, y, _ in pairs})
     out = []
     for x, y, shared in pairs:
@@ -29,6 +29,7 @@ def cross_connect_candidates(store: SqliteStore, limit: int = 20) -> list[dict]:
                 "SELECT a.chunk_id FROM entity_chunks a JOIN entity_chunks b ON a.chunk_id=b.chunk_id WHERE a.entity_id=? AND b.entity_id=? LIMIT 3", (x, y))]
             chunks = store.get_chunks(chunk_ids)
             out.append({
+                "key": f"cross_connect:{x}:{y}",
                 "a": {"id": x, "name": ents[x].name, "type": ents[x].type, "description": ents[x].description},
                 "b": {"id": y, "name": ents[y].name, "type": ents[y].type, "description": ents[y].description},
                 "shared_chunks": shared,
@@ -77,6 +78,7 @@ def _acronym(name: str) -> str:
 def _pair(a, b, sim: float, why: str) -> dict:
     keep, drop = (a, b) if (a.mentions, len(a.name)) >= (b.mentions, len(b.name)) else (b, a)
     return {
+        "key": f"consolidate:{min(a.id, b.id)}:{max(a.id, b.id)}",
         "keep": {"id": keep.id, "name": keep.name, "type": keep.type, "mentions": keep.mentions, "description": keep.description},
         "drop": {"id": drop.id, "name": drop.name, "type": drop.type, "mentions": drop.mentions, "description": drop.description},
         "similarity": sim,

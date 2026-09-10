@@ -76,7 +76,7 @@ becomes context for your host's model, the same as any other text the agent read
   preferences, your conventions, how you like to work.</li>
 </ul>
 <p><code>recall</code> searches the project dataset and then the user dataset and merges the results,
-with the project's own facts taking precedence &mdash; so a project convention overrides a personal
+with the project's own facts taking precedence, so a project convention overrides a personal
 default without you having to say so. Pass <code>include_user=false</code> to search only the project,
 or <code>datasets=[&hellip;]</code> to be explicit. <code>list_datasets</code> shows every scope on
 the machine and where its file is.</p>
@@ -99,7 +99,7 @@ way, so retrieval works with no embedder worth the name.</p>
 <h2>Turning it all off</h2>
 <p>Setting the three switches to <code>0</code> leaves you with exactly the tools: nothing runs unless
 the agent calls it. Uninstalling is removing the MCP server entry from the host's config, the skills
-directory it copied in, and &mdash; if you want the memory gone too &mdash; the SQLite files under
+directory it copied in, and (if you want the memory gone too) the SQLite files under
 <code>~/.memoose</code>. <code>forget(whole_dataset=true)</code> does the last part from inside the
 host, and asks for confirmation first.</p>
 

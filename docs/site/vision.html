@@ -32,15 +32,15 @@
 </header>
 <main id="main">
 <h1>Vision</h1>
-<p class="lede">The agent already has a model. Memory should not bring a second one &mdash; and it
-should not wait to be asked.</p>
+<p class="lede">The agent already has a model. Memory should not bring a second one, and it should
+not wait to be asked.</p>
 
 <h2>The bet</h2>
 <p>Memoose splits into an <strong>engine</strong> and a <strong>harness</strong>. The engine holds
 only what is deterministic: a typed graph store, an ontology, chunking, ranking, supersession, a
 provenance ledger, all reachable as <a href="tools.html">MCP tools</a>. Everything that needs
-judgment &mdash; what counts as an entity, which facts contradict, what is worth remembering, what a
-session taught &mdash; is written down in the harness as <a href="skills.html">skills</a>, rules and
+judgment (what counts as an entity, which facts contradict, what is worth remembering, what a
+session taught) is written down in the harness as <a href="skills.html">skills</a>, rules and
 <a href="automatic.html">hooks</a>, and the model the host is <em>already running</em> does that
 thinking while it calls the tools.</p>
 <p>There is no code path in the library that calls a model
@@ -65,8 +65,8 @@ worklist: contradictions to judge, duplicates to merge, finished sessions to dis
 to rewrite</td><td>ships today</td></tr>
 </tbody>
 </table>
-<p>The pass gathers the work and decides none of it &mdash; the engine proposes, a model disposes,
-which is the same split as everywhere else here. On hosts with hooks it is offered once a day when a
+<p>The pass gathers the work and judges none of it; a model makes every call, which is the same
+split as everywhere else here. On hosts with hooks it is offered once a day when a
 session opens, since a session opening is the only regular event Memoose can observe without a daemon
 (<code>MEMOOSE_AUTO_MAINTAIN=0</code> turns the offer off).</p>
 <p>You do not do the cleaning yourself either. The work goes to a <strong>memory-keeper subagent on a
@@ -78,7 +78,7 @@ is busy with the user&rsquo;s real task, so bookkeeping is the first thing dropp
 <p>These are the two ways anything gets found. Search answers a question you thought to ask.
 Recommendation puts something in front of you that you did not. A memory system that only does search
 is only half of one: it works when the agent already suspects there is something to recall, and stays
-silent every other time &mdash; and an agent usually does not think to ask.</p>
+silent every other time, and an agent usually does not think to ask.</p>
 <p>So Memoose does both. <code>recall</code> answers the asked question across eight retrieval modes.
 For the unasked one, each incoming prompt is read, memory is searched locally, and when something
 genuinely matches the agent is handed a hint before it starts thinking. That hint is BM25 over the
@@ -90,8 +90,8 @@ whether to follow it. See <a href="automatic.html">Automatic memory</a>.</p>
 <p>Long-lived project work, where the hard part is not finding a fact once but keeping a body of facts
 trustworthy for months: who owns what now, which decision replaced which, what convention this team
 follows, what we learned last time and why.</p>
-<p>That framing came out of benchmarking rather than preceding it. On LoCoMo, Memoose scored 91.9 on a
-sampled judged run at 4,728 mean prompt tokens &mdash; but a controlled paired test showed the
+<p>That framing came out of benchmarking rather than preceding it. On LoCoMo, Memoose scored 90.4
+across all 1,540 questions at 4,699 mean prompt tokens, but a controlled paired test showed the
 knowledge graph does <em>not</em> beat plain chunk retrieval there. That is a statement
 about the benchmark, not a defect: LoCoMo asks needle questions and never asks whether a changed fact
 is still current, or where a claim came from. So those questions got their own model-free suite. See
@@ -107,8 +107,8 @@ automation on hosts that have them and no capability the tools lack.</li>
 later run can re-verify rather than trust.</li>
 <li><strong>Nothing true is deleted.</strong> Facts are superseded, not removed; history stays
 queryable.</li>
-<li><strong>Errors teach.</strong> A rejected write returns a message written for the model &mdash;
-which type to use, which relation name.</li>
+<li><strong>Errors teach.</strong> A rejected write returns a message written for the model,
+saying which type to use and which relation name.</li>
 </ol>
 
 <footer class="page-foot">

@@ -7,19 +7,19 @@ Everything here runs against LoCoMo, the standard conversational-memory benchmar
 | `locomo/retrieval_bench.py` | does the gold evidence come back (recall@k) | none | ~5 min | $0 | every change |
 | `locomo/run_locomo.py` | end-to-end judged answer accuracy | answerer + judge | hours | ~$85 full, ~$9 sampled | rarely |
 
-**The judged score is the full 1,540 questions** — `full-haiku-k20`, September 2026, 90.4 at 4,699
+**The judged score is the full 1,540 questions**: `full-haiku-k20`, September 2026, 90.4 at 4,699
 mean prompt tokens, $88.55. It is not re-run on every change: the model-free retrieval benchmark is
 what catches a retrieval regression between commits, at $0 and five minutes.
 
 The consequence for reading these numbers: **every published memory-system score is LLM-as-judge**,
 so recall@k lines up against nobody and exists only to catch our regressions. The judged score is
-comparable in kind, but ours is sampled and uses a smaller answerer than the systems it sits beside,
-and the 2026 LoCoMo leaderboard is mostly self-reported claims on differing model stacks — ZeroMemory
-96.1 and Zep 94.7 are both above us and both unverified, and third-party testing put Zep at 75.1 on
-the same benchmark. Neither of our numbers is a claim to have won anything.
+comparable in kind, but ours uses a smaller answerer than the systems it sits beside, and the 2026
+LoCoMo leaderboard is mostly self-reported claims on differing model stacks. ZeroMemory 96.1 and Zep
+94.7 are both above us and both unverified, and third-party testing put Zep at 75.1 on the same
+benchmark. Neither of our numbers is a claim to have won anything.
 
 LoCoMo asks *can you find a fact that was stated once*. It does not ask whether a body of facts stays
-trustworthy as it changes — a fact was revised, two sources disagree, where did this come from — which
+trustworthy as it changes: a fact was revised, two sources disagree, where did this come from. That
 is what memoose is built for. Designing an eval for that which other systems can run is an open
 problem and a roadmap item, not a result we have.
 
@@ -65,8 +65,8 @@ evidence come from skill-driven extraction.
 
 Full tables live in `locomo/RESULTS.md`. Headline findings:
 
-- 91.9 on a 160-question stratified sample (95% CI 86.6–95.2) vs mem0's published 92.5, at 4,728
-  prompt tokens vs their 6,956, with a much smaller answerer (Claude Haiku 4.5).
+- 90.4 on the full 1,540 questions (95% CI 88.8–91.8) against mem0's published 92.5, at 4,699
+  prompt tokens against their 6,956, with a much smaller answerer (Claude Haiku 4.5).
 - The graph does not beat plain chunk retrieval here (paired McNemar p = 1.00) and costs 77% more
   tokens. LoCoMo does not test what the graph is for.
 - Raising the retrieval budget lifts evidence recall but not the judged score (p = 1.00), so k=20 at

@@ -89,6 +89,10 @@ def build_server(engine: Engine | None = None) -> MCPServer:
     def set_bucket_summary(bucket_id: str, summary: str, dataset: str | None = None) -> dict:
         return guard(engine.dataset(dataset).set_bucket_summary)(bucket_id, summary)
 
+    @server.tool(description="Decline a maintenance candidate by its key (from maintain or contradiction_candidates) with the reason, so it is not proposed again and the reason is shown next time.")
+    def dismiss_candidate(key: str, reason: str, dataset: str | None = None) -> dict:
+        return guard(engine.dataset(dataset).dismiss)(key, reason)
+
     @server.tool(description="Forget an entity (and its relations) by exact name, a relation by id, a session, or a whole dataset. Prefer supersede for facts that were true once. Confirm with the user first.")
     def forget(entity: str | None = None, relation_id: str | None = None, session_id: str | None = None, dataset: str | None = None, whole_dataset: bool = False) -> dict:
         if whole_dataset:

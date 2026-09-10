@@ -142,3 +142,66 @@ def test_maintain_decides_nothing_itself(cli):
     before = cli("--json", "recall", "alice", "--superseded")[1]
     cli("maintain")
     assert cli("--json", "recall", "alice", "--superseded")[1] == before
+
+
+def test_dataset_flag_works_after_the_subcommand(cli):
+    """`memoose remember "..." --dataset user` is the order people write; both must work."""
+    assert cli("remember", "alice:Person --owns--> billing:System", "--desc", "x",
+               "--dataset", "user")[0] == 0
+    assert "alice" in cli("recall", "alice", "--dataset", "user")[1]
+    # the leading form still works, and is not clobbered by the trailing default
+    assert "alice" in cli("--dataset", "user", "recall", "alice")[1]
+    # and the fact went to `user`, not the project dataset
+    assert "nothing matched" in cli("recall", "alice", "--no-user")[1]
+
+
+def test_context_rows_render_as_text_not_json(cli):
+    """A rules recall is read by a model; dumping the raw row wastes its context."""
+    sid = json.loads(cli("--json", "session", "start")[1])["session_id"]
+    cli("session", "context", sid, "--section", "rules", "--text", "Never force-push to main.")
+    out = cli("recall", "what rules should I follow")[1]
+    assert "[rules] Never force-push to main." in out
+    assert '"section"' not in out and '"confidence"' not in out
+
+
+def test_dismiss_from_the_shell_removes_the_candidate(cli):
+    cli("remember", "alice:Person --owns--> billing:System", "--desc", "x")
+    cli("remember", "alice --owns--> auth:System", "--desc", "y")
+    code, out, _ = cli("--json", "maintain")
+    key = json.loads(out)["hotspots"][0]["key"]
+    assert cli("dismiss", key, "--reason", "owns is multi-valued")[0] == 0
+    code, out, _ = cli("maintain")
+    assert "· hotspot:" not in out and "1 earlier candidate(s) dismissed" in out
+    with pytest.raises(SystemExit):  # argparse: the reason is required
+        cli("dismiss", key)
+
+
+
+def test_view_writes_a_self_contained_page_with_the_graph_inline(cli, tmp_path):
+    cli("remember", "alice:Person --owns--> billing:System", "--desc", "Alice owns billing.", "-e", "repo://x.py#L1")
+    cli("remember", "run tests:Procedure --leads_to--> commit:Procedure", "--desc", "When green: commit.")
+    out_path = tmp_path / "g.html"
+    code, out, _ = cli("view", "--out", str(out_path), "--no-open")
+    assert code == 0 and "4 entities, 2 facts" in out and str(out_path) in out
+    html = out_path.read_text()
+    assert "<!doctype html>" in html.lower() and "vis-network" in html
+    for needle in ("alice", "billing", "Alice owns billing.", "repo://x.py#L1", "run tests", "leads_to", '"Procedure"'):
+        assert needle in html, needle
+    assert "</script" not in html.split("const G = ", 1)[1].split(";\n", 1)[0], "inline JSON must not be able to close the script tag"
+
+
+def test_view_hides_superseded_facts_unless_asked(cli, tmp_path):
+    cli("remember", "alice:Person --owns--> billing:System", "--desc", "old", "--valid-from", "2025-01-01")
+    cli("remember", "alice --owns--> auth:System", "--desc", "new", "--valid-from", "2026-01-01")
+    _stdin = json.dumps({"names": ["owns"]})
+    import sys as _sys
+    class _S:
+        def read(self_inner): return _stdin
+    _sys.stdin = _S()
+    cli("tool", "declare_functional_relations", "--stdin")
+    cli("remember", "alice --owns--> auth", "--desc", "new again", "--valid-from", "2026-02-01")
+    p = tmp_path / "a.html"
+    cli("view", "--out", str(p), "--no-open")
+    assert '"superseded": true' not in p.read_text()
+    cli("view", "--out", str(p), "--no-open", "--superseded")
+    assert '"superseded": true' in p.read_text()

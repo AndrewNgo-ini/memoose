@@ -27,8 +27,10 @@ class Dataset:
         self.name = name
         self.store = store
         self.embedder = embedder
-        if not store.list_entity_types():
-            for t in DEFAULT_ENTITY_TYPES:
+        # Seed builtin types additively, so a store opened before a type existed still gains it.
+        have = {t["name"] for t in store.list_entity_types()}
+        for t in DEFAULT_ENTITY_TYPES:
+            if t.name not in have:
                 store.upsert_entity_type(t.name, t.description, builtin=True)
         self.ontology = self._load_ontology()
         self.recaller = Recaller(store, embedder)
@@ -179,7 +181,27 @@ class Dataset:
                 ids += [r.source_id, r.target_id]
         if not ids:
             return {"dataset": self.name, "open_contradictions": self.store.open_contradictions(), "facts": [], "hotspots": [], "guidance": contra.GUIDANCE}
-        return {"dataset": self.name, **contra.candidate_facts(self.store, list(dict.fromkeys(ids)))}
+        out = contra.candidate_facts(self.store, list(dict.fromkeys(ids)))
+        dismissed = self.store.dismissed()
+        out["hotspots"] = [h for h in out["hotspots"] if h["key"] not in dismissed]
+        return {"dataset": self.name, **out}
+
+    def dismiss(self, key: str, reason: str) -> dict:
+        """Record that a maintenance candidate was judged and declined, so it is not proposed again.
+
+        The paper this borrows from (Procedural Graphs, Lu et al. 2026) keeps rejected edits on file
+        and hands them back to the refiner as negative evidence. Same idea: a dismissal goes into
+        the provenance ledger with its reason, `maintenance` filters on it and shows the recent
+        reasons, and nothing about the graph itself changes.
+        """
+        key, reason = key.strip(), reason.strip()
+        if not key or ":" not in key:
+            raise ValueError("key must be a candidate key from maintain or contradiction_candidates, e.g. 'consolidate:<id>:<id>'.")
+        if not reason:
+            raise ValueError("Give the reason the candidate was declined; it is shown next time so the judgment is not redone.")
+        self.store.record(ACTOR, "dismiss", "candidate", key, {"reason": reason})
+        self.store.commit()
+        return {"dataset": self.name, "dismissed": key, "reason": reason}
 
     def mark_contradiction(self, first_relation_id: str, second_relation_id: str, reason: str, confidence: float) -> dict:
         a, b = self.store.get_relation(first_relation_id), self.store.get_relation(second_relation_id)
@@ -315,22 +337,30 @@ class Dataset:
         goes, so this is not a read-only command.
         """
         ids = [e.id for e in self.store.all_entities()]
+        dismissed = self.store.dismissed()
+        keep = lambda items: [c for c in items if c.get("key") not in dismissed]  # noqa: E731
+        sessions = [
+            {**s_, "key": f"session:{s_['id']}"}
+            for s_ in self.store.sessions(50) if s_.get("ended_at") and not s_.get("distilled_at")
+        ]
         work = {
-            "hotspots": (contra.candidate_facts(self.store, ids)["hotspots"][:limit] if ids else []),
+            "hotspots": keep(contra.candidate_facts(self.store, ids)["hotspots"] if ids else [])[:limit],
             "open_contradictions": self.store.open_contradictions(limit),
-            "consolidate": mem.consolidate_candidates(self.store, limit),
-            "cross_connect": mem.cross_connect_candidates(self.store, limit),
+            "consolidate": keep(mem.consolidate_candidates(self.store, limit * 2))[:limit],
+            # Two shared chunks at least: in a young store seeded from one chunk, every pair co-occurs.
+            "cross_connect": keep(mem.cross_connect_candidates(self.store, limit * 2, min_shared=2))[:limit],
             "stale_summaries": (mem.rebuild_buckets(self.store), mem.stale_bucket_inputs(self.store, limit))[1],
-            "undistilled_sessions": [
-                s for s in self.store.sessions(50) if s.get("ended_at") and not s.get("distilled_at")
-            ][:limit],
+            "undistilled_sessions": keep(sessions)[:limit],
         }
         return {
             "dataset": self.name,
             "pending": sum(len(v) for v in work.values()),
             **work,
+            "dismissed": [{"key": k, "reason": r} for k, r in list(dismissed.items())[:limit]],
             "guidance": (
-                "Judge each item; do not accept them wholesale. hotspots and open_contradictions: "
+                "Judge each item; do not accept them wholesale. When you decline one, call dismiss(key, reason) "
+                "so it is not proposed again; `dismissed` lists earlier judgments for the same store. "
+                "hotspots and open_contradictions: "
                 "memoose-contradictions (supersede when the newer fact replaces the older, "
                 "mark_contradiction when both claim to be current). consolidate and cross_connect: "
                 "memoose-memify, and only when the names denote the same thing or the relation is "

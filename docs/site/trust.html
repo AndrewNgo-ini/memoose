@@ -33,7 +33,7 @@
 <main id="main">
 <h1>Evidence &amp; history</h1>
 <p class="lede">Finding a fact once is the easy half. The hard part is keeping a body of facts
-trustworthy for months &mdash; which is what these four mechanisms are for.</p>
+trustworthy for months, which is what these four mechanisms are for.</p>
 
 <p>Memoose is built for long-lived project work, so the questions it has to answer are not needle
 lookups. They are: a fact changed, does recall return the current one? Two sources disagree, does the
@@ -53,8 +53,8 @@ from OpenWiki's grounded claims.</p>
 <h2>Nothing true is deleted</h2>
 <p>When a fact changes, the old one is <strong>superseded</strong>, not removed. It leaves default
 recall, so the agent sees the current answer; it stays in the store, so history stays queryable.</p>
-<p>For relations declared functional &mdash; ones that hold a single current value per subject, like
-<code>owned_by</code> or <code>deployed_in</code> &mdash; this happens on its own: assert a new value
+<p>For relations declared functional, meaning they hold a single current value per subject like
+<code>owned_by</code> or <code>deployed_in</code>, this happens on its own: assert a new value
 and <code>declare_functional_relations</code> makes the old one supersede automatically. Everywhere
 else, <code>supersede(old, new, reason)</code> records it explicitly, with the reason attached.</p>
 <pre><code>recall("who owns billing")                            # the current owner
@@ -62,9 +62,9 @@ recall("who owns billing", include_superseded=true)   # and who used to</code></
 <p><code>forget</code> exists, but it is for mistakes and for things that were never true. Anything
 that was true once should be superseded instead.</p>
 
-<h2>Disagreement is surfaced, not resolved</h2>
-<p>Memoose never decides what conflicts &mdash; the store has no judgment and does not pretend to. What
-it does is refuse to hide the problem. A <code>remember</code> that lands next to a fact it may
+<h2>Disagreement is surfaced for a model to judge</h2>
+<p>Memoose never decides what conflicts. The store has no judgment and does not pretend to, but it
+does refuse to hide the problem. A <code>remember</code> that lands next to a fact it may
 contradict comes back with a <strong>hotspot</strong> warning; <code>contradiction_candidates</code>
 returns the facts around an entity grouped by subject, flagging where one subject holds several values
 for one relation; and <code>recall</code> marks facts <strong>contested</strong> so the agent reading
@@ -84,8 +84,8 @@ history(relation_id="rel_...")      # the life of one fact</code></pre>
 for, and <code>history</code> is how you find out what was written, by which actor, and when.</p>
 
 <h2>Lessons: we solved this before</h2>
-<p>A session's turns and typed context sections are distilled into <strong>lessons</strong> &mdash;
-one to three sentences that stand alone without the session, each with its own evidence and linked to
+<p>A session's turns and typed context sections are distilled into <strong>lessons</strong>: one to
+three sentences that stand alone without the session, each with its own evidence and linked to
 the entities it applies to. They come back through <code>recall</code> in <code>session</code> mode,
 and through the standing context a <a href="automatic.html">session start</a> puts in front of the
 agent, so the thing you learned last month arrives before you re-learn it.</p>
@@ -100,13 +100,13 @@ at all. Designing one other systems can run is
 eval of our own making would prove nothing, so we publish no number for it.</p>
 
 <h3>What we measured</h3>
-<p>On LoCoMo, the standard benchmark for conversational memory &mdash; a model answers from whatever
-the memory system retrieves, and a second model grades the answer &mdash; Memoose scores
+<p>LoCoMo is the standard benchmark for conversational memory: a model answers from whatever the
+memory system retrieves, and a second model grades the answer. Memoose scores
 <strong>90.4</strong> (95% CI 88.8&ndash;91.8) at <strong>4,699 mean prompt tokens</strong> across all
 1,540 questions, run under mem0&rsquo;s protocol with their answerer and judge prompts verbatim.</p>
-<p>By category: single-hop 93.5, temporal 89.7, multi-hop 88.7, open-domain 70.8 &mdash; the last of
-these being the weak one, where the gold answer is a name or a place living in a single turn that
-never reaches the retrieved context. The answerer and judge are both Claude Haiku 4.5, smaller than
+<p>By category: single-hop 93.5, temporal 89.7, multi-hop 88.7, open-domain 70.8. Open-domain is the
+weak one, where the gold answer is a name or a place living in a single turn that never reaches the
+retrieved context. The answerer and judge are both Claude Haiku 4.5, smaller than
 the models other published scores use, and swapping the answerer moves a score more than swapping the
 memory system does: read it as what Memoose does on a small model.</p>
 <p>Two findings from those runs cut against us and are published anyway: the knowledge graph does

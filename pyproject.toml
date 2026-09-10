@@ -1,6 +1,6 @@
 [project]
 name = "memoose"
-version = "0.2.0"
+version = "0.3.0"
 description = "Memory harness for coding agents: cognee-style graph memory exposed as MCP tools and skills, no API key."
 readme = "README.md"
 license = "Apache-2.0"

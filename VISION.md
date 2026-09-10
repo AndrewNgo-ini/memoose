@@ -9,7 +9,7 @@ a third. Move tools and your project's accumulated context stays behind.
 The libraries that solve it properly solve it at a price. cognee, mem0, and Zep are good systems, but
 each one wants an LLM API key of its own, and usually a service to run. That means a second inference
 bill on top of the subscription you already pay, your project's memory leaving the machine, another
-vendor in the loop, and a dependency footprint that does not belong in a developer tool — cognee's
+vendor in the loop, and a dependency footprint that does not belong in a developer tool: cognee's
 core is 45 dependencies over three databases.
 
 The protocol has an answer for this that nobody implements. MCP defines `sampling/createMessage`,
@@ -22,14 +22,14 @@ in practice the server still needs its own key.
 
 **The agent already has a model. Memory should not bring a second one.**
 
-memoose inverts the usual split. The library holds only what is deterministic — a typed graph store,
-an ontology, chunking, ranking, supersession, a provenance ledger — and exposes it as plain MCP
+memoose inverts the usual split. The library holds only what is deterministic (a typed graph store,
+an ontology, chunking, ranking, supersession, a provenance ledger) and exposes it as plain MCP
 tools. Everything that needs judgment (what is an entity, which facts contradict, what is worth
 remembering, what a session taught) is written down as skills, and the model the host is *already
 running* does that thinking while it calls the tools.
 
 Memory work also never happens on the expensive model, and never on the user's clock. Extraction and
-maintenance are delegated to a **small model** — Haiku, or whatever small model the host offers — running
+maintenance are delegated to a **small model**, Haiku or whatever small model the host offers, running
 as a **background job**, so the conversation is not paused to do bookkeeping.
 
 The consequences are the point:
@@ -70,7 +70,7 @@ background subagent. Explicit tool calls keep working; they are just no longer t
 The same problem applies to *reading*. An agent only recalls when it thinks to, and it usually does
 not think to. So memoose does not wait to be queried: it reads each incoming prompt, searches memory
 locally, and when something genuinely matches it hands the agent a hint before the agent starts
-thinking — what memory already holds, and the `recall` query that would fetch the rest.
+thinking: what memory already holds, and the `recall` query that would fetch the rest.
 
 The recommendation is deliberately dumb and therefore free: BM25 over the local index, a relevance
 floor, a hard cap on how much it injects, and silence when nothing matches. No model, a few
@@ -87,7 +87,7 @@ body of facts trustworthy for months: who owns what now, which decision replaced
 convention this team follows, what we learned last time and why.
 
 That framing came out of benchmarking, not before it. On LoCoMo, the standard conversational-memory
-benchmark, memoose scored 91.9 on a sample at 4,728 prompt tokens — but a controlled paired test
+benchmark, memoose scored 90.4 across all 1,540 questions at 4,699 prompt tokens, but a controlled paired test
 showed our knowledge graph does **not** beat plain chunk retrieval
 there (McNemar p = 1.00), at 77% more tokens. That is not a defect; it is a statement about the
 benchmark. LoCoMo asks needle questions over conversations that fit in a context window, so chunk
@@ -112,8 +112,8 @@ this: proposing an eval the field can run is the open problem, and it is on the 
 3. **Facts carry their evidence.** Every relation can point at where it came from, so a later run can
    re-verify rather than trust. Borrowed from OpenWiki's grounded claims.
 4. **Nothing true is deleted.** Facts are superseded, not removed; history stays queryable.
-5. **Errors teach.** A rejected write returns a message written for the model — which type to use,
-   which relation name — because tool errors are the only lever we have on extraction quality.
+5. **Errors teach.** A rejected write returns a message written for the model, saying which type to
+   use and which relation name, because tool errors are the only lever we have on extraction quality.
 6. **Boring storage.** One SQLite file. Add a backend when someone actually outgrows it, not before.
 7. **Report what we measure.** No claimed benchmark win we cannot defend. State the confound.
 
@@ -126,18 +126,18 @@ Ingesting audio and images. Replacing the host's own context management. Winning
 
 - A developer installs it once and it works in whichever agent they open tomorrow.
 - After a month on a project, an agent answers "why is it built this way?" with the decision, the
-  date, and the evidence — and flags the two places the codebase now disagrees with it.
+  date, and the evidence, and flags the two places the codebase now disagrees with it.
 - When a fact changes, nobody has to remember to clean up.
 - The memory file is small enough to read, and a person can open it and understand what the agent
   believes about their project.
 
 ## Roadmap
 
-**Done.** A LoCoMo judged run: 91.9 correct at 4,728 mean prompt tokens, on a 160-question stratified
-sample with a Haiku answerer. Measured once, not re-run on every change.
+**Done.** A full LoCoMo judged run: 90.4 correct across all 1,540 questions at 4,699 mean prompt
+tokens, with a Haiku answerer and judge. Measured once, not re-run on every change.
 
-**Now.** Propose an eval for maintained memory that other systems can run — a fact was revised, two
-sources disagree, where did this come from — since no published benchmark asks it and a suite only we
+**Now.** Propose an eval for maintained memory that other systems can run (a fact was revised, two
+sources disagree, where did this come from), since no published benchmark asks it and a suite only we
 run is not evidence. Alongside it, a token-cost methodology: accuracy is reported everywhere and cost
 almost nowhere, though cost is what a memory system charges you every turn.
 

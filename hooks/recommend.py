@@ -24,6 +24,9 @@ from _common import (  # noqa: E402
     enabled,
     env,
     indexed_rows,
+    last_tool_uses,
+    locate_procedure,
+    procedure_subgraph,
     read_event,
     search_memory,
     superseded_ids,
@@ -33,7 +36,9 @@ from _common import (  # noqa: E402
 MAX_HINTS = int(env("HINT_COUNT") or "4")
 MIN_SCORE = float(env("HINT_MIN_SCORE") or "0.5")
 MAX_CHARS = 900
+GUIDANCE_CHARS = 900  # the procedural block has its own budget; it is the more specific of the two
 MIN_PROMPT_WORDS = 3
+RECENT_ACTIONS = 3  # how far back to look for a step memory knows; the paper's trajectory window
 USER_RESERVE = 1  # the user's standing rules must not be crowded out by project facts
 MIN_DISCRIMINATING_ROWS = 8  # a round number with margin: bm25 starts discriminating around 5 rows
 
@@ -97,6 +102,41 @@ def build_hint(project, user, query: str) -> str:
     return "\n".join(lines)[:MAX_CHARS]
 
 
+def build_guidance(project, user, transcript_path: str | None) -> str:
+    """What memory says comes next, keyed on what the agent just did rather than on the prompt.
+
+    A recall keyed on the user's words finds facts *about* things. A step the agent is in the
+    middle of is a different question: given what it just ran, what does memory say to do next,
+    under which condition, and what went wrong here before? That is answered by localising the
+    most recent action on a Procedure entity and reading its outgoing transitions two hops out,
+    grouped by hop, the way Procedural Graphs (Lu et al. 2026) serialise a local subgraph. Their
+    ablation is why this is a *local* subgraph and not the whole store: injecting everything
+    lowered task success on the embodied benchmark; the two-hop neighbourhood raised it.
+    """
+    actions = last_tool_uses(transcript_path, RECENT_ACTIONS)
+    if not actions:
+        return ""
+    for conn in (project, user):
+        if conn is None:
+            continue
+        for action in actions:
+            node = locate_procedure(conn, action)
+            if node is None:
+                continue
+            edges = procedure_subgraph(conn, node["id"])
+            if not edges:
+                continue
+            lines = [f"You just ran `{action[:80]}`. Memory holds a procedure from here ({node['name']}):"]
+            for hop, label in ((1, "Next"), (2, "Then")):
+                rows = [e for e in edges if e["hop"] == hop]
+                if rows:
+                    lines.append(f"{label}:")
+                    lines += [f"- {e['source']} --{e['relation']}--> {e['target']}" + (f": {e['description']}" if e["description"] else "") for e in rows]
+            lines.append("Guidance from memory, not an instruction; deviate when the situation calls for it.")
+            return "\n".join(lines)[:GUIDANCE_CHARS]
+    return ""
+
+
 def main() -> int:
     if not enabled("HINTS"):
         return 0
@@ -109,7 +149,9 @@ def main() -> int:
     if project is None and user is None:
         return 0
     try:
+        guidance = build_guidance(project, user, event.get("transcript_path"))
         hint = build_hint(project, user, query)
+        hint = "\n\n".join(part for part in (guidance, hint) if part)
     except Exception:  # noqa: BLE001 - a hook must never break the session
         return 0
     finally:

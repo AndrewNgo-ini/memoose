@@ -48,7 +48,7 @@ uv sync</code></pre>
 <pre><code>uv run memoose install claude               # or: codex | opencode | cursor
 uv run memoose install claude --project .   # project scope instead of user scope
 uv run memoose status                       # what is installed where</code></pre>
-<p><code>uninstall</code> reverses both. Then <strong>restart the host</strong> &mdash; MCP servers and hooks are read at startup. Run
+<p><code>uninstall</code> reverses both. Then <strong>restart the host</strong>, because MCP servers and hooks are read at startup. Run
 <code>uv run memoose status</code> again if you want to confirm what landed.</p>
 
 <h3>What each host gets</h3>
@@ -76,7 +76,7 @@ carry its own Memoose configuration for everyone who checks it out.</p>
 <dl>
   <dt>fastembed</dt>
   <dd>Real local embeddings for the vector channel of hybrid retrieval. Without it, Memoose uses a
-  keyless hashed fallback &mdash; still no model download, still no key. Enable with
+  keyless hashed fallback, which still needs no model download and no key. Enable with
   <code>uv sync --extra fastembed</code>.</dd>
   <dt>ontology</dt>
   <dd><code>rdflib</code>, for full OWL/RDF/Turtle parsing in <code>import_ontology</code>. A
@@ -89,8 +89,8 @@ carry its own Memoose configuration for everyone who checks it out.</p>
 describe_ontology    # entity types, functional relations, store stats</code></pre>
 <p>If <code>list_datasets</code> answers, the core is live and every capability is available. If it
 does not, the MCP server is not connected: re-run the install for that host and restart it. For the
-automatic parts, run the <code>memoose-onboard</code> skill &mdash; it checks each one against the
-host you are actually on and reports what it found.</p>
+automatic parts, run the <code>memoose-onboard</code> skill. It checks each one against the host
+you are actually on and reports what it found.</p>
 
 <h2>Develop</h2>
 <pre><code>uv sync --extra fastembed --group dev
