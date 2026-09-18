@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Install &middot; Memoose</title>
-<meta name="description" content="Install Memoose into Claude Code, Codex, OpenCode, or Cursor from a source checkout, or load it as a Claude Code plugin.">
+<meta name="description" content="pip install memoose, then one command wires it into Claude Code, Codex, OpenCode, or Cursor. Or install the Claude Code plugin.">
 <link rel="icon" href="memoose-mascot.png">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -14,7 +14,7 @@
 <header class="side">
   <a class="brand" href="index.html">
     <img src="memoose-mascot.png" alt="" width="48" height="48">
-    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+    <span><strong>Memoose</strong><small>a memory harness for agents</small></span>
   </a>
   <nav aria-label="Documentation">
     <ul>
@@ -32,24 +32,34 @@
 </header>
 <main id="main">
 <h1>Install</h1>
-<p class="lede">One command per host. It writes a single MCP server entry into the host's own config
-and copies the skills in. Nothing else is touched.</p>
+<p class="lede">Memoose is a Python package. Install it once and you have the CLI, the Python
+library and the MCP server; wiring it into an agent host is one more command.</p>
 
-<div class="note">
-<p><strong>From source.</strong> Memoose is not published on PyPI yet, so install from a checkout of
-the repository. Everything below assumes you are inside that checkout.</p>
-</div>
+<h2>Install the package</h2>
+<p>Needs Python 3.11 or newer and nothing else. Pick one:</p>
+<pre><code>pip install memoose            # any Python
+pipx install memoose           # an isolated install, the `npm install -g` of Python
+uvx memoose --help             # with uv, no install step at all</code></pre>
 
-<pre><code>git clone https://github.com/AndrewNgo-ini/mnemoth.git
-cd mnemoth
-uv sync</code></pre>
+<h2>First facts</h2>
+<pre><code>memoose remember "Bao:Person --owns--> auth-service:System" -e "user said 2026-09-18"
+memoose recall "who owns auth"
+memoose view                   # the knowledge graph in your browser, one HTML file, nothing uploaded</code></pre>
+<p>A fact is <code>source[:Type] --relation--> target[:Type]</code>. The <code>:Type</code> is needed
+only the first time an entity is seen. Memory lives in <code>~/.memoose/&lt;dataset&gt;.sqlite</code>,
+one dataset per project plus a <code>user</code> dataset for facts that hold everywhere; see
+<a href="configuration.html">Configuration</a>.</p>
 
 <h2>Install into a host</h2>
-<pre><code>uv run memoose install claude               # or: codex | opencode | cursor
-uv run memoose install claude --project .   # project scope instead of user scope
-uv run memoose status                       # what is installed where</code></pre>
-<p><code>uninstall</code> reverses both. Then <strong>restart the host</strong>, because MCP servers and hooks are read at startup. Run
-<code>uv run memoose status</code> again if you want to confirm what landed.</p>
+<p>This gives the agent the skills (when to recall, how to extract, how to judge a contradiction)
+and, where the host allows, the MCP server:</p>
+<pre><code>memoose install claude               # or: codex | opencode | cursor
+memoose install claude --project .   # project scope instead of user scope
+memoose status                       # what is installed where</code></pre>
+<p><code>install</code> writes one MCP server entry (<code>uvx memoose serve</code>) into the host's
+own config and copies the skills in. <code>uninstall</code> reverses both. Then <strong>restart the
+host</strong>, because MCP servers and hooks are read at startup. The MCP path needs
+<a href="https://docs.astral.sh/uv/">uv</a> on the machine; the CLI does not.</p>
 
 <h3>What each host gets</h3>
 <div class="table-wrap">
@@ -68,23 +78,28 @@ with a separate dataset per project directory. Use <code>--project .</code> when
 carry its own Memoose configuration for everyone who checks it out.</p>
 
 <h2>As a Claude Code plugin</h2>
-<p>Claude Code can load the checkout directly, which brings the MCP server, the skills, the
-<a href="automatic.html">hooks</a>, and the <code>memory-keeper</code> subagent in one step:</p>
-<pre><code>claude --plugin-dir /path/to/memoose</code></pre>
+<p>On Claude Code, install the plugin instead. It is the only route that also loads the
+<a href="automatic.html">hooks</a> and the <code>memory-keeper</code> subagent, and it keeps one
+copy of everything. Inside Claude Code:</p>
+<pre><code>/plugin marketplace add AndrewNgo-ini/mnemoth
+/plugin install memoose@memoose</code></pre>
+<p>The plugin launches the server with <code>uvx memoose serve</code>, so it needs uv.</p>
 
 <h2>Optional extras</h2>
 <dl>
   <dt>fastembed</dt>
   <dd>Real local embeddings for the vector channel of hybrid retrieval. Without it, Memoose uses a
   keyless hashed fallback, which still needs no model download and no key. Enable with
-  <code>uv sync --extra fastembed</code>.</dd>
+  <code>pip install "memoose[fastembed]"</code>.</dd>
   <dt>ontology</dt>
   <dd><code>rdflib</code>, for full OWL/RDF/Turtle parsing in <code>import_ontology</code>. A
-  Turtle/RDF-XML fallback parser is built in, so this is only needed for exotic ontology files.</dd>
+  Turtle/RDF-XML fallback parser is built in, so this is only needed for exotic ontology files.
+  <code>pip install "memoose[ontology]"</code>.</dd>
 </dl>
 
 <h2>Verify it works</h2>
-<p>In the host, ask the agent to call two tools:</p>
+<p>From the shell, <code>memoose status</code> shows what landed. In the host, ask the agent to call
+two tools:</p>
 <pre><code>list_datasets        # is the server reachable, and which dataset is this project?
 describe_ontology    # entity types, functional relations, store stats</code></pre>
 <p>If <code>list_datasets</code> answers, the core is live and every capability is available. If it
@@ -92,10 +107,14 @@ does not, the MCP server is not connected: re-run the install for that host and 
 automatic parts, run the <code>memoose-onboard</code> skill. It checks each one against the host
 you are actually on and reports what it found.</p>
 
-<h2>Develop</h2>
-<pre><code>uv sync --extra fastembed --group dev
-uv run pytest
-claude plugin validate .</code></pre>
+<h2>From a checkout</h2>
+<p>For development or to run the latest pre-release:</p>
+<pre><code>git clone https://github.com/AndrewNgo-ini/mnemoth.git &amp;&amp; cd mnemoth &amp;&amp; uv sync
+uv run memoose install claude          # the MCP entry points uvx at this checkout, not at PyPI
+claude --plugin-dir .                  # Claude Code: skills, hooks and server from the checkout
+uv sync --extra fastembed              # local embeddings (a keyless hashed fallback is used otherwise)
+uv sync --extra ontology               # full RDF parsing
+uv run pytest                          # the suite</code></pre>
 
 <footer class="page-foot">
   <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
