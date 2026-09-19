@@ -4,8 +4,6 @@
 
 # Memoose: A Dual-Path Memory System for Proactive Agents
 
-[Quick start](#quick-start) · [Give your agent memory](#give-your-agent-memory) · [How it works](#how-memoose-works) · [Usage](#usage) · [Benchmarks](#benchmarks) · [Docs](https://andrewngo-ini.github.io/mnemoth/)
-
 </div>
 
 ---
@@ -18,7 +16,7 @@
 - [How Memoose works](#how-memoose-works)
 - [Usage](#usage): [tools](#tools) · [skills](#skills) · [CLI](#cli)
 - [Benchmarks](#benchmarks)
-- [Learn more](#learn-more): [docs](#docs) · [inspiration](#inspiration) · [contributing](#contributing) · [license](#license)
+- [Learn more](#learn-more): [documentation](#documentation) · [inspiration](#inspiration) · [contributing](#contributing) · [license](#license)
 
 # What is Memoose
 
@@ -241,20 +239,9 @@ Protocol, full tables and raw rows: [`benchmarks/`](./benchmarks/README.md). Set
 
 # Learn more
 
-### Docs
+### Documentation
 
-The [documentation site](https://andrewngo-ini.github.io/mnemoth/):
-[Vision](https://andrewngo-ini.github.io/mnemoth/vision.html) ·
-[Features](https://andrewngo-ini.github.io/mnemoth/features.html) ·
-[Install](https://andrewngo-ini.github.io/mnemoth/install.html) ·
-[Tools](https://andrewngo-ini.github.io/mnemoth/tools.html) ·
-[Skills](https://andrewngo-ini.github.io/mnemoth/skills.html) ·
-[Automatic memory](https://andrewngo-ini.github.io/mnemoth/automatic.html) ·
-[Configuration](https://andrewngo-ini.github.io/mnemoth/configuration.html) ·
-[Evidence & history](https://andrewngo-ini.github.io/mnemoth/trust.html) ·
-[Roadmap](https://andrewngo-ini.github.io/mnemoth/roadmap.html)
-
-For contributors: [CONTEXT.md](./CONTEXT.md) is the glossary.
+[Site](https://andrewngo-ini.github.io/mnemoth/)
 
 ### Inspiration
 
