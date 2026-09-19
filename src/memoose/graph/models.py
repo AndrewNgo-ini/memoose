@@ -19,6 +19,9 @@ class RelationIn(BaseModel):
     evidence: str | None = Field(default=None, description="Where this comes from: 'repo://src/auth.py#L40-L82', a URL, an issue id, 'user said 2026-09-06'.")
     valid_from: str | None = Field(default=None, description="ISO date when this fact became true, if known.")
     valid_to: str | None = Field(default=None, description="ISO date when this fact stopped being true, if known.")
+    condition: str | None = Field(default=None, description="Transition only (both endpoints Procedures): when this transition applies.")
+    advice: str | None = Field(default=None, description="Transition only: how to carry out the target step from here.")
+    pitfall: str | None = Field(default=None, description="Transition only: what went wrong on this transition before and must be avoided.")
 
 
 class LessonIn(BaseModel):

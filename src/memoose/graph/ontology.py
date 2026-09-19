@@ -1,8 +1,6 @@
 """The Ontology: declared entity types, aliases, a parent hierarchy, and relation-name rules.
 
-cognee resolves extracted nodes against an OWL/RDF ontology with closest-match lookup.
-memoose ships basic default types (cognee's guidance: basic labels, specifics in
-descriptions), lets a Dataset extend them, and imports OWL/RDF/Turtle class
+memoose ships basic default types (basic labels, specifics in descriptions), lets a Dataset extend them, and imports OWL/RDF/Turtle class
 hierarchies: imported classes become types whose parent chain collapses onto a
 basic type for extraction, so the agent can use either the specific or the basic name.
 """
@@ -121,16 +119,6 @@ class Ontology:
 
 # ----- import ------------------------------------------------------------------------------
 
-_BASIC_HINTS = {
-    "person": "Person", "human": "Person", "agent": "Person", "people": "Person",
-    "organization": "Organization", "organisation": "Organization", "company": "Organization", "team": "Organization",
-    "project": "Project", "product": "Product", "system": "System", "service": "System",
-    "component": "Component", "module": "Component", "technology": "Technology", "tool": "Technology", "software": "Technology",
-    "concept": "Concept", "decision": "Decision", "requirement": "Requirement", "issue": "Issue", "bug": "Issue",
-    "event": "Event", "date": "Date", "time": "Date", "place": "Place", "location": "Place", "role": "Role", "topic": "Topic",
-    "procedure": "Procedure", "step": "Procedure", "action": "Procedure", "workflow": "Procedure", "state": "Procedure",
-}
-
 
 @dataclass
 class ImportedClass:
@@ -140,129 +128,144 @@ class ImportedClass:
     comment: str | None
 
 
-def parse_ontology(text: str, fmt: str | None = None) -> list[ImportedClass]:
-    """Parse OWL/RDF class declarations. Uses rdflib when installed, else a Turtle/RDF-XML regex fallback."""
-    try:
-        return _parse_with_rdflib(text, fmt)
-    except ImportError:
-        return _parse_fallback(text)
+class OntologyImporter:
+    """Reads OWL/RDF class declarations and plans EntityTypes whose parent chains end on a basic type.
 
+    Uses rdflib when installed, else a Turtle / RDF-XML regex fallback.
+    """
 
-def _local(uri: str) -> str:
-    frag = re.split(r"[#/]", uri.rstrip("/#"))[-1]
-    return frag
+    BASIC_HINTS = {
+        "person": "Person", "human": "Person", "agent": "Person", "people": "Person",
+        "organization": "Organization", "organisation": "Organization", "company": "Organization", "team": "Organization",
+        "project": "Project", "product": "Product", "system": "System", "service": "System",
+        "component": "Component", "module": "Component", "technology": "Technology", "tool": "Technology", "software": "Technology",
+        "concept": "Concept", "decision": "Decision", "requirement": "Requirement", "issue": "Issue", "bug": "Issue",
+        "event": "Event", "date": "Date", "time": "Date", "place": "Place", "location": "Place", "role": "Role", "topic": "Topic",
+        "procedure": "Procedure", "step": "Procedure", "action": "Procedure", "workflow": "Procedure", "state": "Procedure",
+    }
+    _TTL_CLASS = re.compile(r"(?P<subj>[<\w:][^\s]*)\s+(?:a|rdf:type)\s+(?:owl:Class|rdfs:Class)\b(?P<body>[^.]*)\.", re.S)
+    _TTL_SUB = re.compile(r"rdfs:subClassOf\s+(?P<obj>[<\w:][^\s;.]*)")
+    _TTL_LABEL = re.compile(r'rdfs:label\s+"(?P<v>[^"]*)"')
+    _TTL_COMMENT = re.compile(r'rdfs:comment\s+"(?P<v>[^"]*)"')
+    _XML_CLASS = re.compile(r'<owl:Class\s+rdf:about="(?P<subj>[^"]+)"(?P<body>.*?)</owl:Class>|<owl:Class\s+rdf:about="(?P<subj2>[^"]+)"\s*/>', re.S)
+    _XML_SUB = re.compile(r'<rdfs:subClassOf\s+rdf:resource="(?P<obj>[^"]+)"')
+    _XML_LABEL = re.compile(r"<rdfs:label[^>]*>(?P<v>[^<]*)</rdfs:label>")
+    _XML_COMMENT = re.compile(r"<rdfs:comment[^>]*>(?P<v>[^<]*)</rdfs:comment>")
 
+    def __init__(self, ontology: Ontology) -> None:
+        self.ontology = ontology
 
-def _parse_with_rdflib(text: str, fmt: str | None) -> list[ImportedClass]:
-    import rdflib  # type: ignore[import-not-found]
-    from rdflib.namespace import OWL, RDF, RDFS  # type: ignore[import-not-found]
-
-    g = rdflib.Graph()
-    formats = [fmt] if fmt else ["turtle", "xml", "n3", "json-ld"]
-    for f in formats:
+    def parse(self, text: str, fmt: str | None = None) -> list[ImportedClass]:
         try:
-            g.parse(data=text, format=f)
-            break
-        except Exception:  # noqa: BLE001
-            continue
-    else:
-        raise OntologyError("Could not parse ontology text as Turtle, RDF/XML, N3, or JSON-LD.")
-    classes: dict[str, ImportedClass] = {}
-    for s in set(g.subjects(RDF.type, OWL.Class)) | set(g.subjects(RDF.type, RDFS.Class)):
-        if not isinstance(s, rdflib.URIRef):
-            continue
-        parent = next((_local(str(o)) for o in g.objects(s, RDFS.subClassOf) if isinstance(o, rdflib.URIRef) and str(o) != str(OWL.Thing)), None)
-        label = next((str(o) for o in g.objects(s, RDFS.label)), None)
-        comment = next((str(o) for o in g.objects(s, RDFS.comment)), None)
-        classes[_local(str(s))] = ImportedClass(_local(str(s)), label, parent, comment)
-    return list(classes.values())
+            return self._parse_with_rdflib(text, fmt)
+        except ImportError:
+            return self._parse_fallback(text)
 
+    def plan(self, classes: list[ImportedClass]) -> list[EntityType]:
+        """EntityTypes for the imported classes, parents before children, every chain ending on a basic type."""
+        by_name = {c.name: c for c in classes}
+        planned: dict[str, EntityType] = {}
+        for c in classes:
+            name = self._type_name(c.name)
+            existing = self.ontology.get(name)
+            if existing and existing.builtin:
+                continue
+            parent_known = c.parent and (c.parent in by_name or self.ontology.get(self._type_name(c.parent)))
+            parent = self._type_name(c.parent) if parent_known else self._basic_for(c, by_name)
+            if parent == name:
+                parent = self._basic_for(c, by_name)
+            aliases = [c.label] if c.label and c.label.casefold() != name.casefold() else []
+            planned[name] = EntityType(name, c.comment or (c.label or c.name), parent=parent, aliases=aliases)
+        return self._parents_first(planned)
 
-_TTL_CLASS = re.compile(r"(?P<subj>[<\w:][^\s]*)\s+(?:a|rdf:type)\s+(?:owl:Class|rdfs:Class)\b(?P<body>[^.]*)\.", re.S)
-_TTL_SUB = re.compile(r"rdfs:subClassOf\s+(?P<obj>[<\w:][^\s;.]*)")
-_TTL_LABEL = re.compile(r'rdfs:label\s+"(?P<v>[^"]*)"')
-_TTL_COMMENT = re.compile(r'rdfs:comment\s+"(?P<v>[^"]*)"')
-_XML_CLASS = re.compile(r'<owl:Class\s+rdf:about="(?P<subj>[^"]+)"(?P<body>.*?)</owl:Class>|<owl:Class\s+rdf:about="(?P<subj2>[^"]+)"\s*/>', re.S)
-_XML_SUB = re.compile(r'<rdfs:subClassOf\s+rdf:resource="(?P<obj>[^"]+)"')
-_XML_LABEL = re.compile(r"<rdfs:label[^>]*>(?P<v>[^<]*)</rdfs:label>")
-_XML_COMMENT = re.compile(r"<rdfs:comment[^>]*>(?P<v>[^<]*)</rdfs:comment>")
-
-
-def _strip(tok: str) -> str:
-    tok = tok.strip("<>")
-    return _local(tok.split(":", 1)[1] if ":" in tok and not tok.startswith("http") else tok)
-
-
-def _parse_fallback(text: str) -> list[ImportedClass]:
-    out: dict[str, ImportedClass] = {}
-    if "<owl:Class" in text or "<rdf:RDF" in text:
-        for m in _XML_CLASS.finditer(text):
-            subj = m.group("subj") or m.group("subj2")
-            body = m.group("body") or ""
-            sub = _XML_SUB.search(body)
-            lab = _XML_LABEL.search(body)
-            com = _XML_COMMENT.search(body)
-            name = _local(subj)
-            out[name] = ImportedClass(name, lab.group("v") if lab else None, _local(sub.group("obj")) if sub else None, com.group("v") if com else None)
-    else:
-        for m in _TTL_CLASS.finditer(text):
-            body = m.group("body")
-            sub = _TTL_SUB.search(body)
-            lab = _TTL_LABEL.search(body)
-            com = _TTL_COMMENT.search(body)
-            name = _strip(m.group("subj"))
-            out[name] = ImportedClass(name, lab.group("v") if lab else None, _strip(sub.group("obj")) if sub else None, com.group("v") if com else None)
-    if not out:
-        raise OntologyError("No owl:Class or rdfs:Class declarations found. Install the 'ontology' extra for full RDF parsing.")
-    return list(out.values())
-
-
-def to_type_name(raw: str) -> str:
-    parts = re.split(r"[^A-Za-z0-9]+", raw)
-    name = "".join(p[:1].upper() + p[1:] for p in parts if p)
-    return name if TYPE_NAME.fullmatch(name or "x") else "X" + re.sub(r"[^A-Za-z0-9]", "", name)
-
-
-def plan_import(ontology: Ontology, classes: list[ImportedClass]) -> list[EntityType]:
-    """Turn imported classes into EntityTypes with parents that end on a basic type."""
-    by_name = {c.name: c for c in classes}
-    planned: dict[str, EntityType] = {}
-
-    def basic_for(c: ImportedClass, depth: int = 0) -> str:
+    def _basic_for(self, c: ImportedClass, by_name: dict[str, ImportedClass], depth: int = 0) -> str:
         key = (c.label or c.name).casefold()
-        for hint, basic in _BASIC_HINTS.items():
+        for hint, basic in self.BASIC_HINTS.items():
             if hint in key:
                 return basic
         if c.parent and c.parent in by_name and depth < 20:
-            return basic_for(by_name[c.parent], depth + 1)
-        if c.parent and ontology.get(to_type_name(c.parent)):
-            return ontology.basic_type(to_type_name(c.parent))
+            return self._basic_for(by_name[c.parent], by_name, depth + 1)
+        if c.parent and self.ontology.get(self._type_name(c.parent)):
+            return self.ontology.basic_type(self._type_name(c.parent))
         return "Concept"
 
-    for c in classes:
-        name = to_type_name(c.name)
-        if ontology.get(name) and ontology.get(name).builtin:
-            continue
-        parent = to_type_name(c.parent) if c.parent and (c.parent in by_name or ontology.get(to_type_name(c.parent))) else basic_for(c)
-        if parent == name:
-            parent = basic_for(c)
-        aliases = [c.label] if c.label and c.label.casefold() != name.casefold() else []
-        planned[name] = EntityType(name, c.comment or (c.label or c.name), parent=parent, aliases=aliases)
-    # Order parents before children.
-    ordered: list[EntityType] = []
-    done: set[str] = set(t.name for t in ontology.types)
-    pending = dict(planned)
-    while pending:
-        progressed = False
-        for name, t in list(pending.items()):
-            if t.parent is None or t.parent in done:
-                ordered.append(t)
-                done.add(name)
-                del pending[name]
-                progressed = True
-        if not progressed:
-            for name, t in pending.items():
-                t.parent = "Concept"
-                ordered.append(t)
-            break
-    return ordered
+    def _parents_first(self, planned: dict[str, EntityType]) -> list[EntityType]:
+        ordered: list[EntityType] = []
+        done = {t.name for t in self.ontology.types}
+        pending = dict(planned)
+        while pending:
+            progressed = False
+            for name, t in list(pending.items()):
+                if t.parent is None or t.parent in done:
+                    ordered.append(t)
+                    done.add(name)
+                    del pending[name]
+                    progressed = True
+            if not progressed:  # a cycle: hang the rest off Concept
+                for t in pending.values():
+                    t.parent = "Concept"
+                    ordered.append(t)
+                break
+        return ordered
+
+    def _parse_with_rdflib(self, text: str, fmt: str | None) -> list[ImportedClass]:
+        import rdflib  # type: ignore[import-not-found]
+        from rdflib.namespace import OWL, RDF, RDFS  # type: ignore[import-not-found]
+
+        g = rdflib.Graph()
+        for f in [fmt] if fmt else ["turtle", "xml", "n3", "json-ld"]:
+            try:
+                g.parse(data=text, format=f)
+                break
+            except Exception:  # noqa: BLE001
+                continue
+        else:
+            raise OntologyError("Could not parse ontology text as Turtle, RDF/XML, N3, or JSON-LD.")
+        classes: dict[str, ImportedClass] = {}
+        for s in set(g.subjects(RDF.type, OWL.Class)) | set(g.subjects(RDF.type, RDFS.Class)):
+            if not isinstance(s, rdflib.URIRef):
+                continue
+            parent = next((self._local(str(o)) for o in g.objects(s, RDFS.subClassOf) if isinstance(o, rdflib.URIRef) and str(o) != str(OWL.Thing)), None)
+            label = next((str(o) for o in g.objects(s, RDFS.label)), None)
+            comment = next((str(o) for o in g.objects(s, RDFS.comment)), None)
+            name = self._local(str(s))
+            classes[name] = ImportedClass(name, label, parent, comment)
+        return list(classes.values())
+
+    def _parse_fallback(self, text: str) -> list[ImportedClass]:
+        out: dict[str, ImportedClass] = {}
+        if "<owl:Class" in text or "<rdf:RDF" in text:
+            for m in self._XML_CLASS.finditer(text):
+                body = m.group("body") or ""
+                name = self._local(m.group("subj") or m.group("subj2"))
+                sub = self._XML_SUB.search(body)
+                out[name] = ImportedClass(name, self._group(self._XML_LABEL, body), self._local(sub.group("obj")) if sub else None, self._group(self._XML_COMMENT, body))
+        else:
+            for m in self._TTL_CLASS.finditer(text):
+                body = m.group("body")
+                name = self._strip(m.group("subj"))
+                sub = self._TTL_SUB.search(body)
+                out[name] = ImportedClass(name, self._group(self._TTL_LABEL, body), self._strip(sub.group("obj")) if sub else None, self._group(self._TTL_COMMENT, body))
+        if not out:
+            raise OntologyError("No owl:Class or rdfs:Class declarations found. Install the 'ontology' extra for full RDF parsing.")
+        return list(out.values())
+
+    @staticmethod
+    def _group(pattern: re.Pattern, body: str) -> str | None:
+        m = pattern.search(body)
+        return m.group("v") if m else None
+
+    @staticmethod
+    def _local(uri: str) -> str:
+        return re.split(r"[#/]", uri.rstrip("/#"))[-1]
+
+    @classmethod
+    def _strip(cls, token: str) -> str:
+        token = token.strip("<>")
+        return cls._local(token.split(":", 1)[1] if ":" in token and not token.startswith("http") else token)
+
+    @staticmethod
+    def _type_name(raw: str) -> str:
+        parts = re.split(r"[^A-Za-z0-9]+", raw)
+        name = "".join(p[:1].upper() + p[1:] for p in parts if p)
+        return name if TYPE_NAME.fullmatch(name or "x") else "X" + re.sub(r"[^A-Za-z0-9]", "", name)

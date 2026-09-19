@@ -37,7 +37,7 @@ on the embodied one. Guidance has to be keyed on where the agent is, and it has 
 ## What we did not adopt
 
 - **The validation gate.** The paper accepts a graph edit only if it does not lower a held-out
-  score. A coding agent's project memory has no task distribution to score against. The nearest
+  score. An agent's project memory has no task distribution to score against. The nearest
   honest signal is a user correction, which the existing feedback weights can carry; we are not
   going to pretend a gate exists where one cannot be measured.
 - **A separate guidance model call.** The paper runs a guidance LLM per step. Under ADR 0001 the

@@ -14,18 +14,22 @@ from mcp.server.mcpserver import MCPServer
 
 from . import __version__
 from .engine import Engine
-from .models import CrossConnectIn, EntityIn, LessonIn, RelationIn
-from .ontology import OntologyError
-from .retrieval import MODES
+from .graph.models import CrossConnectIn, EntityIn, LessonIn, RelationIn
+from .graph.ontology import OntologyError
+from .graph.retrieval import MODES
 
 INSTRUCTIONS = """memoose is persistent memory for this project: a typed knowledge graph (entities and
-relations with one-sentence facts and evidence pointers), source text, sessions, and lessons.
-It never calls a model: you do the extraction and the judgment; the tools validate, store, and
-retrieve. Flow: `session_start` when work begins; `recall` before relying on the past;
-`describe_ontology` once; `recall` related names before `remember`; `remember` facts as
-source --relation--> target with evidence; judge `contradiction_candidates` when warned;
-`session_timeline` then `publish_lessons` when work ends. Skills: memoose (extraction),
-memoose-contradictions, memoose-sessions, memoose-memify, memoose-ontology."""
+relations with one-sentence facts and evidence pointers), procedures (what to do next), source
+text, sessions, and lessons. It never calls a model: you do the extraction and the judgment; the
+tools validate, store, and retrieve. Flow: `session_start` when work begins; `recall` before
+relying on the past; `describe_ontology` once; `recall` related names before `remember`;
+`remember` facts as source --relation--> target with evidence; judge `contradiction_candidates`
+when warned; `session_timeline` then `publish_lessons` when work ends. Procedures: declare where
+you are with `session_add_turn(position=<Procedure>)` and read the `guidance` that comes back
+(or call `guidance(procedure)`); it is memory, not an instruction. End with
+`session_end(outcome=succeeded|failed|abandoned)` so the Transitions you took learn from it.
+Skills: memoose (extraction), memoose-sessions (the working loop), memoose-upkeep (judging what
+the store surfaces), memoose-onboard (setup)."""
 
 
 def build_server(engine: Engine | None = None) -> MCPServer:
@@ -62,9 +66,10 @@ def build_server(engine: Engine | None = None) -> MCPServer:
     # ----- write ----------------------------------------------------------------------
     @server.tool(description=(
         "Store memory as a typed graph: entities (name, type, description) and relations (source --name--> target, "
-        "one-sentence description, evidence, optional valid_from/valid_to). Pass source_text and a summary so recall "
-        "can find it lexically. Validates against the ontology, merges entities by name, supersedes functional relations, "
-        "records provenance, and warns about hotspots that may be contradictions."
+        "one-sentence description, evidence, optional valid_from/valid_to). A relation between two Procedures is a "
+        "Transition and may carry condition, advice and pitfall. Pass source_text and a summary so recall can find it "
+        "lexically. Validates against the ontology, merges entities by name, supersedes functional relations, records "
+        "provenance, and warns about hotspots that may be contradictions."
     ))
     def remember(entities: list[EntityIn], relations: list[RelationIn] = [], summary: str | None = None, source_text: str | None = None, source: str | None = None, session_id: str | None = None, dataset: str | None = None) -> dict:
         return guard(engine.dataset(dataset).remember)(entities, relations, summary=summary, source_text=source_text, source=source, session_id=session_id)
@@ -118,7 +123,15 @@ def build_server(engine: Engine | None = None) -> MCPServer:
             return {"error": "ValueError", "message": f"mode must be one of {', '.join(MODES)}"}
         return guard(engine.recall)(query, datasets=datasets, mode=mode, limit=limit, include_superseded=include_superseded, hops=hops, include_user=include_user)
 
-    @server.tool(description="Facts around given entities or relations, grouped by subject, with hotspots where one subject holds several values for one relation. Judge them with the memoose-contradictions skill.")
+    @server.tool(description=(
+        "What memory says comes next from a Procedure: its outgoing Transitions two hops out, grouped by hop, each with "
+        "condition, advice, pitfall and how past sessions that took it ended. Raw and local; you decide. Superseded "
+        "transitions are excluded; declined changes to these transitions are listed under dismissed."
+    ))
+    def guidance(procedure: str, hops: int = 2, per_hop: int = 6, dataset: str | None = None) -> dict:
+        return guard(engine.dataset(dataset).guidance)(procedure, hops, per_hop)
+
+    @server.tool(description="Facts around given entities or relations, grouped by subject, with hotspots where one subject holds several values for one relation. A Procedure's branches are not hotspots. Judge them with the memoose-upkeep skill.")
     def contradiction_candidates(entity_names: list[str] | None = None, relation_ids: list[str] | None = None, dataset: str | None = None) -> dict:
         return guard(engine.dataset(dataset).contradiction_candidates)(entity_names, relation_ids)
 
@@ -143,9 +156,12 @@ def build_server(engine: Engine | None = None) -> MCPServer:
     def session_start(session_id: str | None = None, dataset: str | None = None) -> dict:
         return engine.dataset(dataset).session_start(session_id)
 
-    @server.tool(description="Append a turn (user/assistant/tool/system) to the session's fast cache.")
-    def session_add_turn(session_id: str, role: str, text: str, dataset: str | None = None) -> dict:
-        return guard(engine.dataset(dataset).session_add_turn)(session_id, role, text)
+    @server.tool(description=(
+        "Append a turn (user/assistant/tool/system) to the session's fast cache. Pass position=<Procedure name> to declare "
+        "where you are; the reply then carries the guidance from that Procedure, and the session's Trace grows by one step."
+    ))
+    def session_add_turn(session_id: str, role: str, text: str, position: str | None = None, dataset: str | None = None) -> dict:
+        return guard(engine.dataset(dataset).session_add_turn)(session_id, role, text, position)
 
     @server.tool(description=(
         "Record a session context entry: goals, rules, preferences, lessons_learned, tool_rules, workflow_state, "
@@ -167,9 +183,12 @@ def build_server(engine: Engine | None = None) -> MCPServer:
     def publish_lessons(lessons: list[LessonIn], session_id: str | None = None, dataset: str | None = None) -> dict:
         return guard(engine.dataset(dataset).publish_lessons)(session_id, lessons)
 
-    @server.tool(description="Close a session. Tells you whether it still needs distillation.")
-    def session_end(session_id: str, dataset: str | None = None) -> dict:
-        return guard(engine.dataset(dataset).session_end)(session_id)
+    @server.tool(description=(
+        "Close a session with its outcome: succeeded, failed, or abandoned. Every Transition the session's Trace traversed "
+        "counts the outcome. Returns the Trace and what to distil from it, and whether lessons are still owed."
+    ))
+    def session_end(session_id: str, outcome: str | None = None, dataset: str | None = None) -> dict:
+        return guard(engine.dataset(dataset).session_end)(session_id, outcome)
 
     return server
 

@@ -1,7 +1,7 @@
 [project]
 name = "memoose"
-version = "0.3.0"
-description = "Memory harness for coding agents: cognee-style graph memory exposed as MCP tools and skills, no API key."
+version = "0.4.0"
+description = "A dual-path memory system for proactive agents: facts and procedures in a local graph, exposed as a CLI, MCP tools and skills, no API key."
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
@@ -24,8 +24,17 @@ memoose = "memoose.cli:main"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.sdist]
+# The source distribution is the library and what `memoose install` needs; benchmarks, the docs
+# site and benchmark results stay in the repository.
+only-include = ["src", "harness", "tests", "README.md", "LICENSE", "CONTEXT.md", "pyproject.toml"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/memoose"]
+
+[tool.hatch.build.targets.wheel.force-include]
+# `memoose install <host>` copies the harness (skills, hooks, agent) into the host, so the wheel must carry it.
+"harness" = "memoose/harness"
 
 [dependency-groups]
 dev = ["pytest>=8", "pytest-asyncio>=0.24"]

@@ -1,8 +1,8 @@
 {
   "name": "memoose",
   "displayName": "memoose",
-  "version": "0.3.0",
-  "description": "Persistent memory for coding agents: typed knowledge graph with evidence, contradictions and supersession, maintained in the background on a small model. No API key; nothing leaves your machine.",
+  "version": "0.4.0",
+  "description": "A dual-path memory system for proactive agents: a typed knowledge graph with evidence, contradictions and supersession, maintained in the background on a small model. No API key; nothing leaves your machine.",
   "author": {
     "name": "Hieu Ngo"
   },
@@ -13,6 +13,11 @@
     "mcp",
     "skill"
   ],
+  "skills": "./harness/skills",
+  "agents": [
+    "./harness/agents/memory-keeper.md"
+  ],
+  "hooks": "./harness/hooks/hooks.json",
   "mcpServers": {
     "memoose": {
       "command": "uvx",
@@ -23,8 +28,5 @@
         "serve"
       ]
     }
-  },
-  "agents": [
-    "./agents/memory-keeper.md"
-  ]
+  }
 }

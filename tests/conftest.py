@@ -1,6 +1,6 @@
 import pytest
 
-from memoose.embeddings import HashEmbedder
+from memoose.store.embeddings import HashEmbedder
 from memoose.engine import Engine
 
 

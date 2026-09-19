@@ -21,11 +21,11 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .datasets import data_dir
-from .engine import Engine
-from .models import EntityIn, LessonIn, RelationIn
-from .ontology import OntologyError
-from .retrieval import MODES
+from ..store.datasets import data_dir
+from ..engine import Engine
+from ..graph.models import EntityIn, LessonIn, RelationIn
+from ..graph.ontology import OntologyError
+from ..graph.retrieval import MODES
 
 HOSTS = ["claude", "codex", "opencode", "cursor"]
 SECTIONS_HINT = "goals, rules, preferences, lessons_learned, tool_rules, workflow_state, success_patterns, failure_lessons, environment_facts, feedback"
@@ -72,6 +72,31 @@ def _fact_line(f: dict) -> str:
     if f.get("contested"):
         bits.append("CONTESTED")
     return " ".join(bits)
+
+
+def _guidance_lines(edges: list[dict]) -> list[str]:
+    """Transitions grouped by hop, nearest first, each with its attributes and how past runs ended."""
+    out: list[str] = []
+    for hop, label in ((1, "Next"), (2, "Then"), (3, "Later")):
+        rows = [e for e in edges if e["hop"] == hop]
+        if not rows:
+            continue
+        out.append(f"{label}:")
+        for e in rows:
+            bits = [f"· {e['source']} --{e['relation']}--> {e['target']}"]
+            attrs = [f"when {e['condition']}" if e.get("condition") else "", f"do {e['advice']}" if e.get("advice") else "", f"avoid {e['pitfall']}" if e.get("pitfall") else ""]
+            attrs = [a for a in attrs if a]
+            if attrs:
+                bits.append(": " + "; ".join(attrs))
+            elif e.get("description"):
+                bits.append(f": {e['description']}")
+            o = e.get("outcomes") or {}
+            if any(o.values()):
+                bits.append(f"  [{o.get('succeeded', 0)} ok / {o.get('failed', 0)} failed / {o.get('abandoned', 0)} abandoned]")
+            out.append("".join(bits))
+    if not out:
+        out.append("no transitions from here yet")
+    return out
 
 
 def _label(key: str, row) -> str:
@@ -166,6 +191,25 @@ def render(cmd: str, payload: dict) -> str:
         out.append(f"[{payload.get('dataset')}] {payload.get('nodes')} entities, {payload.get('edges')} facts, {len(payload.get('types', []))} types")
         out.append(f"wrote {payload.get('path')}" + ("" if payload.get("opened", True) else " (not opened; open it in a browser)")
                    + ("" if payload.get("self_contained", True) else "; the drawing library could not be cached, so this page needs network to draw"))
+    elif cmd == "guidance" or (cmd == "session-turn" and payload.get("guidance") is not None):
+        node = payload.get("procedure", {}).get("name") or payload.get("position")
+        edges = payload.get("transitions") if cmd == "guidance" else payload.get("guidance")
+        head = f"[{payload.get('dataset')}] at {node}"
+        if cmd == "session-turn":
+            head += f" (turn {payload.get('turn_id')})"
+        out.append(head)
+        out += _guidance_lines(edges or [])
+        out += [f"· declined: {d['key']} — {d['reason']}" for d in payload.get("dismissed", [])]
+        if payload.get("note"):
+            out.append(payload["note"])
+    elif cmd == "session-end":
+        sess = payload.get("session") or {}
+        out.append(f"[{payload.get('dataset')}] session {sess.get('id')} ended" + (f" · {payload['outcome']}" if payload.get("outcome") else ""))
+        if payload.get("trace"):
+            out.append("trace: " + " → ".join(payload["trace"]))
+        if payload.get("transitions_counted"):
+            out.append(f"{len(payload['transitions_counted'])} transition(s) counted the outcome")
+        out.append(payload.get("next", ""))
     elif cmd == "session-start":
         out.append(f"[{payload.get('dataset')}] session {payload.get('session_id')} ({'new' if payload.get('new') else 'resumed'})")
         out += [f"· [{c['section']}] {c['content']}" for c in payload.get("standing_context", [])]
@@ -242,6 +286,7 @@ def cmd_remember(engine: Engine, args: argparse.Namespace) -> dict:
         relations.append(RelationIn(
             source=src, name=name, target=tgt, description=args.desc or "",
             evidence=args.evidence, valid_from=args.valid_from, valid_to=args.valid_to,
+            condition=args.when, advice=args.do, pitfall=args.avoid,
         ))
     return ds.remember(list(entities.values()), relations, summary=args.summary, source=args.source, session_id=args.session)
 
@@ -269,7 +314,7 @@ def cmd_session(engine: Engine, args: argparse.Namespace) -> tuple[str, dict]:
     if args.action == "turn":
         if not args.text:
             raise CliError("session turn needs --text.")
-        return "session", ds.session_add_turn(args.session_id, args.role, args.text)
+        return "session-turn", ds.session_add_turn(args.session_id, args.role, args.text, args.at)
     if args.action == "context":
         if not (args.section and args.text):
             raise CliError(f"session context needs --section ({SECTIONS_HINT}) and --text.")
@@ -281,7 +326,7 @@ def cmd_session(engine: Engine, args: argparse.Namespace) -> tuple[str, dict]:
     if args.action == "lessons":
         payload = _stdin_json()
         return "session", ds.publish_lessons(args.session_id, [LessonIn(**le) for le in payload.get("lessons", [])])
-    return "session", ds.session_end(args.session_id)
+    return "session-end", ds.session_end(args.session_id, args.outcome)
 
 
 def cmd_view(engine: Engine, args: argparse.Namespace) -> dict:
@@ -315,7 +360,7 @@ def cmd_tool(engine: Engine, args: argparse.Namespace) -> dict:
 
 # ----- parser -----------------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="memoose", description="Memory for coding agents. Facts in one local SQLite file.")
+    p = argparse.ArgumentParser(prog="memoose", description="A dual-path memory system for proactive agents. Facts and procedures in one local SQLite file.")
     p.add_argument("--json", action="store_true", help="Print the raw payload instead of compact text.")
     p.add_argument("--max-inline", type=int, default=2000, help="Spill text output longer than this to a file and print the path (0 disables; --json is never spilled).")
     p.add_argument("-d", "--dataset", default=None, help="Dataset to act on (default: this project).")
@@ -340,9 +385,17 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--superseded", action="store_true", help="Include facts a newer one replaced.")
     r.add_argument("--no-user", action="store_true", help="Project dataset only; skip user-global memory.")
 
-    m = command("remember", help="Store facts: 'alice:Person --owns--> billing-service:System'.")
+    g = command("guidance", help="What memory says comes next from a Procedure: its outgoing Transitions two hops out. Memory, not an instruction.")
+    g.add_argument("procedure", nargs="+", help="The exact name of a Procedure you are at.")
+    g.add_argument("--hops", type=int, default=2)
+    g.add_argument("--per-hop", type=int, default=6, help="Transitions kept per step, newest first.")
+
+    m = command("remember", help="Store facts: 'alice:Person --owns--> billing-service:System'. Between two Procedures a fact is a Transition: add --when/--do/--avoid.")
     m.add_argument("fact", nargs="*", help="source[:Type] --relation_name--> target[:Type]")
     m.add_argument("--desc", default=None, help="One-sentence description, applied to each fact given.")
+    m.add_argument("--when", default=None, help="Transition only: the condition under which it applies.")
+    m.add_argument("--do", default=None, help="Transition only: the advice, how to carry out the target step from here.")
+    m.add_argument("--avoid", default=None, help="Transition only: the pitfall, what went wrong here before.")
     m.add_argument("-e", "--evidence", default=None, help="repo://path#L1-L2, a URL, an issue id, or 'user said <date>'.")
     m.add_argument("--valid-from", default=None, help="ISO date this became true.")
     m.add_argument("--valid-to", default=None)
@@ -391,16 +444,19 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--retire", type=int, default=None, help="Context entry id this replaces.")
     s.add_argument("--sections", nargs="*", default=None)
     s.add_argument("--no-turns", action="store_true")
+    s.add_argument("--at", default=None, help="turn: the Procedure you are at (your Position); the guidance from there is printed.")
+    s.add_argument("--outcome", default=None, choices=["succeeded", "failed", "abandoned"], help="end: how the session ended; the Transitions it took count it.")
 
     t = command("tool", help="Call any engine method by name with JSON arguments on stdin.")
     t.add_argument("name")
     t.add_argument("--stdin", action="store_true", help="Read keyword arguments as a JSON object on stdin.")
 
     sub.add_parser("serve", help="Run the stdio MCP server (what a host launches).")
-    pi = sub.add_parser("install", help="Wire the MCP server and skills into a host.")
+    pi = sub.add_parser("install", help="Install the skills, hooks and the memory-keeper agent into a host. The agent then uses the CLI; --mcp also wires the MCP server.")
     pi.add_argument("host", choices=HOSTS)
     pi.add_argument("--project", nargs="?", const=".", default=None)
-    pi.add_argument("--command", default=None, help='Server command override, e.g. "uvx memoose serve".')
+    pi.add_argument("--mcp", action="store_true", help="Also register the MCP server, for an agent that has no shell.")
+    pi.add_argument("--command", default=None, help='With --mcp: server command override, e.g. "uvx memoose serve".')
     pu = sub.add_parser("uninstall", help="Remove memoose from a host.")
     pu.add_argument("host", choices=HOSTS)
     pu.add_argument("--project", nargs="?", const=".", default=None)
@@ -414,8 +470,11 @@ def main(argv: list[str] | None = None) -> int:
     if getattr(args, "dataset_after", None):
         args.dataset = args.dataset_after
 
-    if args.cmd in (None, "serve"):
-        from .server import build_server  # imports the mcp package; keep it off every other path
+    if args.cmd is None:
+        build_parser().print_help()  # bare `memoose` used to start the MCP server and look frozen
+        return 0
+    if args.cmd == "serve":
+        from ..server import build_server  # imports the mcp package; keep it off every other path
 
         build_server().run("stdio")
         return 0
@@ -424,7 +483,7 @@ def main(argv: list[str] | None = None) -> int:
         from . import integrations
 
         if args.cmd == "install":
-            result = integrations.install(args.host, project=args.project, command=args.command.split() if args.command else None)
+            result = integrations.install(args.host, project=args.project, command=args.command.split() if args.command else None, mcp=args.mcp or bool(args.command))
         elif args.cmd == "uninstall":
             result = integrations.uninstall(args.host, project=args.project)
         else:
@@ -439,6 +498,8 @@ def main(argv: list[str] | None = None) -> int:
             payload = cmd_recall(engine, args)
         elif args.cmd == "remember":
             payload = cmd_remember(engine, args)
+        elif args.cmd == "guidance":
+            payload = engine.dataset(args.dataset).guidance(" ".join(args.procedure), args.hops, args.per_hop)
         elif args.cmd == "history":
             payload = engine.dataset(args.dataset).history(args.entity, args.relation_id, args.limit)
         elif args.cmd == "contradictions":

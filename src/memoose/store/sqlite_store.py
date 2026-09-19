@@ -3,8 +3,7 @@
 Graph (entities, relations with supersession and weights), retrieval material
 (chunks, summaries, FTS5, embeddings), contradictions, an append-only provenance
 ledger, sessions (fast cache + context sections), lessons, memify weights and
-global-context buckets, ontology sources. Interfaces are shaped after cognee's
-graph/vector engines so another backend can be slotted in later.
+global-context buckets, ontology sources. Interfaces are kept generic so another backend can be slotted in later.
 """
 
 from __future__ import annotations
@@ -21,7 +20,7 @@ from typing import Iterable
 
 import numpy as np
 
-from .migrations import migrate
+from .schema import COLUMNS, SCHEMA
 
 _FTS_TOKEN = re.compile(r"[A-Za-z0-9_]+")
 STOPWORDS = frozenset("""a an the and or but if then else of to in on at by for from with without about as into like through after before
@@ -38,6 +37,10 @@ class EntityRow:
     type: str
     description: str
     mentions: int = 1
+
+    def index_text(self) -> str:
+        """What lexical and vector search see for this entity."""
+        return f"{self.name} ({self.type}). {self.description}".strip()
 
 
 @dataclass
@@ -56,6 +59,32 @@ class RelationRow:
     valid_from: str | None = None
     valid_to: str | None = None
     updated_at: float = 0.0
+    # A Transition's attributes (ADR 0005); null on every other relation.
+    condition: str | None = None
+    advice: str | None = None
+    pitfall: str | None = None
+    # How the Sessions that traversed this Transition ended.
+    succeeded: int = 0
+    failed: int = 0
+    abandoned: int = 0
+
+    def attribute_text(self) -> str:
+        """The Transition's attributes as one sentence, the shape the skills taught before they were columns."""
+        parts = []
+        if self.condition or self.advice:
+            parts.append(f"When {self.condition or 'taken'}: {self.advice or 'proceed'}.")
+        if self.pitfall:
+            parts.append(f"Avoid: {self.pitfall}.")
+        return " ".join(parts)
+
+    def outcomes(self) -> dict[str, int]:
+        return {"succeeded": self.succeeded, "failed": self.failed, "abandoned": self.abandoned}
+
+    def fact(self, source_name: str, target_name: str) -> str:
+        """The relation as one readable line: 'A --rel--> B: description'."""
+        base = f"{source_name} --{self.name}--> {target_name}"
+        text = self.description or self.attribute_text()
+        return f"{base}: {text}" if text else base
 
 
 @dataclass
@@ -64,6 +93,10 @@ class ChunkRow:
     text: str
     summary: str | None = None
     source: str | None = None
+
+    def index_text(self) -> str:
+        """What lexical and vector search see for this chunk: the summary, then the text."""
+        return f"{self.summary}\n\n{self.text}" if self.summary and self.summary != self.text else self.text
 
 
 @dataclass
@@ -79,6 +112,7 @@ def _rel(r: sqlite3.Row) -> RelationRow:
         r["id"], r["source_id"], r["target_id"], r["name"], r["description"], r["evidence"], r["chunk_id"],
         bool(r["superseded"]), r["superseded_by"], r["supersession_reason"], float(r["weight"]),
         r["valid_from"], r["valid_to"], float(r["updated_at"]),
+        r["condition"], r["advice"], r["pitfall"], int(r["succeeded"]), int(r["failed"]), int(r["abandoned"]),
     )
 
 
@@ -98,7 +132,16 @@ class SqliteStore:
         self.conn.execute("PRAGMA busy_timeout = 60000")
         if not mem:
             self.conn.execute("PRAGMA journal_mode = WAL")
-        self.schema_version = migrate(self.conn)
+        self.conn.executescript(SCHEMA)
+        self._add_missing_columns()
+
+    def _add_missing_columns(self) -> None:
+        """Additive, idempotent upgrades for tables that shipped before a column existed."""
+        for table, column, decl in COLUMNS:
+            present = {r["name"] for r in self.conn.execute(f"PRAGMA table_info({table})")}
+            if column not in present:
+                self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
+        self.conn.commit()
 
     def close(self) -> None:
         self.conn.close()
@@ -187,14 +230,15 @@ class SqliteStore:
             self.conn.execute(
                 "UPDATE relations SET description=CASE WHEN length(?)>length(description) THEN ? ELSE description END,"
                 " evidence=COALESCE(?, evidence), chunk_id=COALESCE(?, chunk_id), valid_from=COALESCE(?, valid_from),"
-                " valid_to=COALESCE(?, valid_to), superseded=0, superseded_by=NULL, supersession_reason=NULL, updated_at=? WHERE id=?",
-                (r.description, r.description, r.evidence, r.chunk_id, r.valid_from, r.valid_to, now, r.id),
+                " valid_to=COALESCE(?, valid_to), condition=COALESCE(?, condition), advice=COALESCE(?, advice), pitfall=COALESCE(?, pitfall),"
+                " superseded=0, superseded_by=NULL, supersession_reason=NULL, updated_at=? WHERE id=?",
+                (r.description, r.description, r.evidence, r.chunk_id, r.valid_from, r.valid_to, r.condition, r.advice, r.pitfall, now, r.id),
             )
             return False
         self.conn.execute(
-            "INSERT INTO relations(id, source_id, target_id, name, description, evidence, chunk_id, created_at, updated_at, weight, valid_from, valid_to)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-            (r.id, r.source_id, r.target_id, r.name, r.description, r.evidence, r.chunk_id, now, now, r.weight, r.valid_from, r.valid_to),
+            "INSERT INTO relations(id, source_id, target_id, name, description, evidence, chunk_id, created_at, updated_at, weight, valid_from, valid_to, condition, advice, pitfall)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (r.id, r.source_id, r.target_id, r.name, r.description, r.evidence, r.chunk_id, now, now, r.weight, r.valid_from, r.valid_to, r.condition, r.advice, r.pitfall),
         )
         return True
 
@@ -228,6 +272,41 @@ class SqliteStore:
         sup = "" if include_superseded else " AND superseded=0"
         rows = self.conn.execute(f"SELECT * FROM relations WHERE source_id=? AND name=?{sup} ORDER BY updated_at DESC", (source_id, name))
         return [_rel(r) for r in rows]
+
+    # ----- transitions (ADR 0005) ------------------------------------------------------
+    def transitions_from(self, source_id: str, limit: int = 6) -> list[RelationRow]:
+        """Current outgoing Transitions of a Procedure: relations whose target is also a Procedure."""
+        rows = self.conn.execute(
+            "SELECT r.* FROM relations r JOIN entities t ON t.id=r.target_id"
+            " WHERE r.source_id=? AND r.superseded=0 AND r.name<>'contradicts' AND t.type='Procedure'"
+            " ORDER BY r.updated_at DESC LIMIT ?",
+            (source_id, limit),
+        )
+        return [_rel(r) for r in rows]
+
+    def transitions_between(self, source_id: str, target_id: str) -> list[RelationRow]:
+        rows = self.conn.execute(
+            "SELECT * FROM relations WHERE source_id=? AND target_id=? AND superseded=0 AND name<>'contradicts'", (source_id, target_id)
+        )
+        return [_rel(r) for r in rows]
+
+    def packed_transitions(self) -> list[RelationRow]:
+        """Transitions written before the attribute columns existed: description set, attributes empty."""
+        rows = self.conn.execute(
+            "SELECT r.* FROM relations r JOIN entities s ON s.id=r.source_id JOIN entities t ON t.id=r.target_id"
+            " WHERE s.type='Procedure' AND t.type='Procedure' AND r.condition IS NULL AND r.advice IS NULL AND r.pitfall IS NULL"
+            " AND r.description<>''"
+        )
+        return [_rel(r) for r in rows]
+
+    def set_attributes(self, relation_id: str, condition: str | None, advice: str | None, pitfall: str | None) -> None:
+        self.conn.execute("UPDATE relations SET condition=?, advice=?, pitfall=? WHERE id=?", (condition, advice, pitfall, relation_id))
+
+    def bump_outcome(self, relation_ids: Iterable[str], outcome: str) -> None:
+        ids = list(relation_ids)
+        if not ids or outcome not in ("succeeded", "failed", "abandoned"):
+            return
+        self.conn.execute(f"UPDATE relations SET {outcome}={outcome}+1 WHERE id IN ({','.join('?' * len(ids))})", ids)
 
     def supersede(self, old_id: str, new_id: str, reason: str) -> bool:
         cur = self.conn.execute(
@@ -345,7 +424,7 @@ class SqliteStore:
         return [ChunkRow(r["id"], r["text"], r["summary"], r["source"]) for r in rows]
 
     def cooccurring_pairs(self, limit: int = 20, min_shared: int = 1) -> list[tuple[str, str, int]]:
-        """Entity pairs sharing chunks but with no direct relation: cognee's cross-connect candidates.
+        """Entity pairs sharing chunks but with no direct relation: cross-connect candidates.
 
         `min_shared` is the floor on how many chunks a pair must share. In a store seeded from one
         chunk every entity co-occurs with every other, so the periodic pass asks for 2.
@@ -414,18 +493,32 @@ class SqliteStore:
     def sessions(self, limit: int = 20) -> list[dict]:
         return [dict(r) for r in self.conn.execute("SELECT * FROM sessions ORDER BY started_at DESC LIMIT ?", (limit,))]
 
-    def session_end(self, session_id: str) -> None:
+    def session_end(self, session_id: str, outcome: str | None = None) -> None:
         self.conn.execute("UPDATE sessions SET ended_at=? WHERE id=? AND ended_at IS NULL", (time.time(), session_id))
+        if outcome:
+            self.conn.execute("UPDATE sessions SET outcome=? WHERE id=?", (outcome, session_id))
         self.conn.commit()
 
     def session_mark_distilled(self, session_id: str) -> None:
         self.conn.execute("UPDATE sessions SET distilled_at=? WHERE id=?", (time.time(), session_id))
         self.conn.commit()
 
-    def add_turn(self, session_id: str, role: str, text: str) -> int:
-        cur = self.conn.execute("INSERT INTO session_turns(session_id, role, text, created_at) VALUES (?,?,?,?)", (session_id, role, text, time.time()))
+    def add_turn(self, session_id: str, role: str, text: str, position: str | None = None) -> int:
+        cur = self.conn.execute(
+            "INSERT INTO session_turns(session_id, role, text, created_at, position) VALUES (?,?,?,?,?)",
+            (session_id, role, text, time.time(), position),
+        )
         self.conn.commit()
         return int(cur.lastrowid)
+
+    def trace(self, session_id: str) -> list[dict]:
+        """The Session's declared Positions in order: turn id, Procedure id and name, time."""
+        rows = self.conn.execute(
+            "SELECT t.id AS turn_id, t.position AS procedure_id, e.name, t.created_at FROM session_turns t"
+            " JOIN entities e ON e.id=t.position WHERE t.session_id=? AND t.position IS NOT NULL ORDER BY t.id",
+            (session_id,),
+        )
+        return [dict(r) for r in rows]
 
     def turns(self, session_id: str) -> list[dict]:
         return [dict(r) for r in self.conn.execute("SELECT * FROM session_turns WHERE session_id=? ORDER BY id", (session_id,))]
@@ -553,5 +646,9 @@ class SqliteStore:
             "open_contradictions": one("SELECT count(*) FROM contradictions WHERE resolved_by IS NULL"),
             "sessions": one("SELECT count(*) FROM sessions"),
             "lessons": one("SELECT count(*) FROM lessons"),
-            "schema_version": self.schema_version,
+            "procedures": one("SELECT count(*) FROM entities WHERE type='Procedure'"),
+            "transitions": one(
+                "SELECT count(*) FROM relations r JOIN entities s ON s.id=r.source_id JOIN entities t ON t.id=r.target_id"
+                " WHERE r.superseded=0 AND s.type='Procedure' AND t.type='Procedure'"
+            ),
         }

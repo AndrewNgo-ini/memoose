@@ -9,14 +9,14 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-HOOKS = ROOT / "hooks"
+HOOKS = ROOT / "harness" / "hooks"
 sys.path.insert(0, str(HOOKS))
 import _common  # noqa: E402
 
-from memoose.datasets import project_dataset_name  # noqa: E402
-from memoose.embeddings import HashEmbedder  # noqa: E402
+from memoose.store.datasets import project_dataset_name  # noqa: E402
+from memoose.store.embeddings import HashEmbedder  # noqa: E402
 from memoose.engine import Engine  # noqa: E402
-from memoose.models import EntityIn, LessonIn, RelationIn  # noqa: E402
+from memoose.graph.models import EntityIn, LessonIn, RelationIn  # noqa: E402
 
 
 def run_hook(script: str, event: dict, env: dict) -> subprocess.CompletedProcess:
@@ -38,7 +38,7 @@ def test_hook_dataset_naming_matches_library(tmp_path, monkeypatch):
 
 def test_legacy_mnemoth_env_and_data_dir_still_resolve(tmp_path, monkeypatch):
     """Setups made before the rename keep working: old env names, and memory left in ~/.mnemoth."""
-    from memoose import datasets
+    from memoose.store import datasets
 
     monkeypatch.delenv("MEMOOSE_DATA_DIR", raising=False)
     monkeypatch.delenv("MEMOOSE_PROJECT_DIR", raising=False)
@@ -252,23 +252,32 @@ def test_capture_survives_missing_claude_cli(tmp_path):
 
 
 # ----- plugin wiring -------------------------------------------------------------------------
-def test_plugin_declares_hooks_and_agent():
+def test_plugin_declares_the_harness():
+    """skills, agents and hooks live under harness/, so the manifest must point at each of them.
+
+    Claude Code loads `skills/`, `agents/` and `hooks/hooks.json` at the plugin root by convention;
+    once they moved, the manifest paths are the only way it finds them. (An earlier version
+    declared `hooks` while `hooks/hooks.json` also sat at the root, and the duplicate stopped the
+    plugin loading; there is no root copy now.)
+    """
     root = Path(__file__).resolve().parents[1]
     manifest = json.loads((root / ".claude-plugin" / "plugin.json").read_text())
-    # hooks/hooks.json is loaded by convention; declaring it in the manifest too made it a
-    # duplicate and Claude Code refused to load the plugin (found installing it on itself).
-    assert "hooks" not in manifest
-    assert (ROOT / "hooks" / "hooks.json").exists()
-    assert "./agents/memory-keeper.md" in manifest["agents"]
-    hooks = json.loads((root / "hooks" / "hooks.json").read_text())
+    assert manifest["skills"] == "./harness/skills" and (root / "harness" / "skills" / "memoose" / "SKILL.md").exists()
+    assert manifest["agents"] == ["./harness/agents/memory-keeper.md"]
+    assert manifest["hooks"] == "./harness/hooks/hooks.json"
+    for legacy in ("skills", "agents", "hooks"):
+        assert not (root / legacy).exists(), f"{legacy}/ at the root would be loaded twice"
+    hooks = json.loads((root / "harness" / "hooks" / "hooks.json").read_text())
     assert set(hooks["hooks"]) == {"SessionStart", "UserPromptSubmit", "Stop", "PreCompact"}
+    for event, groups in hooks["hooks"].items():
+        for h in groups[0]["hooks"]:
+            assert h["command"].startswith('python3 "${CLAUDE_PLUGIN_ROOT}/harness/hooks/'), event
     for event in ("Stop", "PreCompact"):
-        entry = hooks["hooks"][event][0]["hooks"][0]
-        assert entry["async"] is True, f"{event} capture must not block the conversation"
-    agent = (root / "agents" / "memory-keeper.md").read_text()
+        assert hooks["hooks"][event][0]["hooks"][0]["async"] is True, f"{event} capture must not block the conversation"
+    agent = (root / "harness" / "agents" / "memory-keeper.md").read_text()
     assert "model: haiku" in agent, "the keeper must run on a small model"
-    for path in ("hooks/session_start.py", "hooks/capture.py", "hooks/recommend.py"):
-        assert (root / path).exists()
+    for path in ("session_start.py", "capture.py", "recommend.py"):
+        assert (HOOKS / path).exists()
 
 
 # ----- recommendation-as-a-memory -------------------------------------------------------------

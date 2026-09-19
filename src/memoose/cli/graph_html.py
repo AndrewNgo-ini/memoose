@@ -16,8 +16,8 @@ import json
 import urllib.request
 from pathlib import Path
 
-from .datasets import data_dir
-from .store.sqlite_store import SqliteStore
+from ..store.datasets import data_dir
+from ..store.sqlite_store import SqliteStore
 
 VIS_JS = "https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"
 
@@ -49,7 +49,9 @@ def export_graph(store: SqliteStore, include_superseded: bool = False) -> dict:
     edges = [
         {
             "id": r["id"], "from": r["source_id"], "to": r["target_id"], "name": r["name"],
-            "description": r["description"] or "", "evidence": r["evidence"],
+            "description": r["description"] or " ".join(p for p in (
+                f"When {r['condition']}: {r['advice'] or 'proceed'}." if (r["condition"] or r["advice"]) else "",
+                f"Avoid: {r['pitfall']}." if r["pitfall"] else "") if p), "evidence": r["evidence"],
             "valid_from": r["valid_from"], "valid_to": r["valid_to"], "superseded": bool(r["superseded"]),
         }
         for r in rels if r["source_id"] in known and r["target_id"] in known

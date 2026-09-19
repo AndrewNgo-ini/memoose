@@ -1,10 +1,10 @@
-"""End-to-end coverage of the ported cognee memory core, driven the way the skills drive it."""
+"""End-to-end coverage of the memory core, driven the way the skills drive it."""
 
 import pytest
 
-from memoose.models import CrossConnectIn, EntityIn, LessonIn, RelationIn
-from memoose.ontology import OntologyError
-from memoose.retrieval import route
+from memoose.graph.models import CrossConnectIn, EntityIn, LessonIn, RelationIn
+from memoose.graph.ontology import OntologyError
+from memoose.graph.retrieval import Router
 
 E = EntityIn
 R = RelationIn
@@ -90,7 +90,7 @@ def test_contradicts_edge_between_different_subjects(ds):
     ("who works at Acme", "hybrid"),
 ])
 def test_router(q, mode):
-    assert route(q).mode == mode
+    assert Router().route(q).mode == mode
 
 
 def test_modes_return_expected_shapes(ds):
@@ -248,7 +248,7 @@ def test_history_for_entity_aggregates_relations(ds):
     assert {"create", "assert"} <= actions
 
 
-def test_merge_by_name_keeps_stats_and_schema_version(ds):
+def test_merge_by_name_keeps_stats(ds):
     seed(ds)
     st = ds.store.stats()
-    assert st["schema_version"] == 3 and st["entities"] == 6 and st["relations"] == 4
+    assert st["entities"] == 6 and st["relations"] == 4
