@@ -1,0 +1,37 @@
+[multisession-k20-sonnet] longmemeval_s_cleaned.json: 5 questions, 5 to run, embedder fastembed
+  1/5 60bf93ed multi-session: yes (session_hit=True, 13097 tok)
+  2/5 gpt4_f2262a51 multi-session: no (session_hit=True, 13806 tok)
+  3/5 bc149d6b multi-session: yes (session_hit=True, 14620 tok)
+  4/5 gpt4_7fce9456 multi-session: yes (session_hit=True, 15430 tok)
+  5/5 gpt4_2ba83207 multi-session: yes (session_hit=True, 12362 tok)
+{
+  "n": 5,
+  "score": 80.0,
+  "ci95": [
+    37.6,
+    96.4
+  ],
+  "by_type": {
+    "multi-session": {
+      "n": 5,
+      "score": 80.0,
+      "session_hit": 100.0
+    }
+  },
+  "abstention": null,
+  "session_hit": 100.0,
+  "turn_recall": 0.79,
+  "mean_prompt_tokens_est": 13863,
+  "total_cost_usd": 1.01,
+  "retrieval_ms_p50": 24.0,
+  "tag": "multisession-k20-sonnet",
+  "dataset": "longmemeval_s_cleaned.json",
+  "k": 20,
+  "answerer": "sonnet",
+  "judge": "haiku",
+  "embedder": "fastembed",
+  "per_type": 5,
+  "seed": 42,
+  "retrieval_only": false,
+  "ingest_s_mean": null
+}

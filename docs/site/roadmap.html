@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roadmap &middot; Memoose</title>
+<meta name="description" content="What Memoose has shipped and what comes next: evals for maintained memory and token cost, a live test of the procedural loop, the first PyPI release.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a dual-path memory system for proactive agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="vision.html">Vision</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="skills.html">Skills</a></li>
+      <li><a href="automatic.html">Automatic memory</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="trust.html">Evidence &amp; history</a></li>
+      <li><a href="roadmap.html" aria-current="page">Roadmap</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<h1>Roadmap</h1>
+<p class="lede">What is done, and what is next. The detailed record, with the measurements behind
+each entry, is <a href="https://github.com/AndrewNgo-ini/mnemoth/blob/main/docs/STATE.md">docs/STATE.md</a>.</p>
+
+<h2>Done</h2>
+<ul>
+  <li>A graph memory core as MCP tools plus skills, no model in the library.</li>
+  <li>Proactive hints, session-start context and background capture on hosts with hooks.</li>
+  <li>A CLI for every memory operation, alongside the MCP tools; background capture writes through it.</li>
+  <li>The periodic pass, <code>memoose maintain</code>, offered daily on hosts with hooks.</li>
+  <li>Procedural memory after the Procedural Graphs paper: transitions with condition, advice and
+  pitfall, guidance keyed on a declared position, outcomes counted on every transition a session took.</li>
+  <li><code>memoose install</code> puts the skills, hooks and the memory-keeper agent into a host; the
+  MCP server is opt-in.</li>
+</ul>
+
+<h2>Next</h2>
+<ul>
+  <li><strong>A live test of the procedural loop.</strong> The unit tests cover guidance, positions and
+  outcomes; nothing yet shows an agent declaring its position often enough for the trace to be useful,
+  or following the guidance. The plan is a handful of real tasks on this repository run with and
+  without declared positions, outcomes recorded, counters read back.</li>
+  <li><strong>Propose an eval for maintained memory.</strong> No published benchmark asks whether a body
+  of facts stays trustworthy as it changes: a fact was revised, two sources disagree, where did this
+  come from. An eval only its author runs is not evidence, so this needs a design other systems can
+  run before any number from it is worth publishing.</li>
+  <li><strong>A token-cost benchmark.</strong> Accuracy is reported everywhere and cost almost nowhere,
+  though cost is what a memory system charges you per turn. No comparable methodology across systems
+  exists yet.</li>
+  <li>First PyPI release: push the <code>v0.4.0</code> tag; the publish workflow does the rest.</li>
+  <li>Exercise the delegated subagent path live on a host without hooks, and a live end-to-end run of
+  <code>maintain</code>, the way capture was verified. Re-check capture quality too: the capture
+  prompt changed shape when it moved to the CLI and has not been measured since.</li>
+  <li>An ANN index, if a project ever passes about 200k vectors. SQLite itself has room well past that.</li>
+  <li>Migration from a pre-rename <code>~/.mnemoth</code> store.</li>
+</ul>
+
+<h2>Not planned</h2>
+<p>A hosted service, a UI, multi-user access control, other storage backends, or winning LoCoMo. The
+<a href="vision.html">vision page</a> says why.</p>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service. Your memory stays on your machine.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

@@ -39,7 +39,7 @@ from retrieval_bench import ingest as ingest_chunks  # noqa: E402
 from retrieval_bench import sessions_of  # noqa: E402
 from fetch_dataset import ensure_dataset  # noqa: E402
 
-from memoose.embeddings import HashEmbedder, default_embedder  # noqa: E402
+from memoose.store.embeddings import HashEmbedder, default_embedder  # noqa: E402
 from memoose.engine import Engine  # noqa: E402
 
 CATS = {1: "multi-hop", 2: "temporal", 3: "open-domain", 4: "single-hop"}

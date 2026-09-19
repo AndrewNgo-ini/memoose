@@ -14,18 +14,20 @@
 <header class="side">
   <a class="brand" href="index.html">
     <img src="memoose-mascot.png" alt="" width="48" height="48">
-    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+    <span><strong>Memoose</strong><small>a dual-path memory system for proactive agents</small></span>
   </a>
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
       <li><a href="vision.html" aria-current="page">Vision</a></li>
+      <li><a href="features.html">Features</a></li>
       <li><a href="install.html">Install</a></li>
       <li><a href="tools.html">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
       <li><a href="automatic.html">Automatic memory</a></li>
       <li><a href="configuration.html">Configuration</a></li>
       <li><a href="trust.html">Evidence &amp; history</a></li>
+      <li><a href="roadmap.html">Roadmap</a></li>
     </ul>
   </nav>
   <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
@@ -34,6 +36,21 @@
 <h1>Vision</h1>
 <p class="lede">The agent already has a model. Memory should not bring a second one, and it should
 not wait to be asked.</p>
+
+<h2>The problem</h2>
+<p>An agent that forgets is an agent you re-teach every morning. Every agent host now ships some
+answer to this, and none of them is portable: Claude Code has its memory, Codex has another, Cursor a
+third. Move tools and your project&rsquo;s accumulated context stays behind.</p>
+<p>The libraries that solve it properly solve it at a price. cognee, mem0 and Zep are good systems, but
+each one wants an LLM API key of its own, and usually a service to run. That means a second inference
+bill on top of the subscription you already pay, your project&rsquo;s memory leaving the machine,
+another vendor in the loop, and a dependency footprint that does not belong in a developer tool.</p>
+<p>The protocol has an answer for this that nobody implements. MCP defines
+<code>sampling/createMessage</code>, which lets a server borrow the host&rsquo;s model instead of
+bringing its own. No host we target grants the capability
+(<a href="https://github.com/anthropics/claude-code/issues/1785">anthropics/claude-code#1785</a> is
+open), so in practice such a server still needs its own key. Memoose takes the other route: the
+model that is already running the conversation does the thinking, through skills.</p>
 
 <h2>The bet</h2>
 <p>Memoose splits into an <strong>engine</strong> and a <strong>harness</strong>. The engine holds
@@ -86,6 +103,22 @@ local index with a relevance floor and a hard cap on how much it injects, silent
 no model, a few milliseconds, cheap enough to run on every prompt. The agent keeps full control over
 whether to follow it. See <a href="automatic.html">Automatic memory</a>.</p>
 
+<h2>The missing context is usually procedural</h2>
+<p>An agent with a good factual memory still fails on long tasks in a particular way: it knows what
+things are and loses what to do next. It runs steps out of order, skips the check before the commit,
+repeats a step that already failed. Facts answer <em>what is</em>; that failure is about
+<em>what to do next</em>, and a pile of past-session text does not answer it.</p>
+<p>Memoose follows Google&rsquo;s <a href="https://arxiv.org/abs/2609.09153">Procedural Graphs</a>
+paper (Lu, Chen, Wu, Ar&#305;k, 2026) and stores procedures in the same graph as facts: steps as
+<code>Procedure</code> entities, transitions as relations carrying a <em>condition</em>, an
+<em>advice</em> and a <em>pitfall</em>. The agent declares its position on a session turn and is handed
+the transitions two hops out from there, raw; it decides. The paper&rsquo;s ablation is why the
+neighbourhood is local and small: the whole graph in context did worse than no graph on an embodied
+benchmark. When the session ends with an outcome, every transition the run took counts it, and a
+transition that keeps failing is the first thing the next distillation looks at. No model call, no
+validation harness, no guessing where the agent is: silence beats a wrong steer. See
+<a href="../adr/0005-procedural-vocabulary-as-first-class-schema.md">ADR 0005</a>.</p>
+
 <h2>What Memoose is for</h2>
 <p>Long-lived project work, where the hard part is not finding a fact once but keeping a body of facts
 trustworthy for months: who owns what now, which decision replaced which, what convention this team
@@ -110,6 +143,18 @@ queryable.</li>
 <li><strong>Errors teach.</strong> A rejected write returns a message written for the model,
 saying which type to use and which relation name.</li>
 </ol>
+
+<h2>How we would know it works</h2>
+<ul>
+  <li>A developer installs it once and it works in whichever agent they open tomorrow.</li>
+  <li>After a month on a project, an agent answers &ldquo;why is it built this way?&rdquo; with the
+  decision, the date and the evidence, and flags the two places the codebase now disagrees with it.</li>
+  <li>When a step failed last time, the agent is told so before it takes it again, and the chain it
+  follows gets better without anyone editing it by hand.</li>
+  <li>When a fact changes, nobody has to remember to clean up.</li>
+  <li>The memory file is small enough to read, and a person can open it and understand what the agent
+  believes about their project.</li>
+</ul>
 
 <footer class="page-foot">
   <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>

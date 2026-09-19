@@ -10,7 +10,7 @@ on:
     branches: [main]
     paths:
       - 'docs/site/**'
-      - 'assets/memoose-mascot-v2.png'
+      - 'assets/memoose-mascot.png'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -40,15 +40,15 @@ jobs:
       - name: Stage site
         run: |
           set -euo pipefail
-          test -f assets/memoose-mascot-v2.png \
-            || { echo "::error::assets/memoose-mascot-v2.png is missing"; exit 1; }
+          test -f assets/memoose-mascot.png \
+            || { echo "::error::assets/memoose-mascot.png is missing"; exit 1; }
           mkdir -p _site
           # -P keeps the checked-in mascot symlink a symlink instead of following it
           # (a dangling link would fail the copy); it is replaced by the real file below,
           # so the artifact contains no link pointing outside the published root.
           cp -RP docs/site/. _site/
           rm -f _site/memoose-mascot.png
-          cp assets/memoose-mascot-v2.png _site/memoose-mascot.png
+          cp assets/memoose-mascot.png _site/memoose-mascot.png
           test -f _site/index.html && test ! -L _site/memoose-mascot.png
           ls -l _site
 

@@ -14,18 +14,20 @@
 <header class="side">
   <a class="brand" href="index.html">
     <img src="memoose-mascot.png" alt="" width="48" height="48">
-    <span><strong>Memoose</strong><small>a memory harness for agents</small></span>
+    <span><strong>Memoose</strong><small>a dual-path memory system for proactive agents</small></span>
   </a>
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
       <li><a href="vision.html">Vision</a></li>
+      <li><a href="features.html">Features</a></li>
       <li><a href="install.html" aria-current="page">Install</a></li>
       <li><a href="tools.html">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
       <li><a href="automatic.html">Automatic memory</a></li>
       <li><a href="configuration.html">Configuration</a></li>
       <li><a href="trust.html">Evidence &amp; history</a></li>
+      <li><a href="roadmap.html">Roadmap</a></li>
     </ul>
   </nav>
   <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
@@ -51,25 +53,29 @@ one dataset per project plus a <code>user</code> dataset for facts that hold eve
 <a href="configuration.html">Configuration</a>.</p>
 
 <h2>Install into a host</h2>
-<p>This gives the agent the skills (when to recall, how to extract, how to judge a contradiction)
-and, where the host allows, the MCP server:</p>
+<p>This gives the agent the skills (when to recall, how to extract, how to judge a contradiction),
+and on Claude Code the hooks and the <code>memory-keeper</code> subagent:</p>
 <pre><code>memoose install claude               # or: codex | opencode | cursor
 memoose install claude --project .   # project scope instead of user scope
+memoose install codex --mcp          # also register the MCP server, for an agent without a shell
 memoose status                       # what is installed where</code></pre>
-<p><code>install</code> writes one MCP server entry (<code>uvx memoose serve</code>) into the host's
-own config and copies the skills in. <code>uninstall</code> reverses both. Then <strong>restart the
-host</strong>, because MCP servers and hooks are read at startup. The MCP path needs
-<a href="https://docs.astral.sh/uv/">uv</a> on the machine; the CLI does not.</p>
+<p><code>install</code> copies the skills in; on Claude Code it also copies the hooks beside the
+settings file, registers them there, and drops the agent into <code>agents/</code>. No MCP server is
+wired unless you pass <code>--mcp</code>: the skills teach the CLI, which costs nothing until it
+runs. <code>uninstall</code> reverses all of it. Then <strong>restart the host</strong>, because hooks
+and MCP servers are read at startup. The MCP path needs <a href="https://docs.astral.sh/uv/">uv</a>
+on the machine; the CLI does not. If the memoose plugin is installed, hooks and agent are skipped:
+the plugin already supplies them.</p>
 
 <h3>What each host gets</h3>
 <div class="table-wrap">
 <table>
-<thead><tr><th>Host</th><th>MCP config written</th><th>Skills copied to</th></tr></thead>
+<thead><tr><th>Host</th><th>Skills copied to</th><th>Hooks and agent</th><th>MCP config (with <code>--mcp</code>)</th></tr></thead>
 <tbody>
-<tr><td>Claude Code</td><td><code>~/.claude.json</code> (user) or <code>.mcp.json</code> (project)</td><td><code>.claude/skills/memoose*</code></td></tr>
-<tr><td>Codex</td><td><code>~/.codex/config.toml</code></td><td><code>.agents/skills/memoose*</code></td></tr>
-<tr><td>OpenCode</td><td><code>~/.config/opencode/opencode.jsonc</code> or <code>opencode.jsonc</code></td><td><code>.config/opencode/skills/memoose*</code> (user) or <code>.opencode/skills/memoose*</code></td></tr>
-<tr><td>Cursor</td><td><code>~/.cursor/mcp.json</code> or <code>.cursor/mcp.json</code></td><td><code>.cursor/skills/memoose*</code></td></tr>
+<tr><td>Claude Code</td><td><code>.claude/skills/memoose*</code></td><td><code>.claude/memoose/hooks/</code>, registered in <code>.claude/settings.json</code>; <code>.claude/agents/memory-keeper.md</code></td><td><code>~/.claude.json</code> (user) or <code>.mcp.json</code> (project)</td></tr>
+<tr><td>Codex</td><td><code>.agents/skills/memoose*</code></td><td>none</td><td><code>~/.codex/config.toml</code></td></tr>
+<tr><td>OpenCode</td><td><code>.config/opencode/skills/memoose*</code> (user) or <code>.opencode/skills/memoose*</code></td><td>none</td><td><code>~/.config/opencode/opencode.jsonc</code> or <code>opencode.jsonc</code></td></tr>
+<tr><td>Cursor</td><td><code>.cursor/skills/memoose*</code></td><td>none</td><td><code>~/.cursor/mcp.json</code> or <code>.cursor/mcp.json</code></td></tr>
 </tbody>
 </table>
 </div>
@@ -98,26 +104,26 @@ copy of everything. Inside Claude Code:</p>
 </dl>
 
 <h2>Verify it works</h2>
-<p>From the shell, <code>memoose status</code> shows what landed. In the host, ask the agent to call
-two tools:</p>
-<pre><code>list_datasets        # is the server reachable, and which dataset is this project?
-describe_ontology    # entity types, functional relations, store stats</code></pre>
-<p>If <code>list_datasets</code> answers, the core is live and every capability is available. If it
-does not, the MCP server is not connected: re-run the install for that host and restart it. For the
+<p>From the shell, <code>memoose status</code> shows what landed. In the host, ask the agent to run
+two commands:</p>
+<pre><code>memoose datasets     # which dataset is this project, and which embedder is in use?
+memoose ontology     # entity types, functional relations, store stats</code></pre>
+<p>If they answer, the core is live and every capability is available. If the agent cannot run a
+shell, install with <code>--mcp</code> and ask it to call <code>list_datasets</code> instead. For the
 automatic parts, run the <code>memoose-onboard</code> skill. It checks each one against the host
 you are actually on and reports what it found.</p>
 
 <h2>From a checkout</h2>
 <p>For development or to run the latest pre-release:</p>
 <pre><code>git clone https://github.com/AndrewNgo-ini/mnemoth.git &amp;&amp; cd mnemoth &amp;&amp; uv sync
-uv run memoose install claude          # the MCP entry points uvx at this checkout, not at PyPI
+uv run memoose install claude          # skills, hooks and agent from this checkout
 claude --plugin-dir .                  # Claude Code: skills, hooks and server from the checkout
 uv sync --extra fastembed              # local embeddings (a keyless hashed fallback is used otherwise)
 uv sync --extra ontology               # full RDF parsing
 uv run pytest                          # the suite</code></pre>
 
 <footer class="page-foot">
-  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+  <p>Memoose is Apache-2.0. No API key, no service. Your memory stays on your machine.</p>
 </footer>
 </main>
 </div>

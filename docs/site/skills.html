@@ -14,18 +14,20 @@
 <header class="side">
   <a class="brand" href="index.html">
     <img src="memoose-mascot.png" alt="" width="48" height="48">
-    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+    <span><strong>Memoose</strong><small>a dual-path memory system for proactive agents</small></span>
   </a>
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
       <li><a href="vision.html">Vision</a></li>
+      <li><a href="features.html">Features</a></li>
       <li><a href="install.html">Install</a></li>
       <li><a href="tools.html">Tools</a></li>
       <li><a href="skills.html" aria-current="page">Skills</a></li>
       <li><a href="automatic.html">Automatic memory</a></li>
       <li><a href="configuration.html">Configuration</a></li>
       <li><a href="trust.html">Evidence &amp; history</a></li>
+      <li><a href="roadmap.html">Roadmap</a></li>
     </ul>
   </nav>
   <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
@@ -46,33 +48,18 @@ have.</p>
 <tbody>
 <tr>
   <td><code>memoose</code></td>
-  <td>When to recall, and how to extract entities, relations, evidence and summaries (cognee's extraction rules).</td>
+  <td>When to recall, how to extract entities, relations, evidence and summaries, how to store a procedure, and how to shape the ontology.</td>
   <td>You say remember or recall, ask &ldquo;what did we decide&rdquo;, refer to people, systems, decisions or dates from earlier work, or the agent learns a durable fact.</td>
 </tr>
 <tr>
   <td><code>memoose-onboard</code></td>
-  <td>What is actually live on this host, what is being stored, and how to turn any of it off.</td>
-  <td>Just after installing, or when automatic memory is not behaving and you want to know why.</td>
+  <td>What is actually live on this host, how to give an existing project its first memory, what is being stored, and how to turn any of it off.</td>
+  <td>Just after installing, on a project with history but no memory yet, or when automatic memory is not behaving and you want to know why.</td>
 </tr>
 <tr>
-  <td><code>memoose-contradictions</code></td>
-  <td>Judging hotspots, choosing <code>supersede</code> over <code>mark_contradiction</code>, declaring functional relations.</td>
-  <td><code>remember</code> returns hotspots, recall shows contested facts, or you say a stored fact is wrong.</td>
-</tr>
-<tr>
-  <td><code>memoose-sessions</code></td>
-  <td>Typed context sections during the work, and the curator and writer rules for distilling lessons.</td>
-  <td>A task starts, you state a goal, rule or preference, or a task ends.</td>
-</tr>
-<tr>
-  <td><code>memoose-memify</code></td>
-  <td>Cross-connecting co-occurring entities, consolidating duplicates, refreshing global-context summaries, feedback weights.</td>
-  <td>You ask to clean up memory, or after a large batch of writes.</td>
-</tr>
-<tr>
-  <td><code>memoose-ontology</code></td>
-  <td>Extending and importing ontologies, and declaring which relations hold a single current value.</td>
-  <td>You have an OWL/RDF/Turtle ontology to import, or want domain-specific entity types.</td>
+  <td><code>memoose-upkeep</code></td>
+  <td>Judging what the store surfaces: hotspots and contradictions (<code>supersede</code> over <code>mark_contradiction</code>), duplicates, connections, stale summaries, and dismissing what was judged.</td>
+  <td><code>remember</code> warns, recall shows a contested fact, you say a fact is wrong, you ask to clean up memory, or a session start says upkeep is due.</td>
 </tr>
 </tbody>
 </table>

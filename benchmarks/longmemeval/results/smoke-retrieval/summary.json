@@ -1,0 +1,59 @@
+{
+  "n": 12,
+  "score": 0.0,
+  "ci95": [
+    0.0,
+    24.3
+  ],
+  "by_type": {
+    "knowledge-update": {
+      "n": 2,
+      "score": 0.0,
+      "session_hit": 100.0
+    },
+    "multi-session": {
+      "n": 2,
+      "score": 0.0,
+      "session_hit": 100.0
+    },
+    "single-session-assistant": {
+      "n": 2,
+      "score": 0.0,
+      "session_hit": 100.0
+    },
+    "single-session-preference": {
+      "n": 2,
+      "score": 0.0,
+      "session_hit": 100.0
+    },
+    "single-session-user": {
+      "n": 2,
+      "score": 0.0,
+      "session_hit": 100.0
+    },
+    "temporal-reasoning": {
+      "n": 2,
+      "score": 0.0,
+      "session_hit": 100.0
+    }
+  },
+  "abstention": {
+    "n": 1,
+    "score": 0.0
+  },
+  "session_hit": 100.0,
+  "turn_recall": 0.955,
+  "mean_prompt_tokens_est": 13010,
+  "total_cost_usd": 0,
+  "retrieval_ms_p50": 15.0,
+  "tag": "smoke-retrieval",
+  "dataset": "longmemeval_s_cleaned.json",
+  "k": 20,
+  "answerer": "haiku",
+  "judge": "haiku",
+  "embedder": "fastembed",
+  "per_type": 2,
+  "seed": 42,
+  "retrieval_only": true,
+  "ingest_s_mean": 39.8
+}

@@ -1,0 +1,42 @@
+# Publishes memoose to PyPI when a version tag is pushed: `git tag v0.3.0 && git push --tags`.
+#
+# One-time setup by a repo admin, on pypi.org > your project > Publishing > add a
+# "trusted publisher" with owner AndrewNgo-ini, repository mnemoth, workflow publish.yml,
+# environment pypi. No API token is stored anywhere; PyPI trusts this workflow's OIDC identity.
+# For the very first release, use "pending publisher" on pypi.org so the name is created by
+# this workflow.
+name: publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - run: uv run pytest -q
+      - name: Tag matches pyproject version
+        run: |
+          set -euo pipefail
+          want="${GITHUB_REF_NAME#v}"
+          have="$(uv run python -c 'import tomllib;print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
+          test "$want" = "$have" || { echo "::error::tag v$want but pyproject.toml says $have"; exit 1; }
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build
+      - run: uv publish

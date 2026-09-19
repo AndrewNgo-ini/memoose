@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Overview &middot; Memoose</title>
-<meta name="description" content="Memoose is a memory harness for coding agents: a deterministic store reached through MCP tools, plus skills that teach the model you are already running how to use it. No API key.">
+<meta name="description" content="Memoose is a dual-path memory system for proactive agents: a deterministic store reached through MCP tools, plus skills that teach the model you are already running how to use it. No API key.">
 <link rel="icon" href="memoose-mascot.png">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -14,18 +14,20 @@
 <header class="side">
   <a class="brand" href="index.html">
     <img src="memoose-mascot.png" alt="" width="48" height="48">
-    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+    <span><strong>Memoose</strong><small>a dual-path memory system for proactive agents</small></span>
   </a>
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html" aria-current="page">Overview</a></li>
       <li><a href="vision.html">Vision</a></li>
+      <li><a href="features.html">Features</a></li>
       <li><a href="install.html">Install</a></li>
       <li><a href="tools.html">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
       <li><a href="automatic.html">Automatic memory</a></li>
       <li><a href="configuration.html">Configuration</a></li>
       <li><a href="trust.html">Evidence &amp; history</a></li>
+      <li><a href="roadmap.html">Roadmap</a></li>
     </ul>
   </nav>
   <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
@@ -35,12 +37,13 @@
   <img src="memoose-mascot.png" alt="The Memoose mascot: a round 2D cartoon moose with tan antlers, sitting and holding up a blank card, on an ivory background." width="320" height="320">
   <div>
     <h1>Memoose</h1>
-    <p class="lede">A memory harness for coding agents. Pick up where you left off, in whichever
+    <p class="lede">A dual-path memory system for proactive agents. Pick up where you left off, in whichever
     agent you open tomorrow.</p>
   </div>
 </div>
 
-<pre><code>uv run memoose install claude      # or: codex | opencode | cursor</code></pre>
+<pre><code>pip install memoose
+memoose install claude             # or: codex | opencode | cursor</code></pre>
 
 <p>You explained the architecture, the conventions, and the reason behind last week's decision.
 Memoose is how your agent still knows them today. It is a <strong>harness</strong>: a
@@ -48,7 +51,8 @@ deterministic store reached through <a href="tools.html">MCP tools</a> or the co
 <a href="skills.html">skills</a> that teach the model you are already running how to use it.</p>
 
 <ul class="cards">
-  <li><a href="install.html"><strong>Install</strong><span>Four hosts, one command, from a source checkout.</span></a></li>
+  <li><a href="features.html"><strong>Features</strong><span>What it does, one paragraph each.</span></a></li>
+  <li><a href="install.html"><strong>Install</strong><span>pip install, then one command per host.</span></a></li>
   <li><a href="tools.html"><strong>Tools</strong><span>Every capability as an MCP tool call.</span></a></li>
   <li><a href="skills.html"><strong>Skills</strong><span>Where the judgment is written down.</span></a></li>
   <li><a href="automatic.html"><strong>Automatic memory</strong><span>Hooks, background capture, onboarding.</span></a></li>
@@ -66,7 +70,7 @@ entity, which facts conflict, what is worth remembering, what a session taught. 
 by the host's model, the one you are already running, while it calls the tools. So
 Memoose ships no model of its own and needs no API key
 (<a href="https://github.com/AndrewNgo-ini/mnemoth/blob/main/docs/adr/0001-skills-and-mcp-only.md">ADR&nbsp;0001</a>).</p>
-<p>Your memory is a typed knowledge graph in one SQLite file on your machine. Recalled facts become
+<p>Your memory is a typed knowledge graph that stays on your machine. Recalled facts become
 context for your host's model, the same as anything else it reads.</p>
 
 <div class="table-wrap">
@@ -106,14 +110,13 @@ suite of 18 cases that asserts it on what the tools return.</p>
   the same ground, with you or the agent asking for it.</li>
   <li><strong>Recall feeds your host's model.</strong> The store is a local file, and what you recall
   becomes context in the conversation like any other text the agent reads.</li>
-  <li><strong>Install is from source.</strong> Memoose is not on PyPI yet.</li>
   <li><strong>It is not built for chat logs, teams, or a service.</strong> No multi-user access
   control, no hosted service, no UI, no audio or images. It does not replace the host's own context
   management.</li>
 </ul>
 
 <footer class="page-foot">
-  <p>Memoose is Apache-2.0. No API key, no service, one SQLite file per project.</p>
+  <p>Memoose is Apache-2.0. No API key, no service. Your memory stays on your machine.</p>
 </footer>
 </main>
 </div>

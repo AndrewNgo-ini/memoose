@@ -14,18 +14,20 @@
 <header class="side">
   <a class="brand" href="index.html">
     <img src="memoose-mascot.png" alt="" width="48" height="48">
-    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+    <span><strong>Memoose</strong><small>a dual-path memory system for proactive agents</small></span>
   </a>
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
       <li><a href="vision.html">Vision</a></li>
+      <li><a href="features.html">Features</a></li>
       <li><a href="install.html">Install</a></li>
       <li><a href="tools.html" aria-current="page">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
       <li><a href="automatic.html">Automatic memory</a></li>
       <li><a href="configuration.html">Configuration</a></li>
       <li><a href="trust.html">Evidence &amp; history</a></li>
+      <li><a href="roadmap.html">Roadmap</a></li>
     </ul>
   </nav>
   <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
@@ -45,12 +47,13 @@ invocation for this machine when the binary is not on <code>PATH</code>.</p>
 <thead><tr><th>command</th><th>does</th></tr></thead>
 <tbody>
 <tr><td><code>memoose recall "who owns billing"</code></td><td>Search memory. <code>--mode</code>, <code>--limit</code>, <code>--hops</code>, <code>--superseded</code>, <code>--no-user</code></td></tr>
-<tr><td><code>memoose remember "bao:Person --owns--&gt; auth:System"</code></td><td>Store a fact. <code>--desc</code>, <code>-e/--evidence</code>, <code>--valid-from</code>, <code>--summary</code>; <code>--stdin</code> takes the full JSON payload</td></tr>
+<tr><td><code>memoose remember "bao:Person --owns--&gt; auth:System"</code></td><td>Store a fact. <code>--desc</code>, <code>-e/--evidence</code>, <code>--valid-from</code>, <code>--summary</code>; <code>--stdin</code> takes the full JSON payload. Between two Procedures the fact is a transition: <code>--when</code>, <code>--do</code>, <code>--avoid</code></td></tr>
+<tr><td><code>memoose guidance "run the test suite"</code></td><td>What memory says comes next from a Procedure: its outgoing transitions two hops out, with condition, advice, pitfall and how past runs ended. Memory, not an instruction</td></tr>
 <tr><td><code>memoose history auth-service</code></td><td>The provenance ledger for an entity or a fact</td></tr>
 <tr><td><code>memoose contradictions [names]</code></td><td>Hotspots and open contradictions to judge</td></tr>
 <tr><td><code>memoose ontology</code></td><td>Entity types, functional relations, store stats</td></tr>
 <tr><td><code>memoose datasets</code> &middot; <code>memoose context</code></td><td>Memory scopes on this machine &middot; the global-context buckets</td></tr>
-<tr><td><code>memoose session start|turn|context|get|timeline|lessons|end</code></td><td>Session lifecycle</td></tr>
+<tr><td><code>memoose session start|turn|context|get|timeline|lessons|end</code></td><td>Session lifecycle. <code>turn --at &lt;Procedure&gt;</code> declares your position and prints the guidance from there; <code>end --outcome succeeded|failed|abandoned</code> counts the outcome on every transition the session took</td></tr>
 <tr><td><code>memoose maintain</code></td><td>The periodic pass: hotspots, open contradictions, duplicate names, missing summaries and undistilled sessions, in one worklist</td></tr>
 <tr><td><code>memoose dismiss &lt;key&gt; --reason "..."</code></td><td>Decline a candidate from <code>maintain</code> or <code>contradictions</code> so it is not proposed again; the reason is shown next time</td></tr>
 <tr><td><code>memoose view</code></td><td>The knowledge graph in your browser as one self-contained HTML file: colour is the entity type, a diamond is a Procedure, click a node for its facts. <code>--superseded</code> draws history dashed</td></tr>
@@ -132,10 +135,14 @@ model which type to use instead.</p>
   <dd>Searches the project dataset and then the user dataset, and returns ranked raw material for the
   model to synthesise: entities, facts with their evidence, validity and superseded/contested flags,
   and chunks. Without <code>mode</code>, a regex router picks one.</dd>
+  <dt>guidance(procedure, hops?, per_hop?, dataset?)</dt>
+  <dd>The outgoing transitions of a Procedure two hops out, grouped by hop, each with condition,
+  advice, pitfall and how past sessions that took it ended. Raw and local; you decide. Superseded
+  transitions are excluded and declined changes to these transitions are listed.</dd>
   <dt>contradiction_candidates(entity_names?, relation_ids?, dataset?)</dt>
   <dd>Facts around given entities or relations, grouped by subject, with <em>hotspots</em> where one
   subject holds several values for one relation. Judge them with the
-  <code>memoose-contradictions</code> skill.</dd>
+  <code>memoose-upkeep</code> skill.</dd>
   <dt>history(entity?, relation_id?, limit?, dataset?)</dt>
   <dd>The provenance ledger: every create, merge, assert, supersede and forget, with actor and
   time.</dd>
@@ -176,9 +183,10 @@ to judge.</p>
   <dt>session_start(session_id?, dataset?)</dt>
   <dd>Start or resume a session. Returns the standing context to load before work: goals, rules,
   preferences and lessons.</dd>
-  <dt>session_add_turn(session_id, role, text, dataset?)</dt>
+  <dt>session_add_turn(session_id, role, text, position?, dataset?)</dt>
   <dd>Append a turn (<code>user</code>, <code>assistant</code>, <code>tool</code>,
-  <code>system</code>) to the session's fast cache.</dd>
+  <code>system</code>) to the session's fast cache. With <code>position</code>, the Procedure you
+  are at, the reply carries the guidance from there and the session's trace grows by one step.</dd>
   <dt>session_set_context(session_id, section, content, confidence?, retire_entry_id?, dataset?)</dt>
   <dd>Write a typed context section (a goal, a rule, a preference) during the work, and retire an
   entry that no longer holds.</dd>
@@ -190,8 +198,10 @@ to judge.</p>
   <dt>publish_lessons(lessons, session_id?, dataset?)</dt>
   <dd>Persist accepted lessons as <code>Lesson</code> entities linked to what they apply to, and mark
   the session distilled.</dd>
-  <dt>session_end(session_id, dataset?)</dt>
-  <dd>Close a session. Tells you whether it still needs distillation.</dd>
+  <dt>session_end(session_id, outcome?, dataset?)</dt>
+  <dd>Close a session with its outcome (<code>succeeded</code>, <code>failed</code>,
+  <code>abandoned</code>). Every transition the trace traversed counts it. Returns the trace, what
+  to distil from it, and whether lessons are still owed.</dd>
 </dl>
 
 <div class="note">

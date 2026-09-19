@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Features &middot; Memoose</title>
+<meta name="description" content="What Memoose does: a typed knowledge graph with evidence, procedures as a graph, recommendation as well as search, a CLI and MCP tools over one store, and nothing leaving your machine.">
+<link rel="icon" href="memoose-mascot.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<header class="side">
+  <a class="brand" href="index.html">
+    <img src="memoose-mascot.png" alt="" width="48" height="48">
+    <span><strong>Memoose</strong><small>a dual-path memory system for proactive agents</small></span>
+  </a>
+  <nav aria-label="Documentation">
+    <ul>
+      <li><a href="index.html">Overview</a></li>
+      <li><a href="vision.html">Vision</a></li>
+      <li><a href="features.html" aria-current="page">Features</a></li>
+      <li><a href="install.html">Install</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="skills.html">Skills</a></li>
+      <li><a href="automatic.html">Automatic memory</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="trust.html">Evidence &amp; history</a></li>
+      <li><a href="roadmap.html">Roadmap</a></li>
+    </ul>
+  </nav>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+</header>
+<main id="main">
+<h1>Features</h1>
+<p class="lede">What Memoose does, one paragraph each, with the page that goes deeper.</p>
+
+<h2>A knowledge graph with an ontology</h2>
+<p>Typed entities and facts instead of text blobs. Every fact is one relation between two entities
+with a one-sentence description, a validity date and an evidence pointer back to where it came from:
+a file range, a URL, an issue id, or &ldquo;user said&rdquo; with a date. The entity types are an
+ontology you can extend in place or import from OWL, RDF or Turtle. See
+<a href="tools.html">Tools</a>.</p>
+
+<h2>Procedures as a graph</h2>
+<p>The context an agent most often lacks is not a fact but the next step. Memoose stores procedures
+in the same graph, after Google&rsquo;s <a href="https://arxiv.org/abs/2609.09153">Procedural
+Graphs</a> paper: steps as <code>Procedure</code> entities, transitions as relations carrying a
+condition, an advice and a pitfall. The agent declares its position on a session turn and is handed
+the transitions two hops out, raw, to decide with. When the session ends with an outcome, every
+transition it took counts it, so a transition that keeps failing stands out at the next distillation.
+No model call and no guessing where the agent is. See <a href="vision.html">Vision</a> and the
+<a href="skills.html">sessions skill</a>.</p>
+
+<h2>Recommendation as well as search</h2>
+<p><code>recall</code> answers the question the agent thought to ask, across eight retrieval modes
+routed from the query. A hint before each prompt covers the questions it did not think to ask:
+memory is searched locally when a prompt arrives and, when something genuinely matches, a short block
+is put in front of the agent. No model, a few milliseconds, silent when nothing matches. See
+<a href="automatic.html">Automatic memory</a>.</p>
+
+<h2>Two ways in, one store</h2>
+<p>A CLI the agent runs like any other command, <code>memoose recall "who owns billing"</code>, and
+26 MCP tools for hosts where the shell is restricted. The CLI is the default: the MCP server&rsquo;s
+schemas measure about 4,250 tokens resident on every turn, while a command costs nothing until it
+runs. Both surfaces sit on the same Engine and the same SQLite file. See
+<a href="tools.html">Tools</a>.</p>
+
+<h2>Stays on your machine</h2>
+<p>No service, no API key, nothing leaves your computer. Each project gets its own memory in one
+SQLite file, plus a <code>user</code> file for facts that hold in every project; you can inspect,
+copy or delete any of them. Measured room to roughly a million facts per project before anything
+needs rethinking. See <a href="configuration.html">Configuration</a>.</p>
+
+<h2>Changes stay visible</h2>
+<p>A fact that was true once is never deleted when it changes; it is superseded and stays in history.
+Disagreements are surfaced as hotspots for a model to judge, every write lands in an append-only
+provenance ledger, and finished sessions distil into lessons. See
+<a href="trust.html">Evidence &amp; history</a>.</p>
+
+<footer class="page-foot">
+  <p>Memoose is Apache-2.0. No API key, no service. Your memory stays on your machine.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

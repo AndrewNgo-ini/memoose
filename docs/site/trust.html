@@ -14,18 +14,20 @@
 <header class="side">
   <a class="brand" href="index.html">
     <img src="memoose-mascot.png" alt="" width="48" height="48">
-    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+    <span><strong>Memoose</strong><small>a dual-path memory system for proactive agents</small></span>
   </a>
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
       <li><a href="vision.html">Vision</a></li>
+      <li><a href="features.html">Features</a></li>
       <li><a href="install.html">Install</a></li>
       <li><a href="tools.html">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
       <li><a href="automatic.html">Automatic memory</a></li>
       <li><a href="configuration.html">Configuration</a></li>
       <li><a href="trust.html" aria-current="page">Evidence &amp; history</a></li>
+      <li><a href="roadmap.html">Roadmap</a></li>
     </ul>
   </nav>
   <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
@@ -47,8 +49,8 @@ a file range like <code>repo://src/auth.py#L40-L82</code>, a URL, an issue id, o
 wherever the source supports it. <code>valid_from</code> and <code>valid_to</code> record when a fact
 became and stopped being true, when the source says.</p>
 <p>The point is re-verification rather than trust: a later run can follow the pointer and check whether
-the claim still holds, instead of believing a sentence it has no way to audit. The idea is borrowed
-from OpenWiki's grounded claims.</p>
+the claim still holds, instead of believing a sentence it has no way to audit. OpenWiki's grounded claims
+follow the same discipline.</p>
 
 <h2>Nothing true is deleted</h2>
 <p>When a fact changes, the old one is <strong>superseded</strong>, not removed. It leaves default
@@ -69,7 +71,7 @@ contradict comes back with a <strong>hotspot</strong> warning; <code>contradicti
 returns the facts around an entity grouped by subject, flagging where one subject holds several values
 for one relation; and <code>recall</code> marks facts <strong>contested</strong> so the agent reading
 them knows two sources disagree.</p>
-<p>The judgment is the <code>memoose-contradictions</code> skill's job, and it comes down to one
+<p>The judgment is the <code>memoose-upkeep</code> skill's job, and it comes down to one
 distinction: if the newer fact simply replaced the older one in time, <code>supersede</code> it; if
 both are asserted and cannot both be true, <code>mark_contradiction</code> records the disagreement
 with a reason and a confidence, and the <code>contradicts</code> edge stays visible.</p>

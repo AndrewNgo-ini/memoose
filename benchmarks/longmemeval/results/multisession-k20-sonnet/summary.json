@@ -1,0 +1,31 @@
+{
+  "n": 5,
+  "score": 80.0,
+  "ci95": [
+    37.6,
+    96.4
+  ],
+  "by_type": {
+    "multi-session": {
+      "n": 5,
+      "score": 80.0,
+      "session_hit": 100.0
+    }
+  },
+  "abstention": null,
+  "session_hit": 100.0,
+  "turn_recall": 0.79,
+  "mean_prompt_tokens_est": 13863,
+  "total_cost_usd": 1.01,
+  "retrieval_ms_p50": 24.0,
+  "tag": "multisession-k20-sonnet",
+  "dataset": "longmemeval_s_cleaned.json",
+  "k": 20,
+  "answerer": "sonnet",
+  "judge": "haiku",
+  "embedder": "fastembed",
+  "per_type": 5,
+  "seed": 42,
+  "retrieval_only": false,
+  "ingest_s_mean": null
+}

@@ -1,0 +1,90 @@
+[pilot30-k20-haiku] longmemeval_s_cleaned.json: 30 questions, 30 to run, embedder fastembed
+  1/30 852ce960 knowledge-update: no (session_hit=True, 14845 tok)
+  2/30 4d6b87c8 knowledge-update: yes (session_hit=True, 13745 tok)
+  3/30 1cea1afa knowledge-update: yes (session_hit=True, 14414 tok)
+  4/30 18bc8abd knowledge-update: yes (session_hit=True, 15084 tok)
+  5/30 60bf93ed multi-session: yes (session_hit=True, 13097 tok)
+  6/30 01493427 knowledge-update: no (session_hit=True, 14650 tok)
+  7/30 bc149d6b multi-session: yes (session_hit=True, 14620 tok)
+  8/30 c4f10528 single-session-assistant: yes (session_hit=True, 13098 tok)
+  9/30 gpt4_2ba83207 multi-session: no (session_hit=True, 12362 tok)
+  10/30 6ae235be single-session-assistant: yes (session_hit=True, 13927 tok)
+  11/30 gpt4_f2262a51 multi-session: no (session_hit=True, 13806 tok)
+  12/30 gpt4_7fce9456 multi-session: no (session_hit=True, 15430 tok)
+  13/30 18dcd5a5 single-session-assistant: yes (session_hit=True, 14783 tok)
+  14/30 51b23612 single-session-assistant: yes (session_hit=True, 11435 tok)
+  15/30 dc439ea3 single-session-assistant: yes (session_hit=True, 13521 tok)
+  16/30 8a2466db single-session-preference: yes (session_hit=True, 16577 tok)
+  17/30 75f70248 single-session-preference: yes (session_hit=True, 13374 tok)
+  18/30 95228167 single-session-preference: yes (session_hit=True, 14047 tok)
+  19/30 f4f1d8a4_abs single-session-user: yes (session_hit=True, 12232 tok)
+  20/30 195a1a1b single-session-preference: yes (session_hit=True, 13944 tok)
+  21/30 311778f1 single-session-user: yes (session_hit=True, 23073 tok)
+  22/30 a06e4cfe single-session-user: yes (session_hit=True, 14839 tok)
+  23/30 1faac195 single-session-user: yes (session_hit=True, 15362 tok)
+  24/30 60d45044 single-session-user: yes (session_hit=True, 13612 tok)
+  25/30 gpt4_21adecb5 temporal-reasoning: yes (session_hit=True, 14610 tok)
+  26/30 gpt4_f49edff3 temporal-reasoning: yes (session_hit=True, 14868 tok)
+  27/30 993da5e2 temporal-reasoning: yes (session_hit=True, 14278 tok)
+  28/30 gpt4_70e84552 temporal-reasoning: yes (session_hit=True, 13991 tok)
+  29/30 fca70973 single-session-preference: yes (session_hit=True, 13605 tok)
+  30/30 gpt4_b5700ca0 temporal-reasoning: yes (session_hit=True, 11844 tok)
+{
+  "n": 30,
+  "score": 83.3,
+  "ci95": [
+    66.4,
+    92.7
+  ],
+  "by_type": {
+    "knowledge-update": {
+      "n": 5,
+      "score": 60.0,
+      "session_hit": 100.0
+    },
+    "multi-session": {
+      "n": 5,
+      "score": 40.0,
+      "session_hit": 100.0
+    },
+    "single-session-assistant": {
+      "n": 5,
+      "score": 100.0,
+      "session_hit": 100.0
+    },
+    "single-session-preference": {
+      "n": 5,
+      "score": 100.0,
+      "session_hit": 100.0
+    },
+    "single-session-user": {
+      "n": 5,
+      "score": 100.0,
+      "session_hit": 100.0
+    },
+    "temporal-reasoning": {
+      "n": 5,
+      "score": 100.0,
+      "session_hit": 100.0
+    }
+  },
+  "abstention": {
+    "n": 1,
+    "score": 100.0
+  },
+  "session_hit": 100.0,
+  "turn_recall": 0.947,
+  "mean_prompt_tokens_est": 14303,
+  "total_cost_usd": 2.8,
+  "retrieval_ms_p50": 19.2,
+  "tag": "pilot30-k20-haiku",
+  "dataset": "longmemeval_s_cleaned.json",
+  "k": 20,
+  "answerer": "haiku",
+  "judge": "haiku",
+  "embedder": "fastembed",
+  "per_type": 5,
+  "seed": 42,
+  "retrieval_only": false,
+  "ingest_s_mean": null
+}

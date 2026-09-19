@@ -14,18 +14,20 @@
 <header class="side">
   <a class="brand" href="index.html">
     <img src="memoose-mascot.png" alt="" width="48" height="48">
-    <span><strong>Memoose</strong><small>a memory harness for coding agents</small></span>
+    <span><strong>Memoose</strong><small>a dual-path memory system for proactive agents</small></span>
   </a>
   <nav aria-label="Documentation">
     <ul>
       <li><a href="index.html">Overview</a></li>
       <li><a href="vision.html">Vision</a></li>
+      <li><a href="features.html">Features</a></li>
       <li><a href="install.html">Install</a></li>
       <li><a href="tools.html">Tools</a></li>
       <li><a href="skills.html">Skills</a></li>
       <li><a href="automatic.html" aria-current="page">Automatic memory</a></li>
       <li><a href="configuration.html">Configuration</a></li>
       <li><a href="trust.html">Evidence &amp; history</a></li>
+      <li><a href="roadmap.html">Roadmap</a></li>
     </ul>
   </nav>
   <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
@@ -40,9 +42,10 @@ Memoose runs itself, and every automatic part is a convenience over the
 <table>
 <thead><tr><th>When</th><th>What happens</th><th>Cost</th></tr></thead>
 <tbody>
-<tr><td>You submit a prompt</td><td>Memory is searched locally; a short hint is injected if something matches</td><td>~ms, no model</td></tr>
+<tr><td>You submit a prompt</td><td>If the agent has declared its position in a procedure, the transitions from there are injected; then memory is searched locally and a short hint is injected if something matches</td><td>~ms, no model</td></tr>
 <tr><td>A session starts</td><td>Standing rules, preferences and recent lessons are put in front of the agent</td><td>~ms, no model</td></tr>
-<tr><td>A turn ends, or before compaction</td><td>A background job on a small model stores what was learned</td><td>Small model, off your critical path</td></tr>
+<tr><td>A turn ends, or before compaction</td><td>A background job on a small model stores what was learned, writing through the CLI</td><td>Small model, off your critical path</td></tr>
+<tr><td>A session starts, at most once a day</td><td>The upkeep pass (<code>memoose maintain</code>) is offered when the store has work waiting</td><td>~ms, no model</td></tr>
 </tbody>
 </table>
 </div>
@@ -57,14 +60,15 @@ memory already holds, and the <code>recall</code> query that would fetch the res
 (<code>MEMOOSE_HINT_COUNT</code>, default <code>4</code>), and silence when nothing matches. No model,
 a few milliseconds, so it can run on every prompt without anyone noticing. The agent keeps full
 control over whether to follow the hint.</p>
-<p>Before that lexical hint, the hook asks a different question: not what the user said, but what
-the agent just <em>did</em>. Its most recent tool call is matched to a <code>Procedure</code> entity
-whose name and description read like the command, and that step&rsquo;s outgoing transitions are
-injected two hops out, grouped as <em>Next</em> and <em>Then</em>, each with the condition and the
-pitfall its description carries. Outgoing only: what precedes the step is what the agent has already
-done. This follows Procedural Graphs (Lu et&nbsp;al., 2026), whose ablation showed the local
-subgraph beating the whole graph and whole-graph injection lowering task success, so the block is
-small, and it is silent unless at least two of the command&rsquo;s words match a stored step.</p>
+<p>Before that lexical hint, the hook asks a different question: not what the user said, but where
+the agent <em>is</em>. When the agent has declared its position on an open session
+(<code>memoose session turn &lt;id&gt; --at "run the test suite"</code>), that step&rsquo;s outgoing
+transitions are injected two hops out, grouped as <em>Next</em> and <em>Then</em>, each with its
+condition, advice and pitfall and how past sessions that took it ended. Outgoing only: what precedes
+the step is what the agent has already done. This follows Procedural Graphs (Lu et&nbsp;al., 2026),
+whose ablation showed the local subgraph beating the whole graph and whole-graph injection lowering
+task success, so the block is small. Memory never guesses the position: with no declared position
+there is no guidance, because a wrong steer is worse than silence.</p>
 
 <h2>Standing context at session start</h2>
 <p>The <code>SessionStart</code> hook loads what should hold for the whole session before you type
@@ -84,10 +88,10 @@ small talk.</p>
 <table>
 <thead><tr><th>Hook</th><th>Script</th><th>Mode</th></tr></thead>
 <tbody>
-<tr><td><code>UserPromptSubmit</code></td><td><code>hooks/recommend.py</code></td><td>Blocking, 10&nbsp;s timeout</td></tr>
-<tr><td><code>SessionStart</code></td><td><code>hooks/session_start.py</code></td><td>Blocking, 10&nbsp;s timeout</td></tr>
-<tr><td><code>Stop</code></td><td><code>hooks/capture.py</code></td><td>Async</td></tr>
-<tr><td><code>PreCompact</code></td><td><code>hooks/capture.py</code></td><td>Async</td></tr>
+<tr><td><code>UserPromptSubmit</code></td><td><code>harness/hooks/recommend.py</code></td><td>Blocking, 10&nbsp;s timeout</td></tr>
+<tr><td><code>SessionStart</code></td><td><code>harness/hooks/session_start.py</code></td><td>Blocking, 10&nbsp;s timeout</td></tr>
+<tr><td><code>Stop</code></td><td><code>harness/hooks/capture.py</code></td><td>Async</td></tr>
+<tr><td><code>PreCompact</code></td><td><code>harness/hooks/capture.py</code></td><td>Async</td></tr>
 </tbody>
 </table>
 </div>

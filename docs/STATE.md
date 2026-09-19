@@ -2,6 +2,49 @@
 
 Last updated 2026-09-09, after shipping the CLI, the upkeep pass, and the numpy scoring path.
 
+## The procedural vocabulary is schema, not convention (2026-09-18)
+
+Grilled the ADR 0004 adoption against the paper and found it partial: the Engine could not answer
+"what comes next" (only the hook could, with its own queries), the three edge attributes were one
+packed sentence nobody could query or revise separately, the lexical matcher fired on token overlap
+and steered toward an unrelated procedure (observed live in this repo), nothing recorded where the
+agent was or how a session ended, and every branching Procedure was flagged as a hotspot. ADR 0005
+closes those: `condition`, `advice`, `pitfall` columns on relations (`remember --when/--do/--avoid`;
+old packed descriptions are unpacked once on open), `guidance(procedure)` as Engine method, MCP tool
+and CLI command returning the two-hop outgoing neighbourhood raw, a `position` on session turns
+that returns the guidance from there and builds the Trace, an `outcome` on `session_end` that counts
+on every traversed Transition (`succeeded`/`failed`/`abandoned` columns, plus a `traverse` event
+per Transition in provenance), the hotspot rule skipping Transitions, and `dismiss` widened to
+`transition:<id>`. The hint hook no longer reads the transcript; it keys on the latest declared
+Position of an open Session and is silent otherwise. CONTEXT.md gains Transition, Condition,
+Advice, Pitfall, Start, Position, Trace, Outcome. Skills and the keeper agent teach the loop; the
+keeper is told never to write Procedures. Still not adopted: a validation gate (counts are shown,
+not enforced), a guidance model call, named procedure graphs. Not yet verified live: whether an
+agent declares its Position often enough for the Trace to be useful. Version 0.4.0, 97 tests.
+
+`memoose install <host>` now installs what the skills need and nothing they do not: the skills on
+every host, and on Claude Code the hooks (copied to `.claude/memoose/hooks/`, registered in
+`settings.json`, removed by `uninstall`) and the `memory-keeper` agent with `tools: Bash` so it
+works through the CLI. The MCP server is opt-in (`--mcp`) for an agent without a shell. When the
+plugin is installed the hooks and agent are skipped rather than registered twice. The wheel now
+carries the harness. 99 tests.
+
+`skills/`, `hooks/` and `agents/` moved under `harness/`, which is what the project has always
+called that half of memoose. The plugin manifest now points at all three (`skills`, `agents`,
+`hooks` fields); Claude Code loads the root locations by convention, and the docs say `agents`
+and `hooks` replace their defaults while `skills` adds to it, so nothing may be left at the root or
+it loads twice. The wheel force-includes `harness/` as one tree. The installed plugin copy only
+refreshes on a version change or a reinstall.
+
+Six skills became four, split by the moment that triggers them rather than by store feature:
+`memoose` (recall, extraction, procedures, and now the ontology section), `memoose-sessions` (the
+working loop), `memoose-upkeep` (contradictions and memify merged: everything `maintain` lists,
+one reader, one set of verbs), `memoose-onboard`. The ontology skill fired once per project and
+paid a resident description every turn; the two maintenance skills covered one worklist. Onboard
+gained the first fill: on a project with history and an empty store it asks once, then reads the
+README, glossary, ADRs, CI and recent log and writes facts with evidence, standing rules, and
+documented workflows as Procedures, under a precision rule.
+
 ## Installed on itself as a plugin; two manifest bugs found (2026-09-10)
 
 Dogfooding the plugin route surfaced two defects that `claude plugin validate` does not catch. The
@@ -75,7 +118,7 @@ lexical work never loads the ONNX model. Measured: fastembed loads in 0.39 s and
 
 ## What is done
 
-**The port is complete and released (v0.2.0).** cognee's memory core is reimplemented as 24 MCP
+**The memory core is complete and released (v0.2.0):** 24 MCP
 tools plus 5 skills, packaged as an Agent Plugin, with no model call anywhere in the library
 (ADR 0001) and one SQLite file per Dataset (ADR 0002). 77 tests pass, including one that drives the
 server over MCP stdio the way a host does. `claude plugin validate .` passes. Verified end to end
@@ -84,7 +127,7 @@ entry and copies the skills into each host's own locations.
 
 Covered: ontology with OWL/RDF/Turtle import and basic-type collapse, deterministic entity ids and
 merge-by-name, functional-relation supersession, contradiction candidates with `contradicts` edges,
-the ported regex query router with 8 retrieval modes, memify weights, provenance ledger, sessions
+the regex query router with 8 retrieval modes, memify weights, provenance ledger, sessions
 with typed context sections and lesson distillation, memify cross-connect/consolidate/global-context
 buckets, project plus user Datasets with a reserve merge.
 
@@ -161,7 +204,7 @@ The bug it caught before removal is the reason to rebuild something like it, and
 
 > Functional supersession was decided by **write order alone**. Backfilling a fact that was true in
 > 2024, after the 2025 value was already known, silently made the 2024 value current again — learning
-> the past overwrote the present. Fixed by `states_later_value` in `src/memoose/contradictions.py`:
+> the past overwrote the present. Fixed by `states_later_value` in `src/memoose/graph/contradictions.py`:
 > `valid_from` decides when both facts carry one, and a backfilled arrival is stored as superseded
 > history. Write order still decides when a date is missing, and an undated arrival is presumed
 > current, so the ordinary path is unchanged.

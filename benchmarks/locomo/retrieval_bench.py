@@ -23,10 +23,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from memoose.embeddings import HashEmbedder, default_embedder  # noqa: E402
+from memoose.store.embeddings import HashEmbedder, default_embedder  # noqa: E402
 from memoose.engine import Engine  # noqa: E402
-from memoose.ids import chunk_id  # noqa: E402
-from memoose.models import EntityIn, RelationIn  # noqa: E402
+from memoose.graph.ids import Ids  # noqa: E402
+from memoose.graph.models import EntityIn, RelationIn  # noqa: E402
 from memoose.store.sqlite_store import ChunkRow  # noqa: E402
 from fetch_dataset import ensure_dataset  # noqa: E402
 
@@ -51,7 +51,7 @@ def ingest(ds, conv: dict, turns_per_chunk: int) -> int:
         for start in range(0, len(turns), turns_per_chunk):
             window = turns[start : start + turns_per_chunk]
             text = f"[{when}]\n" + "\n".join(f"{t['speaker']}: {t['text']}" + (f" (photo: {t['blip_caption']})" if t.get("blip_caption") else "") for t in window)
-            cid = chunk_id(text)
+            cid = Ids.chunk(text)
             with ds.store.conn:
                 ds.store.upsert_chunk(ChunkRow(cid, text, None, ",".join(t["dia_id"] for t in window)), [])
                 ds.store.index_text("chunk", cid, text)
