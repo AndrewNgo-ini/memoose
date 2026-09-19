@@ -18,7 +18,7 @@
 - [How Memoose works](#how-memoose-works)
 - [Usage](#usage): [tools](#tools) · [skills](#skills) · [CLI](#cli)
 - [Benchmarks](#benchmarks)
-- [Learn more](#learn-more)
+- [Learn more](#learn-more): [docs](#docs) · [inspiration](#inspiration) · [contributing](#contributing) · [license](#license)
 
 # What is Memoose
 
@@ -241,7 +241,9 @@ Protocol, full tables and raw rows: [`benchmarks/`](./benchmarks/README.md). Set
 
 # Learn more
 
-**Docs:** [Overview](https://andrewngo-ini.github.io/mnemoth/) ·
+### Docs
+
+The [documentation site](https://andrewngo-ini.github.io/mnemoth/):
 [Vision](https://andrewngo-ini.github.io/mnemoth/vision.html) ·
 [Features](https://andrewngo-ini.github.io/mnemoth/features.html) ·
 [Install](https://andrewngo-ini.github.io/mnemoth/install.html) ·
@@ -252,17 +254,24 @@ Protocol, full tables and raw rows: [`benchmarks/`](./benchmarks/README.md). Set
 [Evidence & history](https://andrewngo-ini.github.io/mnemoth/trust.html) ·
 [Roadmap](https://andrewngo-ini.github.io/mnemoth/roadmap.html)
 
-Contributors: [CONTEXT.md](./CONTEXT.md) is the glossary, [docs/STATE.md](./docs/STATE.md) the
+For contributors: [CONTEXT.md](./CONTEXT.md) is the glossary, [docs/STATE.md](./docs/STATE.md) the
 engineering log.
 
-**Inspiration.** [cognee](https://github.com/topoteretes/cognee) for the memory philosophy: a typed
-graph, ontology-constrained extraction, deterministic ids, hybrid retrieval, contradictions and
-supersession as first-class concepts; where cognee calls a model, Memoose has a skill.
-[OpenWiki](https://github.com/langchain-ai/openwiki) for grounded claims, so every fact carries a
-checkable evidence pointer. [mem0](https://github.com/mem0ai/mem0) for the LoCoMo protocol, with
-prompts vendored verbatim from [memory-benchmarks](https://github.com/mem0ai/memory-benchmarks).
+### Inspiration
 
-**Contributing.** Pull requests and [issues](https://github.com/AndrewNgo-ini/mnemoth/issues) are
-welcome; open an issue first for larger changes. `uv run pytest` runs the suite.
+- [**cognee**](https://github.com/topoteretes/cognee) for the memory philosophy: a typed graph,
+  ontology-constrained extraction, deterministic ids, hybrid retrieval, contradictions and
+  supersession as first-class concepts. Where cognee calls a model, Memoose has a skill.
+- [**OpenWiki**](https://github.com/langchain-ai/openwiki) for grounded claims: every fact carries a
+  checkable evidence pointer.
+- [**mem0**](https://github.com/mem0ai/mem0) for the LoCoMo protocol, with prompts vendored verbatim
+  from [memory-benchmarks](https://github.com/mem0ai/memory-benchmarks).
 
-**License.** Apache 2.0. See [LICENSE](./LICENSE).
+### Contributing
+
+Pull requests and [issues](https://github.com/AndrewNgo-ini/mnemoth/issues) are welcome; open an
+issue first for larger changes. `uv run pytest` runs the suite.
+
+### License
+
+Apache 2.0. See [LICENSE](./LICENSE).
