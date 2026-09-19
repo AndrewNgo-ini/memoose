@@ -60,10 +60,8 @@ judgment (what counts as an entity, which facts contradict, what is worth rememb
 session taught) is written down in the harness as <a href="skills.html">skills</a>, rules and
 <a href="automatic.html">hooks</a>, and the model the host is <em>already running</em> does that
 thinking while it calls the tools.</p>
-<p>There is no code path in the library that calls a model
-(<a href="https://github.com/AndrewNgo-ini/mnemoth/blob/main/docs/adr/0001-skills-and-mcp-only.md">ADR&nbsp;0001</a>),
-so there is no API key, no second inference bill, and nothing leaves the machine
-(<a href="https://github.com/AndrewNgo-ini/mnemoth/blob/main/docs/adr/0002-single-sqlite-store.md">ADR&nbsp;0002</a>).
+<p>There is no code path in the library that calls a model,
+so there is no API key, no second inference bill, and nothing leaves the machine.
 The cost of the bet is stated plainly: quality depends on the host&rsquo;s model following a skill,
 and on the host having something to delegate to. The upside is that when that model gets better,
 extraction and judgment get better without shipping anything.</p>
@@ -116,8 +114,7 @@ the transitions two hops out from there, raw; it decides. The paper&rsquo;s abla
 neighbourhood is local and small: the whole graph in context did worse than no graph on an embodied
 benchmark. When the session ends with an outcome, every transition the run took counts it, and a
 transition that keeps failing is the first thing the next distillation looks at. No model call, no
-validation harness, no guessing where the agent is: silence beats a wrong steer. See
-<a href="../adr/0005-procedural-vocabulary-as-first-class-schema.md">ADR 0005</a>.</p>
+validation harness, no guessing where the agent is: silence beats a wrong steer.</p>
 
 <h2>What Memoose is for</h2>
 <p>Long-lived project work, where the hard part is not finding a fact once but keeping a body of facts
