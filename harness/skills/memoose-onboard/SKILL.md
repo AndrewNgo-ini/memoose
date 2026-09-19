@@ -1,132 +1,133 @@
 ---
 name: memoose-onboard
-description: Set up memoose memory for this user and host, and give an existing project its first memory. Use when memoose was just installed, when a project has history but memoose ontology reports an empty store, when the user asks to enable, configure, or turn off automatic memory, hints, or background capture, or when memory is not being captured or recalled automatically and they want to know why.
+description: Get memoose working on this host and give this project its memory. Use when memoose was just installed, when the user asks to set up, enable, configure or turn off memory, hints or background capture, when a project has no memory yet or memory that looks stale, or when memory is not being captured or recalled automatically and they want to know why.
 ---
 
 # Onboarding memoose
 
-memoose cannot see how this machine is configured, so this skill walks the setup with the user.
-Work through it in order and report what you found rather than assuming.
+Three jobs, in order: find out what works here, install what is missing, then fill this project's
+memory so the next session starts with context. memoose cannot see the machine; you can. Report what
+you found rather than assuming, and ask the user at most one question per job.
 
-## 1. Find out what is actually working
+## 1. Check what works
 
 ```
-memoose status         # what is installed where: CLI, plugin, skills, hooks, agent, MCP
+memoose status         # CLI, plugin, skills, hooks, agent, MCP: what is installed where
 memoose datasets       # which dataset is this project? (no shell: the list_datasets tool)
-memoose ontology       # how much is already remembered?
+memoose ontology       # entity types and store stats: how much is remembered
 ```
 
-Then check which automatic parts are live on this host:
-
-| capability | how to check | if missing |
+| capability | how to tell | if missing |
 | --- | --- | --- |
-| Memory commands | `memoose datasets` answers (or `list_datasets` over MCP) | the CLI is not on PATH and no server is wired; see step 2 |
-| Hints on each prompt | the user sees "memoose already holds memory…" before your answers | hooks not installed; step 3 |
-| Standing context at session start | you received rules and preferences without asking | hooks not installed; step 3 |
-| Background capture after each turn | new facts appear without anyone calling `remember` | hooks not installed; step 3 |
+| Memory commands | `memoose datasets` answers (or `list_datasets` over MCP) | step 2 |
+| Skills | this skill loaded, so at least one did; `status` lists the rest | step 2 |
+| Hints on each prompt | the user sees "memoose already holds memory…" before your answers | step 2, or step 4 |
+| Standing context at session start | you received rules and preferences without asking | step 2, or step 4 |
+| Background capture | new facts appear without anyone calling `remember` | step 2, or step 4 |
 
-Everything still works without hooks: the tools and skills cover every capability. Hooks only
-remove the need to ask.
+Everything works without hooks; they only remove the need to ask. Note the store stats: no entities
+means step 3 is a first fill, some entities means step 3 is a top-up.
 
-Read the store stats too. If `memoose ontology` reports no entities while the directory has a git
-history, a README, docs or ADRs, this is a **brownfield** project: it knows things memory does not.
-Go to step 6 before anything else, because every later session benefits from the first fill.
+## 2. Install what is missing
 
-## 2. If the commands are missing
+Say what is missing and what you will run, ask once, then run it:
 
-`pip install memoose` (or `uv tool install memoose`) puts the CLI on PATH; that alone is enough for
-an agent with a shell. Then `memoose install claude` (or `codex`, `opencode`, `cursor`) copies the
-skills in and, on Claude Code, the hooks and the `memory-keeper` agent. Only if the agent has no
-shell add `--mcp`, which registers `uvx memoose serve`. Restart the host afterwards. Ask the user to
-run it; do not edit their host configuration behind their back.
+- CLI not on PATH: `pip install memoose` (or `uv tool install memoose`).
+- Skills, hooks or agent missing: `memoose install claude` (or `codex`, `opencode`, `cursor`).
+  On Claude Code, the plugin is the alternative that keeps one copy of everything:
+  `/plugin marketplace add AndrewNgo-ini/mnemoth` then `/plugin install memoose@memoose`.
+- Agent has no shell: add `--mcp`, which registers `uvx memoose serve`.
 
-## 3. Enabling the automatic parts
+Tell the user the host must restart before hooks and the server load, and carry on with step 3,
+which needs only the CLI. Do not edit host configuration by hand; `install` and `uninstall` are the
+only writes, and `status` shows what they did.
 
-Hooks come from either the Claude Code plugin (wired through its manifest) or `memoose install
-claude` (registered in `.claude/settings.json`); `memoose status` shows which. If they are not
-firing, the likely causes are, in order:
+## 3. Fill this project's memory
 
-1. The host has no hook surface memoose wires (Codex, OpenCode, Cursor). Fall back to the delegated
-   path: the `memoose` skill tells you to hand memory work to the `memory-keeper` subagent, which
-   needs no hooks.
+Every project is brownfield: it has a README, a history, a stack, people, conventions, even when
+memory is empty. A cold memory helps nobody, so this step runs whether memory is empty or not.
+
+Open a session for it, so the fill is on record and can be distilled:
+`memoose session start onboard-<date>`, then `session turn` for what you read and decided, and
+`session end --outcome succeeded|abandoned` when done.
+
+**Ask once, then go.** Tell the user what you found (commits, documents, what memory already holds)
+and what you propose to read, and ask one question: fill from these now, or skip. Default to yes. If
+the user already said to go, or nobody can answer, go ahead under the precision rule and report at
+the end. Never ask per fact.
+
+**Read**, in this order, what exists of:
+
+1. `README.md`, `CONTEXT.md` or any glossary, `CONTRIBUTING.md`, architecture or decision docs
+2. `CODEOWNERS` and the manifest (`pyproject.toml`, `package.json`, `go.mod`, ...) for the stack
+3. CI workflows, `Makefile` or package scripts: how this project tests, builds, releases
+4. `git log --oneline -50` and `git shortlog -sn`: what changed lately, who works here
+
+When memory already has entities, first `memoose recall` the project name and `memoose context` to
+see what it holds, then store only what is new or changed since. Where a document disagrees with a
+stored fact, remember the new one with its evidence and let `memoose maintain` surface the hotspot.
+
+**Write** three kinds of memory:
+
+- **Facts** with evidence: decisions and their reasons (`decided_on`, `replaced_by`), ownership
+  (`owned_by`), how systems relate (`depends_on`, `deployed_in`), the stack (`uses`), conventions
+  and constraints. Evidence is a file range (`repo://docs/adr/0002.md#L1-L12`) or a commit. Facts,
+  never bare entities. On hosts with subagents, hand this part to `memory-keeper` with the file
+  list; it is bookkeeping and should not occupy the conversation.
+- **Standing context**: rules and preferences the documents state ("tests before commit", "uv, not
+  pip") go in `session context --section rules|preferences`, so they load at every future start.
+- **Procedures**: a documented multi-step workflow (release, deploy, review, test-then-commit)
+  becomes Procedure entities joined by Transitions with `--when`, `--do`, `--avoid` taken from the
+  text. Write these yourself; the keeper does not author procedures. Three to seven steps per
+  chain, and only what the documents spell out.
+
+If there is nothing to read (a new, empty repository), ask the user the four things worth knowing:
+the stack, who owns what, conventions to follow, hard constraints. Store them the same way.
+
+**Precision rule.** Store what the documents say, not what you infer from code. A wrong fact learned
+on day one is recalled every later day. Skip anything personal or secret. Aim for tens of facts, not
+hundreds; `memoose maintain` afterwards shows duplicates and stale summaries to tidy.
+
+**Report**: counts by kind, the standing rules now active, the procedures memory holds, and two or
+three `memoose recall` lines the user can run to check.
+
+## 4. If the automatic parts do not fire
+
+Hooks come from the Claude Code plugin or from `memoose install claude`; `status` shows which. In
+order of likelihood:
+
+1. The host has no hook surface memoose wires (Codex, OpenCode, Cursor). Use the delegated path: the
+   `memoose` skill hands memory work to the `memory-keeper` subagent, which needs no hooks.
 2. The host was not restarted after installing.
-3. The user turned them off. See the switches below.
+3. The user turned them off; see the switches.
 
-**Never install hooks into the user's global configuration without asking.** Show them what it would
-do and let them decide.
+## 5. The switches
 
-## 4. The switches
-
-All are environment variables; all default to on. Set them where the host's MCP server and hooks get
-their environment.
+Environment variables, all on by default, set where the host's hooks and server get their
+environment:
 
 | variable | effect |
 | --- | --- |
-| `MEMOOSE_HINTS=0` | stop injecting relevant-memory hints before each prompt |
-| `MEMOOSE_AUTO_RECALL=0` | stop injecting standing context at session start |
-| `MEMOOSE_AUTO_CAPTURE=0` | stop background capture entirely |
-| `MEMOOSE_AUTO_MAINTAIN=0` | stop the daily offer to run the upkeep pass (`MEMOOSE_MAINTAIN_EVERY_HOURS` re-paces it) |
-| `MEMOOSE_CAPTURE_MODEL=haiku` | which small model does the background extraction |
-| `MEMOOSE_CAPTURE_MIN_CHARS=400` | how substantial a turn must be before capture spends anything |
-| `MEMOOSE_DATA_DIR` | where the SQLite files live |
+| `MEMOOSE_HINTS=0` | no relevant-memory hints before each prompt |
+| `MEMOOSE_AUTO_RECALL=0` | no standing context at session start |
+| `MEMOOSE_AUTO_CAPTURE=0` | no background capture |
+| `MEMOOSE_AUTO_MAINTAIN=0` | no daily offer to run upkeep (`MEMOOSE_MAINTAIN_EVERY_HOURS` re-paces it) |
+| `MEMOOSE_CAPTURE_MODEL=haiku` | which small model does background extraction |
+| `MEMOOSE_CAPTURE_MIN_CHARS=400` | how substantial a turn must be before capture runs |
+| `MEMOOSE_DATA_DIR` | where the memory files live |
 | `MEMOOSE_EMBEDDER=hash\|fastembed\|auto` | local embeddings; `hash` needs no model download |
 
-The project was called mnemoth before, so every `MNEMOTH_*` variable above is still read when the
-`MEMOOSE_*` one is unset, and memory already written to `~/.mnemoth` keeps being used from there.
-Nothing is moved or copied; point `MEMOOSE_DATA_DIR` at it to be explicit.
+`MNEMOTH_*` names from before the rename are still read when the `MEMOOSE_*` one is unset, and an
+existing `~/.mnemoth` store keeps being used.
 
-## 5. Tell the user what is being stored
+## 6. Tell the user what is stored
 
-Automatic capture means facts get written that nobody explicitly asked for, so be plain about it:
+Background capture writes facts nobody explicitly asked for, so be plain:
 
-- Memory lives in a SQLite file on this machine (`list_datasets` shows where). Nothing is uploaded.
+- Memory lives on this machine (`memoose datasets` shows where). Nothing is uploaded.
 - Two scopes: this project, and a `user` dataset for facts that hold across projects.
-- `recall` shows what is remembered; `history(entity=…)` shows who stored it and when.
-- `forget` removes an entity, a fact, or a whole dataset.
+- `memoose recall` shows what is remembered; `memoose history <entity>` shows who stored it and when.
+- `memoose forget` removes an entity, a fact, a session, or a whole dataset.
 
-Offer to run a `recall` over anything they are unsure about, and ask before enabling capture if the
-project contains anything sensitive.
-
-## 6. The first fill
-
-A cold memory helps nobody, and on a project with history the material already exists.
-
-**Ask once, then go.** Tell the user what you found (how many commits, which documents) and what you
-propose to read, and ask one question: fill memory from these now, or skip. Default to yes. If the
-user already told you to just go, or you are running where nobody can answer, go ahead under the
-precision rule below and report what you wrote at the end. Never ask twice, and never ask per fact.
-
-**Greenfield** (no history to read): ask what is worth knowing about this project and store it: the
-stack, who owns what, conventions to follow, hard constraints. Use `session_set_context` for rules
-and preferences so they come back automatically at the start of every future session.
-
-**Brownfield** (history, no memory): read, in this order, what exists of
-
-1. `README.md`, `CONTEXT.md` or any glossary, `CONTRIBUTING.md`, `docs/adr/*`
-2. `CODEOWNERS`, the manifest (`pyproject.toml`, `package.json`, `go.mod`, ...) for the stack
-3. CI workflows, `Makefile` or package scripts: the steps this project runs to test, build, release
-4. `git log --oneline -50` and `git shortlog -sn` for what changed lately and who works here
-
-and write three kinds of memory from it:
-
-- **Facts** with evidence: decisions and their reasons (`decided_on`, `replaced_by`), ownership
-  (`owned_by`), how systems relate (`depends_on`, `deployed_in`), the stack (`uses`), conventions and
-  constraints. Evidence is the file range, `repo://docs/adr/0002-single-sqlite-store.md#L1-L12`, or
-  the commit. Facts, not entities alone. On hosts with subagents, hand this part to `memory-keeper`
-  with the list of files; it is bookkeeping and should not occupy the conversation.
-- **Standing context**: rules and preferences the documents state ("tests before commit", "uv, not
-  pip") go in `session_set_context` under `rules` or `preferences`, so they load at every start.
-- **Procedures**: a documented multi-step workflow (release, deploy, review, the test-then-commit
-  chain in CONTRIBUTING or the CI file) becomes Procedure entities joined by Transitions with
-  `--when`, `--do`, `--avoid` taken from the text. Write these yourself, in the foreground; the
-  keeper does not author procedures. Three to seven steps per chain; skip anything the documents do
-  not actually spell out.
-
-**Precision rule.** Store what the documents say, not what you infer from code. A wrong fact
-learned on day one is recalled on every later day. When a document contradicts another, store both
-with their evidence and let `memoose maintain` surface the hotspot for the user to judge. Skip
-anything that looks personal or secret. Aim for tens of facts, not hundreds; `memoose maintain`
-afterwards will show duplicates and stale buckets to tidy.
-
-**Report** what was written: counts by kind, the standing rules now active, and the procedures
-memory holds, with `memoose recall` lines the user can run to check.
+Offer a `recall` over anything they are unsure about, and ask before enabling capture if the project
+holds anything sensitive.

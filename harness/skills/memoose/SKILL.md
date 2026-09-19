@@ -1,6 +1,6 @@
 ---
 name: memoose
-description: Persistent project memory as a typed knowledge graph plus procedures (what to do next). Use when the user says remember, recall, "what did we decide", "last time", "as before", refers to people, systems, decisions, or dates from earlier work, when you learn a durable fact about the project, the team, or the user's preferences, when you start a multi-step task memory may hold a procedure for, or when a step failed and you then found the way that works. Companion skills: memoose-onboard (setup and first fill), memoose-sessions (the working loop), memoose-upkeep (judging what the store surfaces).
+description: Persistent project memory as a typed knowledge graph plus procedures (what to do next). Use when the user says remember, recall, "what did we decide", "last time", "as before", refers to people, systems, decisions, or dates from earlier work, when you learn a durable fact about the project, the team, or the user's preferences, when you start a multi-step task memory may hold a procedure for, or when a step failed and you then found the way that works. Companion skills: memoose-onboard (setup and the project fill), memoose-sessions (the working loop), memoose-upkeep (judging what the store surfaces).
 ---
 
 # memoose memory

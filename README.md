@@ -120,10 +120,10 @@ uv run pytest
 > Upgrading from mnemoth: `MNEMOTH_*` variables are still read, an existing `~/.mnemoth` store is
 > reused, and `install` clears the old MCP entry.
 
-**Onboarding.** Memoose cannot see how your machine is set up, so ask your agent to onboard it. The
-[`memoose-onboard`](./harness/skills/memoose-onboard/SKILL.md) skill checks what is live, shows what
-is stored, and on a project with history but no memory offers to fill it from the README, docs and
-git log.
+**Onboarding.** Ask your agent to onboard Memoose. The
+[`memoose-onboard`](./harness/skills/memoose-onboard/SKILL.md) skill checks what works on this host,
+installs what is missing, then fills the project's memory from its README, docs and git log so the
+next session starts with context.
 
 # How Memoose works
 
@@ -156,7 +156,7 @@ already has.
 | [`memoose`](./harness/skills/memoose/SKILL.md) | when to recall; how to extract facts with evidence, store procedures, shape the ontology |
 | [`memoose-sessions`](./harness/skills/memoose-sessions/SKILL.md) | the working loop: position and guidance, context sections, outcome, distilling lessons |
 | [`memoose-upkeep`](./harness/skills/memoose-upkeep/SKILL.md) | judging what the store surfaces: contradictions, duplicates, connections, stale summaries |
-| [`memoose-onboard`](./harness/skills/memoose-onboard/SKILL.md) | what is live on this host, the first fill of an existing project, the switches |
+| [`memoose-onboard`](./harness/skills/memoose-onboard/SKILL.md) | check what works, install what is missing, then fill this project's memory from its docs and history |
 
 ### CLI
 
