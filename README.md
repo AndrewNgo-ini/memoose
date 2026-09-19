@@ -254,8 +254,7 @@ The [documentation site](https://andrewngo-ini.github.io/mnemoth/):
 [Evidence & history](https://andrewngo-ini.github.io/mnemoth/trust.html) ·
 [Roadmap](https://andrewngo-ini.github.io/mnemoth/roadmap.html)
 
-For contributors: [CONTEXT.md](./CONTEXT.md) is the glossary, [docs/STATE.md](./docs/STATE.md) the
-engineering log.
+For contributors: [CONTEXT.md](./CONTEXT.md) is the glossary.
 
 ### Inspiration
 
