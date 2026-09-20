@@ -15,21 +15,13 @@ _SAFE = re.compile(r"[^a-z0-9._-]+")
 
 
 def env(name: str) -> str | None:
-    """MEMOOSE_* is canonical; the MNEMOTH_* name is still read for setups made before the rename."""
-    return os.environ.get(f"MEMOOSE_{name}") or os.environ.get(f"MNEMOTH_{name}")
+    return os.environ.get(f"MEMOOSE_{name}")
 
 
 def data_dir() -> Path:
-    """`~/.memoose`, or the pre-rename `~/.mnemoth` when that is the only one on disk.
-
-    Existing memory is never moved or copied: a store written before the rename keeps being
-    read and written where it already lives, until the user points MEMOOSE_DATA_DIR elsewhere.
-    """
+    """`~/.memoose`, unless MEMOOSE_DATA_DIR points elsewhere."""
     override = env("DATA_DIR")
-    if override:
-        return Path(override).expanduser()
-    new, old = Path.home() / ".memoose", Path.home() / ".mnemoth"
-    return old if old.exists() and not new.exists() else new
+    return Path(override).expanduser() if override else Path.home() / ".memoose"
 
 
 def project_dataset_name(cwd: str | os.PathLike | None = None) -> str:

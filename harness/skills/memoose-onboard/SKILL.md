@@ -35,7 +35,7 @@ Say what is missing and what you will run, ask once, then run it:
 - CLI not on PATH: `pip install memoose` (or `uv tool install memoose`).
 - Skills, hooks or agent missing: `memoose install claude` (or `codex`, `opencode`, `cursor`).
   On Claude Code, the plugin is the alternative that keeps one copy of everything:
-  `/plugin marketplace add AndrewNgo-ini/mnemoth` then `/plugin install memoose@memoose`.
+  `/plugin marketplace add AndrewNgo-ini/memoose` then `/plugin install memoose@memoose`.
 - Agent has no shell: add `--mcp`, which registers `uvx memoose serve`.
 
 Tell the user the host must restart before hooks and the server load, and carry on with step 3,
@@ -116,9 +116,6 @@ environment:
 | `MEMOOSE_CAPTURE_MIN_CHARS=400` | how substantial a turn must be before capture runs |
 | `MEMOOSE_DATA_DIR` | where the memory files live |
 | `MEMOOSE_EMBEDDER=hash\|fastembed\|auto` | local embeddings; `hash` needs no model download |
-
-`MNEMOTH_*` names from before the rename are still read when the `MEMOOSE_*` one is unset, and an
-existing `~/.mnemoth` store keeps being used.
 
 ## 6. Tell the user what is stored
 

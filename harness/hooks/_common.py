@@ -26,17 +26,13 @@ def read_event() -> dict:
 
 
 def env(name: str) -> str | None:
-    """MEMOOSE_* is canonical; the MNEMOTH_* name is still read for setups made before the rename."""
-    return os.environ.get(f"MEMOOSE_{name}") or os.environ.get(f"MNEMOTH_{name}")
+    return os.environ.get(f"MEMOOSE_{name}")
 
 
 def data_dir() -> Path:
-    """Mirrors `memoose.store.datasets.data_dir`, including the pre-rename `~/.mnemoth` fallback."""
+    """Mirrors `memoose.store.datasets.data_dir`."""
     override = env("DATA_DIR")
-    if override:
-        return Path(override).expanduser()
-    new, old = Path.home() / ".memoose", Path.home() / ".mnemoth"
-    return old if old.exists() and not new.exists() else new
+    return Path(override).expanduser() if override else Path.home() / ".memoose"
 
 
 def dataset_name(cwd: str | os.PathLike | None) -> str:
@@ -77,7 +73,7 @@ def state_dir() -> Path:
 
 
 def enabled(var: str = "AUTO_CAPTURE") -> bool:
-    """`var` is the suffix: MEMOOSE_<var>, or the legacy MNEMOTH_<var>. On unless explicitly off."""
+    """`var` is the suffix of MEMOOSE_<var>. On unless explicitly off."""
     return (env(var) or "1").strip().lower() not in ("0", "false", "off", "no")
 
 

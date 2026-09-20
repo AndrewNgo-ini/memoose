@@ -46,7 +46,7 @@ transitions carrying a condition, an advice and a pitfall. The agent declares wh
 transitions two hops out, and decides. When the session ends with an outcome, every transition it
 took counts it, so the next run learns from the last.
 
-Read more: [Vision](https://andrewngo-ini.github.io/mnemoth/vision.html).
+Read more: [Vision](https://andrewngo-ini.github.io/memoose/vision.html).
 
 # Quick start
 
@@ -96,7 +96,7 @@ unless the agent has no shell: `install <host> --mcp` adds `uvx memoose serve`, 
 On **Claude Code** the plugin is the simplest route and keeps one copy of everything:
 
 ```
-/plugin marketplace add AndrewNgo-ini/mnemoth
+/plugin marketplace add AndrewNgo-ini/memoose
 /plugin install memoose@memoose
 ```
 
@@ -105,7 +105,7 @@ On **Claude Code** the plugin is the simplest route and keeps one copy of everyt
 <br>
 
 ```sh
-git clone https://github.com/AndrewNgo-ini/mnemoth.git && cd mnemoth && uv sync
+git clone https://github.com/AndrewNgo-ini/memoose.git && cd memoose && uv sync
 uv run memoose install claude          # skills, hooks and agent from this checkout
 claude --plugin-dir .                  # or load the checkout as a plugin
 uv sync --extra fastembed              # local embeddings (a keyless hash fallback is used otherwise)
@@ -114,9 +114,6 @@ uv run pytest
 ```
 
 </details>
-
-> Upgrading from mnemoth: `MNEMOTH_*` variables are still read, an existing `~/.mnemoth` store is
-> reused, and `install` clears the old MCP entry.
 
 **Onboarding.** Ask your agent to onboard Memoose. The
 [`memoose-onboard`](./harness/skills/memoose-onboard/SKILL.md) skill checks what works on this host,
@@ -129,10 +126,10 @@ Two layers. A deterministic **engine**: a knowledge graph behind a CLI and 26 MC
 A **harness** of skills, hooks and a subagent that carries the judgment, run by the model your host
 already has.
 
-- [Overview](https://andrewngo-ini.github.io/mnemoth/) explains the split.
-- [Automatic memory](https://andrewngo-ini.github.io/mnemoth/automatic.html): what runs without being asked, on which hosts.
-- [Evidence & history](https://andrewngo-ini.github.io/mnemoth/trust.html): what a fact carries and how it changes.
-- [Configuration](https://andrewngo-ini.github.io/mnemoth/configuration.html): the switches.
+- [Overview](https://andrewngo-ini.github.io/memoose/) explains the split.
+- [Automatic memory](https://andrewngo-ini.github.io/memoose/automatic.html): what runs without being asked, on which hosts.
+- [Evidence & history](https://andrewngo-ini.github.io/memoose/trust.html): what a fact carries and how it changes.
+- [Configuration](https://andrewngo-ini.github.io/memoose/configuration.html): the switches.
 
 # Usage
 
@@ -241,7 +238,7 @@ Protocol, full tables and raw rows: [`benchmarks/`](./benchmarks/README.md). Set
 
 ### Documentation
 
-[Site](https://andrewngo-ini.github.io/mnemoth/)
+[Site](https://andrewngo-ini.github.io/memoose/)
 
 ### Inspiration
 
@@ -255,7 +252,7 @@ Protocol, full tables and raw rows: [`benchmarks/`](./benchmarks/README.md). Set
 
 ### Contributing
 
-Pull requests and [issues](https://github.com/AndrewNgo-ini/mnemoth/issues) are welcome; open an
+Pull requests and [issues](https://github.com/AndrewNgo-ini/memoose/issues) are welcome; open an
 issue first for larger changes. `uv run pytest` runs the suite.
 
 ### License

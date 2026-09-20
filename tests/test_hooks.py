@@ -36,37 +36,6 @@ def test_hook_dataset_naming_matches_library(tmp_path, monkeypatch):
     assert _common.dataset_name(None) == project_dataset_name()
 
 
-def test_legacy_mnemoth_env_and_data_dir_still_resolve(tmp_path, monkeypatch):
-    """Setups made before the rename keep working: old env names, and memory left in ~/.mnemoth."""
-    from memoose.store import datasets
-
-    monkeypatch.delenv("MEMOOSE_DATA_DIR", raising=False)
-    monkeypatch.delenv("MEMOOSE_PROJECT_DIR", raising=False)
-    monkeypatch.setenv("MNEMOTH_DATA_DIR", str(tmp_path / "old"))
-    monkeypatch.setenv("MNEMOTH_PROJECT_DIR", str(tmp_path))
-    assert datasets.data_dir() == _common.data_dir() == tmp_path / "old"
-    assert datasets.project_dataset_name() == _common.dataset_name(None)
-
-    monkeypatch.setenv("MEMOOSE_DATA_DIR", str(tmp_path / "new"))  # the new name wins when both are set
-    assert datasets.data_dir() == _common.data_dir() == tmp_path / "new"
-
-    monkeypatch.delenv("MEMOOSE_DATA_DIR")
-    monkeypatch.delenv("MNEMOTH_DATA_DIR")
-    home = tmp_path / "home"
-    (home / ".mnemoth").mkdir(parents=True)
-    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
-    assert datasets.data_dir() == _common.data_dir() == home / ".mnemoth"  # pre-rename store, left in place
-    (home / ".memoose").mkdir()
-    assert datasets.data_dir() == _common.data_dir() == home / ".memoose"
-
-
-def test_legacy_kill_switches_still_apply(tmp_path):
-    """MNEMOTH_AUTO_CAPTURE=0 and friends must keep turning the hooks off."""
-    r = run_hook("capture.py", {"cwd": str(tmp_path), "hook_event_name": "Stop"},
-                 {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "MNEMOTH_AUTO_CAPTURE": "0"})
-    assert r.returncode == 0 and r.stdout.strip() == ""
-
-
 def test_session_start_is_silent_without_memory(tmp_path):
     r = run_hook("session_start.py", {"cwd": str(tmp_path), "hook_event_name": "SessionStart"},
                  {"MEMOOSE_DATA_DIR": str(tmp_path / "data")})

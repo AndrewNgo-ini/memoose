@@ -82,18 +82,3 @@ def test_install_skips_hooks_and_agent_when_the_plugin_is_installed(tmp_path, mo
     assert not (tmp_path / ".claude" / "settings.json").exists()
     assert not (tmp_path / ".claude" / "agents").exists()
     assert (tmp_path / ".claude" / "skills" / "memoose" / "SKILL.md").exists()
-
-
-def test_install_clears_a_pre_rename_install(tmp_path, monkeypatch):
-    """Upgrading must not leave the old mnemoth server wired in beside memoose."""
-    _home(tmp_path, monkeypatch)
-    claude = tmp_path / ".claude.json"
-    claude.write_text(json.dumps({"mcpServers": {"other": {"command": "x"}, "mnemoth": {"command": "uvx"}}}))
-    old_skill = tmp_path / ".claude/skills/mnemoth-onboard"
-    old_skill.mkdir(parents=True)
-    (old_skill / "SKILL.md").write_text("old")
-
-    integrations.install("claude", command=["uvx", "memoose", "serve"], mcp=True)
-    assert set(json.loads(claude.read_text())["mcpServers"]) == {"other", "memoose"}
-    assert not old_skill.exists()
-    assert (tmp_path / ".claude/skills/memoose-onboard/SKILL.md").exists()

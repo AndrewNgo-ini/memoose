@@ -95,14 +95,14 @@ class LazyEmbedder:
 
 def _probe_name() -> str:
     """Which embedder `default_embedder` will pick, without importing or loading it."""
-    choice = (os.environ.get("MEMOOSE_EMBEDDER") or os.environ.get("MNEMOTH_EMBEDDER") or "auto").casefold()
+    choice = (os.environ.get("MEMOOSE_EMBEDDER") or "auto").casefold()
     if choice in ("auto", "fastembed") and importlib.util.find_spec("fastembed") is not None:
         return "fastembed"
     return "hash"
 
 
 def default_embedder() -> Embedder:
-    choice = (os.environ.get("MEMOOSE_EMBEDDER") or os.environ.get("MNEMOTH_EMBEDDER") or "auto").casefold()
+    choice = (os.environ.get("MEMOOSE_EMBEDDER") or "auto").casefold()
     if choice in ("auto", "fastembed"):
         try:
             return FastembedEmbedder()

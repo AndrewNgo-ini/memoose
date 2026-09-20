@@ -110,11 +110,7 @@ def _memoose_cmd() -> str:
 
 def _child_env(cwd: str) -> dict:
     """The store the keeper must write to, passed down so its shell commands agree with ours."""
-    child = {**os.environ, "MEMOOSE_PROJECT_DIR": cwd}
-    for var in ("DATA_DIR", "EMBEDDER"):  # a legacy MNEMOTH_* value is passed on under the new name
-        if value := env(var):
-            child[f"MEMOOSE_{var}"] = value
-    return child
+    return {**os.environ, "MEMOOSE_PROJECT_DIR": cwd}
 
 
 def _no_mcp_config(tmp: Path) -> Path:

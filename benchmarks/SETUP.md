@@ -12,8 +12,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Claude Code CLI
 npm install -g @anthropic-ai/claude-code     # or: curl -fsSL https://claude.ai/install.sh | bash
 
-git clone https://github.com/AndrewNgo-ini/mnemoth
-cd mnemoth
+git clone https://github.com/AndrewNgo-ini/memoose
+cd memoose
 uv sync --extra fastembed --group dev
 uv run pytest -q                              # 77 tests, ~3s
 ```

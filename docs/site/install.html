@@ -30,7 +30,7 @@
       <li><a href="roadmap.html">Roadmap</a></li>
     </ul>
   </nav>
-  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/mnemoth">Source on GitHub</a></p>
+  <p class="side-foot"><a href="https://github.com/AndrewNgo-ini/memoose">Source on GitHub</a></p>
 </header>
 <main id="main">
 <h1>Install</h1>
@@ -87,7 +87,7 @@ carry its own Memoose configuration for everyone who checks it out.</p>
 <p>On Claude Code, install the plugin instead. It is the only route that also loads the
 <a href="automatic.html">hooks</a> and the <code>memory-keeper</code> subagent, and it keeps one
 copy of everything. Inside Claude Code:</p>
-<pre><code>/plugin marketplace add AndrewNgo-ini/mnemoth
+<pre><code>/plugin marketplace add AndrewNgo-ini/memoose
 /plugin install memoose@memoose</code></pre>
 <p>The plugin launches the server with <code>uvx memoose serve</code>, so it needs uv.</p>
 
@@ -115,7 +115,7 @@ you are actually on and reports what it found.</p>
 
 <h2>From a checkout</h2>
 <p>For development or to run the latest pre-release:</p>
-<pre><code>git clone https://github.com/AndrewNgo-ini/mnemoth.git &amp;&amp; cd mnemoth &amp;&amp; uv sync
+<pre><code>git clone https://github.com/AndrewNgo-ini/memoose.git &amp;&amp; cd memoose &amp;&amp; uv sync
 uv run memoose install claude          # skills, hooks and agent from this checkout
 claude --plugin-dir .                  # Claude Code: skills, hooks and server from the checkout
 uv sync --extra fastembed              # local embeddings (a keyless hashed fallback is used otherwise)

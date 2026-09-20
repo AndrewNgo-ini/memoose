@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 SERVER_NAME = "memoose"
-LEGACY_SERVER_NAME = "mnemoth"  # pre-rename installs, cleared on the next install
 _PACKAGE = Path(__file__).resolve().parents[1]  # the memoose package directory
 # The wheel carries a copy of harness/ (skills, hooks, agents) inside the package; a source checkout has it at the repo root.
 HARNESS_ROOT = _PACKAGE / "harness" if (_PACKAGE / "harness").exists() else _PACKAGE.parents[1] / "harness"
@@ -89,7 +88,6 @@ def install(host: str, project: str | None = None, command: list[str] | None = N
         dst_dir = skill_dir.parent / skill_src.name
         _copy_tree(skill_src, dst_dir)
         installed.append(str(dst_dir))
-    _clear_legacy(kind, mcp_path, skill_dir.parent)
     out: dict = {"host": t.display, "scope": "project" if project else "user", "skills": installed, "cli": cli_command()}
     if mcp:
         command = command or default_command()
@@ -167,24 +165,12 @@ def _remove_claude_hooks_and_agent(claude_dir: Path) -> bool:
     return removed
 
 
-def _clear_legacy(kind: str, mcp_path: Path, skills_parent: Path) -> None:
-    """Drop a pre-rename install so the host does not end up running two memory servers.
-
-    Only the host's own config entry and its copy of the skills go; stored memory is never
-    touched, and `datasets.data_dir` keeps reading it where it already lives.
-    """
-    _remove_mcp(kind, mcp_path, LEGACY_SERVER_NAME)
-    for legacy in skills_parent.glob(f"{LEGACY_SERVER_NAME}*"):
-        shutil.rmtree(legacy, ignore_errors=True)
-
-
 def uninstall(host: str, project: str | None = None) -> dict:
     t, skill_dir, mcp_path, kind = _paths(host, project)
     removed_skill = skill_dir.exists()
     for skill_src in SKILLS_ROOT.iterdir():
         if (skill_src / "SKILL.md").exists():
             shutil.rmtree(skill_dir.parent / skill_src.name, ignore_errors=True)
-    _clear_legacy(kind, mcp_path, skill_dir.parent)
     removed_mcp = _remove_mcp(kind, mcp_path)
     out = {"host": t.display, "skill_removed": removed_skill, "mcp_removed": removed_mcp}
     if host == "claude":

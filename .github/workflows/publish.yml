@@ -1,7 +1,7 @@
 # Publishes memoose to PyPI when a version tag is pushed: `git tag v0.3.0 && git push --tags`.
 #
 # One-time setup by a repo admin, on pypi.org > your project > Publishing > add a
-# "trusted publisher" with owner AndrewNgo-ini, repository mnemoth, workflow publish.yml,
+# "trusted publisher" with owner AndrewNgo-ini, repository memoose, workflow publish.yml,
 # environment pypi. No API token is stored anywhere; PyPI trusts this workflow's OIDC identity.
 # For the very first release, use "pending publisher" on pypi.org so the name is created by
 # this workflow.
