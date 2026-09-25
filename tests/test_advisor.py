@@ -102,10 +102,9 @@ def test_runner_starts_then_resumes_one_advisor_session(tmp_path, monkeypatch):
     env = {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"}
     ev = {"session_id": "s", "cwd": str(proj), "transcript_path": str(t), "hook_event_name": "PostToolUse"}
 
-    assert _hook("advisor.py", ev, env).returncode == 0
-    assert not log.exists(), "off by default"
-    env["MEMOOSE_ADVISOR"] = "1"
-    assert _hook("advisor.py", ev, env).returncode == 0
+    assert _hook("advisor.py", ev, {**env, "MEMOOSE_ADVISOR": "0"}).returncode == 0
+    assert not log.exists(), "the kill switch"
+    assert _hook("advisor.py", ev, env).returncode == 0, "on by default"
     assert _hook("advisor.py", ev, env).returncode == 0
     calls = lambda: log.read_text().split("==CALL==\n")[:-1]  # noqa: E731
     assert len(calls()) == 1, "nothing new since the cursor, no second review"

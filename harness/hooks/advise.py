@@ -28,7 +28,7 @@ import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import _SAFE, env, state_dir  # noqa: E402
+from _common import _SAFE, enabled, env, state_dir  # noqa: E402
 
 try:
     import fcntl
@@ -48,8 +48,8 @@ lgtm|looks good|all good|agent is on track|agent on track|on track|continue|carr
 
 
 def advisor_on() -> bool:
-    """Off unless MEMOOSE_ADVISOR is set: a review per step costs a model call per step."""
-    return (env("ADVISOR") or "").strip().lower() in ("1", "true", "on", "yes")
+    """On unless MEMOOSE_ADVISOR=0, like every other memoose switch."""
+    return enabled("ADVISOR")
 
 
 def normalize(note: str) -> str:

@@ -44,8 +44,11 @@ primary.
      the primary is already idle, it wakes it through `asyncRewake`.
    - A steer opens an immune window of 3 tool steps, during which concerns wait.
    - Every Advisory is marked delivered once, because `asyncRewake` was observed delivering twice.
-7. **Off by default** (`MEMOOSE_ADVISOR=1`), as in OMP, because it costs a review per step.
-   Claude Code only; other hosts keep ADR 0003's jobs. OMP's `syncBacklog` (making the primary
+7. **On by default**, unlike OMP; `MEMOOSE_ADVISOR=0` turns it off. Memoose's premise is that
+   memory is found two ways, by search and by recommendation, and recommendation that has to be
+   switched on is not recommendation. The prompt hint recommends before a turn; the Advisor
+   recommends during it. The cost is one small-model review per batch of steps, on the host's
+   own auth, the same trade ADR 0003 made for capture. Claude Code only; other hosts keep ADR 0003's jobs. OMP's `syncBacklog` (making the primary
    wait for the Advisor) is not ported.
 
 ## Consequences
@@ -56,5 +59,5 @@ primary.
   that misjudges costs one note, not a wrong fact.
 - The guard only catches repeats with the same wording. A reworded repeat gets through; the
   prompt's "never repeat prior advice" and the Advisor's own conversation are what hold it back.
-- Every tool call now runs two small hooks. When the Advisor is off, both exit immediately after
-  one environment check.
+- Every tool call now runs two small hooks. The sync one only reads a mailbox; the async one
+  returns at once when a review is already running.

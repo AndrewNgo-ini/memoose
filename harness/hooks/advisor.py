@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """The advisor: a second agent that watches the primary step by step and advises it.
 
-A port of Oh My Pi's advisor (`advisor/runtime.ts`, MIT) onto Claude Code's hooks. Off unless
-`MEMOOSE_ADVISOR=1`.
+A port of Oh My Pi's advisor (`advisor/runtime.ts`, MIT) onto Claude Code's hooks. On by default,
+off with `MEMOOSE_ADVISOR=0`. It is the recommendation path's live half: the prompt hint surfaces
+memory before the agent starts, the advisor surfaces it while the agent works.
 
 - **Trigger.** An async PostToolUse and Stop hook, so the advisor sees every step, like OMP's
   per-step `onTurnEnd`, and never blocks the primary.

@@ -114,7 +114,7 @@ environment:
 | `MEMOOSE_AUTO_MAINTAIN=0` | no daily offer to run upkeep (`MEMOOSE_MAINTAIN_EVERY_HOURS` re-paces it) |
 | `MEMOOSE_CAPTURE_MODEL=haiku` | which small model does background extraction |
 | `MEMOOSE_CAPTURE_MIN_CHARS=400` | how substantial a turn must be before capture runs |
-| `MEMOOSE_ADVISOR=1` | **off by default.** A second small-model session reviews every step of the primary, with memory and `WATCHDOG.md`, and injects Advisories (ADR 0006). Costs a review per step. `MEMOOSE_ADVISOR_MODEL` picks the model |
+| `MEMOOSE_ADVISOR=0` | no Advisor: the second small-model session that reviews each step of the work, with memory and `WATCHDOG.md`, and injects Advisories into the running turn (ADR 0006). `MEMOOSE_ADVISOR_MODEL=haiku` picks its model |
 | `MEMOOSE_DATA_DIR` | where the memory files live |
 | `MEMOOSE_EMBEDDER=hash\|fastembed\|auto` | local embeddings; `hash` needs no model download |
 
@@ -126,6 +126,8 @@ Background capture writes facts nobody explicitly asked for, so be plain:
 - Two scopes: this project, and a `user` dataset for facts that hold across projects.
 - `memoose recall` shows what is remembered; `memoose history <entity>` shows who stored it and when.
 - `memoose forget` removes an entity, a fact, a session, or a whole dataset.
+- On Claude Code an Advisor watches the work: a small model reviews each step against memory and
+  `WATCHDOG.md` and can interrupt with an `<advisory>`. It reads, never writes. `MEMOOSE_ADVISOR=0` turns it off.
 
 Offer a `recall` over anything they are unsure about, and ask before enabling capture if the project
 holds anything sensitive.
