@@ -114,6 +114,7 @@ environment:
 | `MEMOOSE_AUTO_MAINTAIN=0` | no daily offer to run upkeep (`MEMOOSE_MAINTAIN_EVERY_HOURS` re-paces it) |
 | `MEMOOSE_CAPTURE_MODEL=haiku` | which small model does background extraction |
 | `MEMOOSE_CAPTURE_MIN_CHARS=400` | how substantial a turn must be before capture runs |
+| `MEMOOSE_ADVISOR=1` | **off by default.** A second small-model session reviews every step of the primary, with memory and `WATCHDOG.md`, and injects Advisories (ADR 0006). Costs a review per step. `MEMOOSE_ADVISOR_MODEL` picks the model |
 | `MEMOOSE_DATA_DIR` | where the memory files live |
 | `MEMOOSE_EMBEDDER=hash\|fastembed\|auto` | local embeddings; `hash` needs no model download |
 

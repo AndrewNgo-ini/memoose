@@ -1,6 +1,6 @@
 [project]
 name = "memoose"
-version = "0.4.0"
+version = "0.5.0"
 description = "A dual-path memory system for proactive agents: facts and procedures in a local graph, exposed as a CLI, MCP tools and skills, no API key."
 readme = "README.md"
 license = "Apache-2.0"

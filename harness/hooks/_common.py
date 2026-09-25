@@ -99,20 +99,42 @@ def _blocks_text(content) -> tuple[str, bool]:
     return "\n".join(parts), tools
 
 
+def complete_lines(path: Path) -> list[str]:
+    """The transcript's lines, minus a last line the host is still writing.
+
+    A line without its newline is complete only if it parses; otherwise a reader that advanced
+    its cursor past it would never see that message.
+    """
+    raw = path.read_text(errors="replace")
+    lines = raw.split("\n")
+    tail = lines.pop()
+    if tail.strip():
+        try:
+            json.loads(tail)
+            lines.append(tail)
+        except json.JSONDecodeError:
+            pass
+    return lines
+
+
 def read_exchange(transcript_path: str | None, start_line: int = 0, max_chars: int = 24000) -> tuple[str, int, bool]:
-    """Plain-text transcript slice from `start_line`, the new line count, and whether tools ran.
+    """Plain-text transcript slice from `start_line`, the line to resume from, and whether tools ran.
 
     Thinking blocks, tool calls, tool results and injected system text are dropped: what is
-    worth remembering is what the user and the assistant actually said.
+    worth remembering is what the user and the assistant actually said. A slice is at most
+    `max_chars`: it stops before the message that would overflow and returns that line as the
+    resume point, so a long turn is read in pieces rather than cut. A single message longer than
+    the budget is clipped.
     """
     if not transcript_path:
         return "", start_line, False
     p = Path(transcript_path)
     if not p.exists():
         return "", start_line, False
-    lines = p.read_text(errors="replace").splitlines()
-    out, tools = [], False
-    for raw in lines[start_line:]:
+    lines = complete_lines(p)
+    out, tools, size = [], False, 0
+    for i in range(start_line, len(lines)):
+        raw = lines[i]
         if not raw.strip():
             continue
         try:
@@ -123,16 +145,18 @@ def read_exchange(transcript_path: str | None, start_line: int = 0, max_chars: i
             continue
         msg = d.get("message") or {}
         text, had_tools = _blocks_text(msg.get("content"))
-        tools = tools or had_tools
         text = text.strip()
         if not text or text.startswith(_SKIP_PREFIXES):
+            tools = tools or had_tools
             continue
         role = "User" if d["type"] == "user" else "Assistant"
-        out.append(f"{role}: {text}")
-    joined = "\n\n".join(out)
-    if len(joined) > max_chars:  # keep the most recent, that is where new facts are
-        joined = joined[-max_chars:]
-    return joined, len(lines), tools
+        entry = f"{role}: {text}"[:max_chars]
+        if out and size + len(entry) + 2 > max_chars:
+            return "\n\n".join(out), i, tools
+        tools = tools or had_tools
+        out.append(entry)
+        size += len(entry) + 2
+    return "\n\n".join(out), len(lines), tools
 
 
 def offset_file(session_id: str) -> Path:

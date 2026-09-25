@@ -28,7 +28,7 @@ def test_install_puts_skills_everywhere_and_hooks_plus_agent_into_claude(tmp_pat
     commands = [h["command"] for groups in settings["hooks"].values() for g in groups for h in g["hooks"]]
     assert "echo other" in commands, "someone else's hook survives"
     ours = [c for c in commands if integrations.HOOK_MARK in c]
-    assert len(ours) == 4 and all("${CLAUDE_PLUGIN_ROOT}" not in c for c in ours)
+    assert len(ours) == 9 and all("${CLAUDE_PLUGIN_ROOT}" not in c for c in ours)
     assert (tmp_path / ".claude" / "memoose" / "hooks" / "recommend.py").exists()
     agent = (tmp_path / ".claude" / "agents" / "memory-keeper.md").read_text()
     assert "\ntools: Bash\n" in agent, "without the server the keeper works through the CLI"
@@ -37,7 +37,7 @@ def test_install_puts_skills_everywhere_and_hooks_plus_agent_into_claude(tmp_pat
     # a second install does not double-register
     integrations.install("claude")
     settings = json.loads((tmp_path / ".claude" / "settings.json").read_text())
-    assert sum(integrations.HOOK_MARK in h["command"] for groups in settings["hooks"].values() for g in groups for h in g["hooks"]) == 4
+    assert sum(integrations.HOOK_MARK in h["command"] for groups in settings["hooks"].values() for g in groups for h in g["hooks"]) == 9
 
     for host in integrations.HOSTS:
         res = integrations.uninstall(host)

@@ -11,7 +11,7 @@
       "name": "memoose",
       "source": "./",
       "description": "A dual-path memory system for proactive agents: a typed knowledge graph with evidence, contradictions and supersession, maintained in the background on a small model. No API key; nothing leaves your machine.",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "category": "productivity",
       "keywords": [
         "memory",

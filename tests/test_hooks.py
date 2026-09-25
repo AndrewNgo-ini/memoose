@@ -237,7 +237,7 @@ def test_plugin_declares_the_harness():
     for legacy in ("skills", "agents", "hooks"):
         assert not (root / legacy).exists(), f"{legacy}/ at the root would be loaded twice"
     hooks = json.loads((root / "harness" / "hooks" / "hooks.json").read_text())
-    assert set(hooks["hooks"]) == {"SessionStart", "UserPromptSubmit", "Stop", "PreCompact"}
+    assert set(hooks["hooks"]) == {"SessionStart", "UserPromptSubmit", "Stop", "PreCompact", "PostToolUse"}
     for event, groups in hooks["hooks"].items():
         for h in groups[0]["hooks"]:
             assert h["command"].startswith('python3 "${CLAUDE_PLUGIN_ROOT}/harness/hooks/'), event
@@ -245,7 +245,7 @@ def test_plugin_declares_the_harness():
         assert hooks["hooks"][event][0]["hooks"][0]["async"] is True, f"{event} capture must not block the conversation"
     agent = (root / "harness" / "agents" / "memory-keeper.md").read_text()
     assert "model: haiku" in agent, "the keeper must run on a small model"
-    for path in ("session_start.py", "capture.py", "recommend.py"):
+    for path in ("session_start.py", "capture.py", "recommend.py", "advisor.py", "advise.py", "deliver.py"):
         assert (HOOKS / path).exists()
 
 
@@ -441,3 +441,53 @@ def test_maintenance_nudge_has_a_kill_switch(tmp_path):
                  {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "MEMOOSE_AUTO_MAINTAIN": "0"})
     assert r.returncode == 0
     assert "Never force-push" in r.stdout and "memoose maintain" not in r.stdout
+
+
+# ----- capture drains, chunks, and does not capture itself ------------------------------------
+def test_keeper_session_runs_with_memoose_hooks_off():
+    """The keeper is a Claude Code session with memoose's hooks loaded; left on, its own Stop would
+    capture the keeper's transcript into a Dataset named after its temp dir and start another keeper."""
+    import capture
+
+    child = capture._child_env("/proj")
+    assert child["MEMOOSE_PROJECT_DIR"] == "/proj"
+    assert all(child[k] == "0" for k in ("MEMOOSE_AUTO_CAPTURE", "MEMOOSE_HINTS", "MEMOOSE_AUTO_RECALL", "MEMOOSE_ADVISOR"))
+
+
+def test_read_exchange_reads_a_long_turn_in_pieces_instead_of_cutting_it(tmp_path):
+    rows = [{"type": "user", "message": {"role": "user", "content": f"fact {i} " + "x" * 90}} for i in range(10)]
+    t = _transcript(tmp_path, rows)
+    text, n, _ = _common.read_exchange(str(t), 0, max_chars=450)
+    assert "fact 0" in text and "fact 4" not in text and n == 4
+    text, n, _ = _common.read_exchange(str(t), n, max_chars=450)
+    assert text.startswith("User: fact 4") and n == 8
+    assert _common.read_exchange(str(t), 8, max_chars=450)[1] == 10
+
+
+def test_read_exchange_leaves_a_half_written_line(tmp_path):
+    t = tmp_path / "t.jsonl"
+    t.write_text(json.dumps({"type": "user", "message": {"content": "whole"}}) + '\n{"type": "user", "mess')
+    text, n, _ = _common.read_exchange(str(t))
+    assert text == "User: whole" and n == 1
+
+
+def test_capture_takes_a_turn_that_ends_while_it_runs(tmp_path, monkeypatch):
+    """A Stop that finds the lock held returns; the holder must pick that turn up before it exits."""
+    long_text = "We decided the billing service owns invoicing, recorded for the team. " * 12
+    t = tmp_path / "t.jsonl"
+    t.write_text(json.dumps({"type": "user", "message": {"role": "user", "content": long_text}}) + "\n")
+    more = json.dumps({"type": "user", "message": {"role": "user", "content": "Later turn: " + long_text}})
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    calls = tmp_path / "calls"
+    # the first keeper run appends a turn to the transcript, as the primary would meanwhile
+    (fake_bin / "claude").write_text(
+        f'#!/bin/sh\ncat > /dev/null\necho x >> {calls}\n'
+        f'[ "$(wc -l < {calls})" -eq 1 ] && echo \'{more}\' >> {t}\nexit 0\n')
+    (fake_bin / "claude").chmod(0o755)
+    env = {"MEMOOSE_DATA_DIR": str(tmp_path / "data"), "PATH": f"{fake_bin}:{os.environ['PATH']}"}
+    r = run_hook("capture.py", {"session_id": "sd2", "cwd": str(tmp_path), "transcript_path": str(t)}, env)
+    assert r.returncode == 0
+    assert len(calls.read_text().splitlines()) == 2, "the later turn is captured in the same run"
+    monkeypatch.setenv("MEMOOSE_DATA_DIR", str(tmp_path / "data"))
+    assert _common.read_offset("sd2") == 2

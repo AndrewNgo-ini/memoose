@@ -109,8 +109,14 @@ def _memoose_cmd() -> str:
 
 
 def _child_env(cwd: str) -> dict:
-    """The store the keeper must write to, passed down so its shell commands agree with ours."""
-    return {**os.environ, "MEMOOSE_PROJECT_DIR": cwd}
+    """The store the keeper must write to, passed down so its shell commands agree with ours.
+
+    The keeper is a Claude Code session with memoose's own hooks loaded, so they are switched off
+    in it: otherwise its Stop would capture the keeper's transcript, into a Dataset named after
+    its temp directory, and start another keeper.
+    """
+    return {**os.environ, "MEMOOSE_PROJECT_DIR": cwd, "MEMOOSE_AUTO_CAPTURE": "0", "MEMOOSE_HINTS": "0",
+            "MEMOOSE_AUTO_RECALL": "0", "MEMOOSE_ADVISOR": "0"}
 
 
 def _no_mcp_config(tmp: Path) -> Path:
@@ -127,42 +133,57 @@ def main() -> int:
     session_id = str(event.get("session_id") or "unknown")
     cwd = event.get("cwd") or os.getcwd()
 
-    start = read_offset(session_id)
-    exchange, new_offset, _ = read_exchange(event.get("transcript_path"), start)
+    # One capture per session at a time. The holder keeps going until the cursor reaches the end of
+    # the transcript, so a turn that ends mid-capture is taken by this run instead of waiting for a
+    # Stop that may never come. After unlocking it looks once more, for a turn that found the lock held.
+    while True:
+        lock = _lock(session_id)
+        if lock is None:
+            return 0
+        try:
+            while (done := _capture_next(session_id, cwd, event.get("transcript_path"))) is True:
+                pass
+        finally:
+            lock.unlink(missing_ok=True)
+        if done is None:
+            return 0  # the model failed; the slice stays unread for the next Stop
+        if read_exchange(event.get("transcript_path"), read_offset(session_id))[1] <= read_offset(session_id):
+            return 0
 
-    # Relevance gate: never spend a model call on a turn with nothing durable in it.
+
+def _capture_next(session_id: str, cwd: str, transcript: str | None) -> bool | None:
+    """Capture the next slice after the cursor: True when done, False when caught up, None on failure."""
+    start = read_offset(session_id)
+    exchange, new_offset, _ = read_exchange(transcript, start)
+    if new_offset <= start:
+        return False
+    # Relevance gate: never spend a model call on a slice with nothing durable in it.
     if len(exchange) < MIN_CHARS:
         write_offset(session_id, new_offset)
-        return 0
-
-    lock = _lock(session_id)
-    if lock is None:
-        return 0  # a capture is already running; its offset will cover this turn too
-    try:
-        with tempfile.TemporaryDirectory(prefix="memoose-capture-") as td:
-            tmp = Path(td)
-            cfg = _no_mcp_config(tmp)
-            prompt = PROMPT.format(
-                exchange=exchange, today=time.strftime("%Y-%m-%d"),
-                dataset=dataset_name(cwd), memoose=_memoose_cmd(),
-            )
-            cmd = [
-                "claude", "-p", "--model", MODEL, "--max-turns", "24",
-                "--mcp-config", str(cfg), "--strict-mcp-config",
-                "--allowedTools", "Bash",
-                "--dangerously-skip-permissions",
-            ]
-            plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-            if plugin_root:
-                cmd += ["--plugin-dir", plugin_root]
-            try:
-                subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=td,
-                               env=_child_env(cwd), timeout=TIMEOUT_S)
-            except (OSError, subprocess.SubprocessError):
-                return 0  # claude missing or failed: silent, memory is best-effort
-        write_offset(session_id, new_offset)
-    finally:
-        lock.unlink(missing_ok=True)
+        return True
+    with tempfile.TemporaryDirectory(prefix="memoose-capture-") as td:
+        tmp = Path(td)
+        cfg = _no_mcp_config(tmp)
+        prompt = PROMPT.format(
+            exchange=exchange, today=time.strftime("%Y-%m-%d"),
+            dataset=dataset_name(cwd), memoose=_memoose_cmd(),
+        )
+        cmd = [
+            "claude", "-p", "--model", MODEL, "--max-turns", "24",
+            "--mcp-config", str(cfg), "--strict-mcp-config",
+            "--allowedTools", "Bash",
+            "--dangerously-skip-permissions",
+        ]
+        plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        if plugin_root:
+            cmd += ["--plugin-dir", plugin_root]
+        try:
+            subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=td,
+                           env=_child_env(cwd), timeout=TIMEOUT_S)
+        except (OSError, subprocess.SubprocessError):
+            return None  # claude missing or failed: silent, memory is best-effort; the slice is retried
+    write_offset(session_id, new_offset)
+    return True
     return 0
 
 

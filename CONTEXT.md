@@ -104,6 +104,14 @@ _Avoid_: Score, result, status, verdict
 The Transitions two hops out from the agent's Position, put in front of the agent before it acts. The agent decides; Guidance is memory, not an instruction.
 _Avoid_: Suggestion, plan, next steps, recommendation
 
+**Advisor**:
+A second Host Model session that watches the primary agent's transcript step by step, with memory and read-only tools, and raises Advisories. It never writes memory and never acts in the workspace.
+_Avoid_: Reviewer, watchdog, supervisor, critic
+
+**Advisory**:
+One note from the Advisor to the primary agent, with a severity (nit, concern, blocker) that decides when it is delivered. The agent weighs it; it is not an instruction.
+_Avoid_: Advice (that is a Transition attribute), warning, review comment, feedback
+
 **Dismissal**:
 A recorded judgment that a candidate was reviewed and declined, with the reason: a maintenance candidate (a Hotspot, a possible duplicate, a possible connection, an undistilled Session) or a proposed change to a Transition. It removes the candidate from later passes and changes nothing in the graph. Lives in Provenance.
 _Avoid_: Rejection, ignore, mute, suppress
