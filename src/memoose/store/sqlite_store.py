@@ -300,7 +300,7 @@ class SqliteStore:
         return [_rel(r) for r in rows]
 
     def set_attributes(self, relation_id: str, condition: str | None, advice: str | None, pitfall: str | None) -> None:
-        self.conn.execute("UPDATE relations SET condition=?, advice=?, pitfall=? WHERE id=?", (condition, advice, pitfall, relation_id))
+        self.conn.execute("UPDATE relations SET condition=?, advice=?, pitfall=? WHERE id=?\", (condition, advice, pitfall, relation_id))
 
     def bump_outcome(self, relation_ids: Iterable[str], outcome: str) -> None:
         ids = list(relation_ids)
@@ -316,7 +316,7 @@ class SqliteStore:
         return cur.rowcount > 0
 
     def set_relation_weight(self, relation_id: str, weight: float) -> None:
-        self.conn.execute("UPDATE relations SET weight=? WHERE id=?", (weight, relation_id))
+        self.conn.execute("UPDATE relations SET weight=? WHERE id=?\", (weight, relation_id))
 
     def delete_entity(self, entity_id: str) -> int:
         self._delete_index("entity", [entity_id])
@@ -411,6 +411,19 @@ class SqliteStore:
         for eid in entity_ids:
             self.conn.execute("INSERT OR IGNORE INTO entity_chunks VALUES (?,?)", (eid, c.id))
         return new
+
+    def superseded_chunk_ids(self) -> set[str]:
+        """Chunk IDs whose associated relations have all been superseded."""
+        q = """
+            SELECT DISTINCT r.chunk_id
+            FROM relations r
+            WHERE r.superseded = 1
+              AND r.chunk_id IS NOT NULL
+              AND r.chunk_id NOT IN (
+                  SELECT chunk_id FROM relations WHERE superseded = 0 AND chunk_id IS NOT NULL
+              )
+        """
+        return {r[0] for r in self.conn.execute(q)}
 
     def get_chunks(self, ids: Iterable[str]) -> dict[str, ChunkRow]:
         ids = list(ids)

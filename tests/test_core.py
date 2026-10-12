@@ -41,6 +41,29 @@ def test_functional_relation_supersedes_older_value(ds):
     assert [e["action"] for e in events][:1] == ["supersede"] and events[-1]["action"] == "assert"
 
 
+def test_functional_relation_supersedes_hides_retired_chunks(ds):
+    ds.declare_functional_relations(["listens_on"])
+    ds.remember(
+        entities=[E(name="zeta", type="System", description="Service"), E(name="port_8000", type="Concept", description="Port 8000")],
+        relations=[R(source="zeta", name="listens_on", target="port_8000", description="zeta listens on port 8000")],
+        source_text="zeta service listens on port 8000.",
+        source="doc_v1",
+    )
+    ds.remember(
+        entities=[E(name="zeta", type="System", description="Service"), E(name="port_9000", type="Concept", description="Port 9000")],
+        relations=[R(source="zeta", name="listens_on", target="port_9000", description="zeta listens on port 9000")],
+        source_text="zeta service listens on port 9000.",
+        source="doc_v2",
+    )
+    default_res = ds.recall("what port does zeta listen on")
+    assert any("9000" in c["text"] for c in default_res["chunks"])
+    assert not any("8000" in c["text"] for c in default_res["chunks"])
+
+    hist_res = ds.recall("what port does zeta listen on", include_superseded=True)
+    assert any("9000" in c["text"] for c in hist_res["chunks"])
+    assert any("8000" in c["text"] for c in hist_res["chunks"])
+
+
 def test_non_functional_multi_value_becomes_hotspot_not_supersession(ds):
     seed(ds)
     out = ds.remember([E(name="Redis", type="Technology", description="Cache.")], [R(source="auth-service", name="uses", target="Redis", description="auth-service caches tokens in Redis.")])

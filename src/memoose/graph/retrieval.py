@@ -107,13 +107,13 @@ class Recaller:
         return {
             "entities": self._entities_payload(entity_hits),
             "facts": self._facts_payload(fact_scores, limit, inc),
-            "chunks": self._chunks_payload(by.get("chunk", [])[:limit]),
+            "chunks": self._chunks_payload(by.get("chunk", [])[:limit], inc),
         }
 
     def _mode_facts(self, query: str, limit: int, inc: bool, hops: int) -> dict:
         by = self._fused(query, ("relation", "entity", "chunk"), limit * 6)
         fact_scores = self._facts_around(by, by.get("entity", [])[:3], inc, boost=0.8, per_entity=10)
-        return {"entities": [], "facts": self._facts_payload(fact_scores, limit, inc), "chunks": self._chunks_payload(by.get("chunk", [])[:limit])}
+        return {"entities": [], "facts": self._facts_payload(fact_scores, limit, inc), "chunks": self._chunks_payload(by.get("chunk", [])[:limit], inc)}
 
     def _mode_neighbourhood(self, query: str, limit: int, inc: bool, hops: int) -> dict:
         by = self._fused(query, ("entity",), limit * 4)
@@ -139,7 +139,7 @@ class Recaller:
                 for eid, e in neighbours.items() if eid not in seed_ids
             ][: limit * 2],
             "facts": self._facts_payload(fact_scores, limit * 2, inc),
-            "chunks": self._chunks_payload(self._fused(query, ("chunk",), limit * 2).get("chunk", [])[:limit]),
+            "chunks": self._chunks_payload(self._fused(query, ("chunk",), limit * 2).get("chunk", [])[:limit], inc),
         }
 
     def _mode_lexical(self, query: str, limit: int, inc: bool, hops: int) -> dict:
@@ -147,7 +147,7 @@ class Recaller:
         phrase = query.startswith('"') and query.endswith('"')
         text = query.strip('"') if phrase else self._LEXICAL_CUE.sub("", query)
         hits = self.store.phrase_search(text, limit=limit, kinds=("chunk",)) if phrase else self.store.lexical_search(text, limit=limit, kinds=("chunk",))
-        return {"entities": [], "facts": [], "chunks": self._chunks_payload([(h.ref_id, h.score) for h in hits])}
+        return {"entities": [], "facts": [], "chunks": self._chunks_payload([(h.ref_id, h.score) for h in hits], inc)}
 
     def _mode_summaries(self, query: str, limit: int, inc: bool, hops: int) -> dict:
         chunk_hits = self._fused(query, ("chunk",), limit * 4).get("chunk", [])
@@ -167,7 +167,7 @@ class Recaller:
         by = self._fused(query, ("relation", "entity", "chunk"), limit * 8)
         fact_scores = self._facts_around(by, by.get("entity", [])[:5], include_superseded=True, boost=0.8, per_entity=20)
         facts = self._facts_payload(fact_scores, limit * 3, True)
-        chunks = self._chunks_payload(by.get("chunk", [])[:limit])
+        chunks = self._chunks_payload(by.get("chunk", [])[:limit], True)
         if dates:
             chunks.sort(key=lambda c: (not any(d[:4] in (c["text"] or "") for d in dates), -c["score"]))
         dated = []
@@ -190,7 +190,7 @@ class Recaller:
         lessons = [{"id": l["id"], "title": l["title"], "text": l["text"], "evidence": l["evidence"]} for l in self.store.lessons(limit)]
         by = self._fused(query, ("relation", "chunk"), limit * 2)
         fact_scores = {rid: s for rid, s in by.get("relation", []) if s > 0}
-        return {"entities": [], "facts": self._facts_payload(fact_scores, limit // 2 or 1, inc), "chunks": self._chunks_payload(by.get("chunk", [])[:limit]), "rules": rules, "lessons": lessons}
+        return {"entities": [], "facts": self._facts_payload(fact_scores, limit // 2 or 1, inc), "chunks": self._chunks_payload(by.get("chunk", [])[:limit], inc), "rules": rules, "lessons": lessons}
 
     def _mode_session(self, query: str, limit: int, inc: bool, hops: int) -> dict:
         """Search the fast cache of recent turns by word overlap; fall through to hybrid when nothing matches."""
@@ -282,9 +282,14 @@ class Recaller:
         rows.sort(key=lambda r: r["score"], reverse=True)
         return rows
 
-    def _chunks_payload(self, hits: list[tuple[str, float]]) -> list[dict]:
+    def _chunks_payload(self, hits: list[tuple[str, float]], include_superseded: bool = False) -> list[dict]:
         chunks = self.store.get_chunks([cid for cid, _ in hits])
-        return [{"id": c.id, "summary": c.summary, "text": c.text, "source": c.source, "score": round(s, 6)} for cid, s in hits if (c := chunks.get(cid))]
+        superseded_cids = set() if include_superseded else self.store.superseded_chunk_ids()
+        return [
+            {"id": c.id, "summary": c.summary, "text": c.text, "source": c.source, "score": round(s, 6)}
+            for cid, s in hits
+            if (c := chunks.get(cid)) and (include_superseded or cid not in superseded_cids)
+        ]
 
     @classmethod
     def _dates_in(cls, text: str) -> list[str]:
